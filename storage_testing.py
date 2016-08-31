@@ -17,7 +17,7 @@ def gen_length():
 
 def gen_string():
 	length = gen_length()
-	s=string.lowercase + string.uppercase + string.digits
+	s = string.lowercase + string.uppercase + string.digits
 	return ''.join(random.sample(s,length))
 	# return ''.join(random.choice(string.lowercase) for i in range(length))
 
