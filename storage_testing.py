@@ -1,3 +1,10 @@
+'''
+Execution steps for testing:
+1. Install mongodb: 'sudo apt-get install -y mongodb-org'
+2. Install pymongo: 'python -m pip install pymongo'
+3. Run the testing code: 'python storage_testing.py'
+'''
+
 import unittest
 import random
 from random import randint
