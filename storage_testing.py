@@ -1,8 +1,8 @@
 '''
 Execution steps for testing:
 1. Install mongodb: 'sudo apt-get install -y mongodb-org'
-2. Install pymongo: 'python -m pip install pymongo'
-3. Run the testing code: 'python storage_testing.py'
+2. Install pymongo: 'sudo pip3 install pymongo'
+3. Run the testing code: 'python3 storage_testing.py'
 '''
 
 import unittest
@@ -11,13 +11,14 @@ from random import randint
 import string
 import datetime 
 import storage_api as api
+import sys
 
 def gen_length():
 	return randint(2,20)
 
 def gen_string():
 	length = gen_length()
-	s = string.lowercase + string.uppercase + string.digits
+	s = string.ascii_letters
 	return ''.join(random.sample(s,length))
 	# return ''.join(random.choice(string.lowercase) for i in range(length))
 
@@ -30,7 +31,7 @@ def gen_date():
 	sec = randint(0,59)
 	return datetime.datetime(year, month, date, hr, mn, sec)
 
-class testing(unittest.TestCase):
+class Test(unittest.TestCase):
 	def test_readwrite(self):
 		obj = []
 		api_obj = api.db_api()
@@ -103,8 +104,16 @@ class testing(unittest.TestCase):
 		self.assertEqual(api_obj.read_note_from_db(8), None)
 		self.assertEqual(api_obj.read_note_from_db(9), None)			
 
+def suite():
+	test_suite = unittest.TestSuite()
 
+	test_suite.addTest(unittest.makeSuite(Test))
+
+	return test_suite
 
 if __name__ == '__main__':
-	unittest.main()
-
+	if '-v' in sys.argv:
+		runner = unittest.TextTestRunner(verbosity=2)
+	else:
+		runner = unittest.TextTestRunner()
+	runner.run(suite())

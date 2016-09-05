@@ -14,6 +14,7 @@ class notes:
 		d['window_attr_obj'] = self.window_attr_obj.return_dict()
 		return d
 
+
 	#For testing
 	def __eq__(self, other):
 		return (isinstance(other, self.__class__) and
@@ -87,7 +88,7 @@ class db_api:
 
 	def write_note_to_db(self, note_obj):    
 		d = note_obj.return_dict()
-		self.collection.insert(d)
+		self.collection.insert_one(d)
 
 	def read_note_from_db(self, note_hash):
 		note_obj_dict = self.collection.find_one({'note_hash' : note_hash})
