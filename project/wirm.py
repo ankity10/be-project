@@ -2,8 +2,7 @@
 Execution Steps for python3:
 
 1. Install xlib for python:
-	i.	Clone with https://github.com/python-xlib/python-xlib.git
-	ii.	In the python-xlib folder run command : "sudo python3 setup.py install"
+	i.	run: "sudo pip3 install python-xlib"
 
 2. Execute program using "python3 wirm.py"
 """
