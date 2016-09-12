@@ -11,20 +11,43 @@ class TrayIcon(QSystemTrayIcon):
         QSystemTrayIcon.__init__(self)
         self.setIcon(QIcon('icon.png'))
 
-        self.trayIconMenu = QMenu()
-        shownote = QAction('Note',self)
-        shownote.triggered.connect(self.showtext)
-        self.trayIconMenu.addAction(shownote)
 
-        self.trayIconMenu.addSeparator()
+        self.activated.connect(self.showtext)
 
-        exitaction = QAction('Exit',self)
-        exitaction.triggered.connect(self.exitapp)
-        self.trayIconMenu.addAction(exitaction)
+        # self.trayIconMenu = QMenu()
+        # shownote = QAction('Note',self)
+        # shownote.triggered.connect(self.showtext)
+        # self.trayIconMenu.addAction(shownote)
 
-        self.setContextMenu(self.trayIconMenu)
+        # self.trayIconMenu.addSeparator()
+
+        # exitaction = QAction('Exit',self)
+        # exitaction.triggered.connect(self.exitapp)
+        # self.trayIconMenu.addAction(exitaction)
+
+        # self.setContextMenu(self.trayIconMenu)
         self.show()
         
+    def onTrayIconActivated(self, reason):
+        print(str(reason))
+        print("asfkjbfkja")
+        self.w = QWidget()
+        self.layout = QVBoxLayout()
+        self.edit = QTextEdit()
+        txt = open('note.txt')
+        self.edit.append(txt.read())
+        self.edit.append(reason)
+        txt.close()
+        self.button = QPushButton('Save')
+        self.layout.addWidget(self.edit)
+        self.layout.addWidget(self.button)
+        self.button.clicked.connect(self.showtext1)
+        self.w.setLayout(self.layout)
+        self.w.setWindowFlags(Qt.WindowStaysOnTopHint)
+        pos = self.geometry().topRight()
+        x, y = pos.x() - self.w.width()/2 + 50, pos.y() - self.w.height() 
+        self.w.move(x,y)
+        self.w.show()
 
     def exitapp(self):
         sys.exit(0)

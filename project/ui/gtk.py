@@ -1,4 +1,12 @@
 # depends on gir1.2-appindicator3-0.1
+# 
+# 
+#  application indicator /
+#  GTK status icon / 
+#  systray icon / 
+#  notification icon,
+#  
+#  
 #!/usr/bin/env python
 import os
 from gi.repository import Gtk
@@ -10,21 +18,21 @@ class AppIndicatorExample:
         self.ind.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
 
         # create a menu
-        # self.menu = Gtk.Menu()
+        self.menu = Gtk.Menu()
 
-        # item_note = Gtk.MenuItem('Note')
-        # item_note.connect("activate",self.show_note)
-        # item_note.show()
-        # self.menu.append(item_note)
+        item_note = Gtk.MenuItem('Note')
+        item_note.connect("activate",self.show_note)
+        item_note.show()
+        self.menu.append(item_note)
 
-        # item_exit = Gtk.MenuItem('Quit')
-        # item_exit.connect("activate", self.quit)
-        # item_exit.show()
-        # self.menu.append(item_exit)
+        item_exit = Gtk.MenuItem('Quit')
+        item_exit.connect("activate", self.quit)
+        item_exit.show()
+        self.menu.append(item_exit)
 
-        # self.menu.show()
+        self.menu.show()
 
-        # self.ind.set_menu(self.menu)
+        self.ind.set_menu(self.menu)
 
     def quit(self,data=None):
         Gtk.main_quit()
