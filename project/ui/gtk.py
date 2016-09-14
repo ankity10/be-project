@@ -33,6 +33,7 @@ class AppIndicatorExample:
         self.menu.show()
 
         self.ind.set_menu(self.menu)
+        self.ind.set_secondary_activate_target(item_note)
 
     def quit(self,data=None):
         Gtk.main_quit()

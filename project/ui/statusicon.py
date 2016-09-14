@@ -8,7 +8,7 @@ import gtk
 class SystrayIconApp:
     def __init__(self):
         self.tray = gtk.StatusIcon()
-        self.tray.set_from_stock(gtk.STOCK_ABOUT) 
+        self.tray.set_from_stock(gtk.STOCK_ABOUT)
         self.tray.connect('popup-menu', self.on_right_click)
         self.tray.set_tooltip(('Sample tray app'))
 
