@@ -3,9 +3,6 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QSystemTrayIcon, QApplication, QMenu, QAction, QWidget, QTextEdit,QVBoxLayout, QPushButton)
 
-
-
-
 class TrayIcon(QSystemTrayIcon):
     def __init__(self):
         QSystemTrayIcon.__init__(self)
@@ -43,8 +40,11 @@ class TrayIcon(QSystemTrayIcon):
         self.w.setLayout(self.layout)
         self.w.setWindowFlags(Qt.WindowStaysOnTopHint)
         pos = self.geometry().topRight()
-        x, y = pos.x() - self.w.width()/2 + 50, pos.y() - self.w.height() 
-        self.w.move(x,y)
+        x = pos.x() - self.w.width()/2;
+        y = pos.y()
+        if(pos.y() > 0):
+        	y = y - self.w.height()/2
+        self.w.setGeometry(x,y,self.w.width()/2,self.w.height()/2)
         self.w.show()
 
         
