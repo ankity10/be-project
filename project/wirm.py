@@ -69,5 +69,5 @@ class wirm:
 		return (self.active_window_name)
 
 w=wirm()
-s = w.get_active_window_id()
+s = w.get_active_window_title()
 print (s)
