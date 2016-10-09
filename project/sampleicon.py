@@ -105,8 +105,11 @@ class TrayIcon(QSystemTrayIcon):
         
     def boldtext(self):
         if self.edit.fontWeight() == QFont.Bold:
+
             self.edit.setFontWeight(QFont.Normal)
+
         else:
+
             self.edit.setFontWeight(QFont.Bold)
 
     def italictext(self):
