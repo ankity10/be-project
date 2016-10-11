@@ -1,7 +1,14 @@
 import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import (QSystemTrayIcon, QApplication, QMenu, QAction, QWidget, QTextEdit,QVBoxLayout, QPushButton)
+from PyQt5.QtWidgets import (QSystemTrayIcon, 
+                                QApplication, 
+                                QMenu, 
+                                QAction, 
+                                QWidget, 
+                                QTextEdit, 
+                                QVBoxLayout, 
+                                QPushButton)
 
 
 class TrayIcon(QSystemTrayIcon):
