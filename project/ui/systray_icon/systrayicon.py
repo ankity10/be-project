@@ -2,12 +2,12 @@ import sys
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-
+from PyQt5.QtWebEngineWidgets import QWebEngineView 
 
 class TrayIcon(QSystemTrayIcon):
     def __init__(self):
         QSystemTrayIcon.__init__(self)
-        self.setIcon(QIcon('icon.png'))
+        self.setIcon(QIcon('notes.png'))
         self.activated.connect(self.trayIconActivated)
         self.createIconMenu()
         self.show()
@@ -43,7 +43,11 @@ class TrayIcon(QSystemTrayIcon):
         self.vbox.addWidget(self.button)
         self.button.clicked.connect(self.savenote)
         widget.setLayout(self.vbox)
-        self.w.setCentralWidget(widget)
+        # self.w.setCentralWidget(widget)
+        self.browser = QWebEngineView() 
+        self.browser.load(QUrl("file:///home/ankit/projects/be-project/project/ui/systray_icon/firepad/examples/richtext.html#-KTmUhwtbbs1bbjjZh6E")) 
+        # self.browser.setHtml("<!DOCTYPE html><form action=""><input name=vehicle type=checkbox value=Bike>I have a bike<br><input name=vehicle type=checkbox value=Car>I have a car</form>")
+        self.w.setCentralWidget(self.browser)
         self.w.setWindowFlags(Qt.WindowStaysOnTopHint)
         self.setPosition()
         self.createmenu()
@@ -63,6 +67,7 @@ class TrayIcon(QSystemTrayIcon):
 
     def savenote(self):
         with open('note.txt','wt') as txt:
+            print(self.edit.toHtml())
             txt.write(self.edit.toHtml())
 
     def createmenu(self):
@@ -100,9 +105,15 @@ class TrayIcon(QSystemTrayIcon):
         self.formatbar.addAction(self.underline)
 
     def addListStyle(self):
-        self.liststyle = QComboBox()
-        self.formatbar.addWidget(self.liststyle)
+        self.liststyle = QAction('CheckBox',self,checkable=True)
+        self.liststyle.triggered.connect(self.addlist)
         
+        self.formatbar.addAction(self.liststyle)
+        
+    def addlist(self):
+        self.edit.insertHtml("<a href='http://www.google.com'>demo</a>")
+
+
     def boldtext(self):
         if self.edit.fontWeight() == QFont.Bold:
             self.edit.setFontWeight(QFont.Normal)
