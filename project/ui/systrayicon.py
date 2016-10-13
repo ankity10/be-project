@@ -2,9 +2,11 @@ import sys
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from PyQt5.QtWebEngineWidgets import *
-from PyQt5.Qt import *
+from PyQt5.QtWebEngineWidgets import QWebEngineView 
+import time
+from threading import Thread
 
+    
 class TrayIcon(QSystemTrayIcon):
     def __init__(self):
         QSystemTrayIcon.__init__(self)
@@ -25,50 +27,12 @@ class TrayIcon(QSystemTrayIcon):
         self.setContextMenu(self.trayIconMenu)
 
     def exitapp(self):
+        self.w.close()
         sys.exit(0)
 
     def showtext(self):
-        self.w = QMainWindow()
-        self.w.setWindowTitle("Lazynote")
-        widget = QWidget()
-        self.layout = QHBoxLayout()
-        self.vbox = QVBoxLayout()
-        self.edit = QTextEdit()
-        self.edit.currentCharFormatChanged.connect(self.currentformat)
-        with open('note.txt','rt') as txt:
-            self.edit.setText(txt.read())
-        self.button = QPushButton('Save')
-        self.layout.addWidget(self.edit)
-        self.vbox.addLayout(self.layout)
-        self.button.setFixedSize(100,25)
-        self.vbox.addWidget(self.button)
-        self.button.clicked.connect(self.savenote)
-        widget.setLayout(self.vbox)
-        # self.w.setCentralWidget(widget)
-        self.browser = QWebEngineView() 
-        # self.browser.setHtml("<!DOCTYPE html><form action=""><input name=vehicle type=checkbox value=Bike>I have a bike<br><input name=vehicle type=checkbox value=Car>I have a car</form>")
-        # self.browser.page().runJavaScript("window.firepad", lambda output: print(output))
-        page = self.browser.page()
-        web_channel = QWebChannel()
-        page.setWebChannel(web_channel)
-        web_channel.registerObject("jshelper", web_channel)
-        self.browser.load(QUrl("file:///home/ankit/projects/be-project/project/ui/systray_icon/firepad/examples/richtext-simple.html")) 
-
-
-        self.w.setCentralWidget(self.browser)
-        self.w.setWindowFlags(Qt.WindowStaysOnTopHint)
-        self.setPosition()
-        self.createmenu()
-        self.w.show()
-
-    def setPosition(self):
-        pos = self.geometry().topRight()
-        x = pos.x() - self.w.width()/2;
-        y = pos.y()
-        if(pos.y() > 0):
-            y = y - self.w.height()/2
-        self.w.setGeometry(x,y,self.w.width()/2,self.w.height()/2)
-
+        self.w = MainWindow(self.geometry().topRight())
+        
     def trayIconActivated(self,reason):
         if reason in (QSystemTrayIcon.Trigger, QSystemTrayIcon.DoubleClick):
             self.showtext()
@@ -78,71 +42,43 @@ class TrayIcon(QSystemTrayIcon):
             print(self.edit.toHtml())
             txt.write(self.edit.toHtml())
 
-    def createmenu(self):
-        self.formatbar = self.w.addToolBar("Format")
-        self.addBold()
-        self.addItalic()
-        self.addUnderline()
-        self.addListStyle()
+    
 
-    def addBold(self):
-        self.bold = QAction('B',self,checkable=True)
-        self.bold.setShortcut("Ctrl+B")
-        self.bold.triggered.connect(self.boldtext)
-        boldfont = QFont()
-        boldfont.setBold(True)
-        self.bold.setFont(boldfont)
-        self.formatbar.addAction(self.bold)
+class MainWindow(QMainWindow):
+    def __init__(self, position):
+        self.position = position
+        self.thread_flag = 1
+        super(MainWindow, self).__init__()
+        self.setWindowTitle("Lazynote")
+        widget = QWidget()
+        self.layout = QHBoxLayout()
+        self.vbox = QVBoxLayout()
+        self.browser = QWebEngineView() 
+        self.browser.load(QUrl("file:///home/kartik/Projects/firepad/examples/richtext-simple.html#-KTnBzQ2axjbmqlJ6NRL"))
+        self.setCentralWidget(self.browser)
+        self.setWindowFlags(Qt.WindowStaysOnTopHint)
+        self.setPosition()
+        self.show()
+        self.thread = Thread(target = self.return_html, args = (self.browser, ))
+        self.thread_flag = 1
+        self.thread.start()
 
-    def addItalic(self):
-        self.italic = QAction('i',self,checkable=True)
-        self.italic.setShortcut("Ctrl+I")
-        self.italic.triggered.connect(self.italictext)
-        italicfont = QFont()
-        italicfont.setItalic(True)
-        self.italic.setFont(italicfont)
-        self.formatbar.addAction(self.italic)
+    def setPosition(self):
+        x = self.position.x() - self.width()/2;
+        y = self.position.y()
+        if y > 0:
+            y = y - self.height()/2
+        self.setGeometry(x,y,self.width()/2,self.height()/2)
 
-    def addUnderline(self):
-        self.underline = QAction('U',self,checkable=True)
-        self.underline.setShortcut("Ctrl+U")
-        self.underline.triggered.connect(self.underlinetext)
-        ulfont = QFont()
-        ulfont.setUnderline(True)
-        self.underline.setFont(ulfont)
-        self.formatbar.addAction(self.underline)
+    def return_html(self,browser):
+        while(self.thread_flag == 1):
+            x = browser.page().runJavaScript(str("firepad.getHtml()"),self.print_html)
+            time.sleep(2)
+    def print_html(self,y):
+        print(y)
 
-    def addListStyle(self):
-        self.liststyle = QAction('CheckBox',self,checkable=True)
-        self.liststyle.triggered.connect(self.addlist)
-        
-        self.formatbar.addAction(self.liststyle)
-        
-    def addlist(self):
-        self.edit.insertHtml("<a href='http://www.google.com'>demo</a>")
-
-
-    def boldtext(self):
-        if self.edit.fontWeight() == QFont.Bold:
-            self.edit.setFontWeight(QFont.Normal)
-        else:
-            self.edit.setFontWeight(QFont.Bold)
-
-    def italictext(self):
-        state = self.edit.fontItalic()
-        self.edit.setFontItalic(not state)
-
-    def underlinetext(self):
-        state = self.edit.fontUnderline()
-        self.edit.setFontUnderline(not state)
-
-    def currentformat(self, format):
-        self.currentfont(format.font())
-
-    def currentfont(self, font):
-        self.bold.setChecked(font.bold())
-        self.italic.setChecked(font.italic())
-        self.underline.setChecked(font.underline())
+    def closeEvent(self,event):
+        self.thread_flag = 0
 
 if __name__ == '__main__':
     app=QApplication(sys.argv) 
