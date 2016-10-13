@@ -21,8 +21,8 @@ firepad.Firepad = (function(global) {
 
 
 
-  function Firepad(ref, place, options) {
-    if (!(this instanceof Firepad)) { return new Firepad(ref, place, options); }
+  function Firepad( place, options) {
+    if (!(this instanceof Firepad)) { return new Firepad(place, options); }
 
     if (!CodeMirror && !ace) {
       throw new Error('Couldn\'t find CodeMirror or ACE.  Did you forget to include codemirror.js or ace.js?');
@@ -106,7 +106,6 @@ firepad.Firepad = (function(global) {
     }
       self.ready_ = true;
       self.trigger('ready');
-      var editor = document.getElementById('firepad-container');
       
 
 

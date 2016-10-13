@@ -4,8 +4,6 @@
 
 <head>
   <meta charset="utf-8" />
-  <!-- Firebase -->
-  <!-- <script src="https://www.gstatic.com/firebasejs/3.3.0/firebase.js"></script> -->
 
   <!-- CodeMirror -->
   <script src="assets/codemirror.js"></script>
@@ -14,6 +12,7 @@
   <!-- Firepad -->
   <link rel="stylesheet" href="assets/firepad.css" />
   <script src="../dist/firepad.js"></script>
+  <script src="assets/jquery-3.1.1.min.js"></script>
 
  
   <style>
@@ -26,26 +25,43 @@
       height: 100%;
     }
   </style>
+
 </head>
 
-<body onload="init()">
+
+<body onload="">
+<div class="status"></div>
   <div id="firepad-container"></div>
 
   <script>
   var firepad;
+  var code_mirror;
     function init() {
       //// Create CodeMirror (with lineWrapping on).
-      var codeMirror = CodeMirror(document.getElementById('firepad-container'), { lineWrapping: true });
+      code_mirror = CodeMirror(document.getElementById('firepad-container'), { lineWrapping: true });
 
       //// Create Firepad (with rich text toolbar and shortcuts enabled).
-      firepad = Firepad.fromCodeMirror("abc", codeMirror,
-          { richTextToolbar: true, richTextShortcuts: true });
+      firepad = Firepad.fromCodeMirror(code_mirror,
+                                      { richTextToolbar: true, richTextShortcuts: true });
 
+
+      //// Autosave notes
+      var timeout_id;
+      var status = $('div.status');
+
+      code_mirror.on('keyup', function(){
+
+        status.text("changes pending");
+        if (timeout_id) {
+          clearTimeout(timeout_id);
+        }
+        timeout_id = setTimeout(function() {
+          console.error(firepad.getHtml());
+          status.text("changes saved");
+        }, 800);
+
+      })
     }
-
-
-
   </script>
-
 </body>
 </html>
