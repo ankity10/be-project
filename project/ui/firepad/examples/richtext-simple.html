@@ -8,11 +8,11 @@
   <!-- <script src="https://www.gstatic.com/firebasejs/3.3.0/firebase.js"></script> -->
 
   <!-- CodeMirror -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.17.0/codemirror.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.17.0/codemirror.css" />
+  <script src="assets/codemirror.js"></script>
+  <link rel="stylesheet" href="assets/codemirror.css" />
 
   <!-- Firepad -->
-  <link rel="stylesheet" href="https://cdn.firebase.com/libs/firepad/1.4.0/firepad.css" />
+  <link rel="stylesheet" href="assets/firepad.css" />
   <script src="../dist/firepad.js"></script>
 
  
@@ -32,19 +32,15 @@
   <div id="firepad-container"></div>
 
   <script>
+  var firepad;
     function init() {
       //// Create CodeMirror (with lineWrapping on).
       var codeMirror = CodeMirror(document.getElementById('firepad-container'), { lineWrapping: true });
 
       //// Create Firepad (with rich text toolbar and shortcuts enabled).
-      window.firepad = Firepad.fromCodeMirror("abc", codeMirror,
+      firepad = Firepad.fromCodeMirror("abc", codeMirror,
           { richTextToolbar: true, richTextShortcuts: true });
 
-      //// Initialize contents.
-      firepad.on('ready', function() {
-          firepad.setHtml('<span style="font-size: 24px;">Rich-text editing with <span style="color: red">Firepad!</span></span><br/><br/>Collaborative-editing made easy.\n');
-        
-      });
     }
 
 

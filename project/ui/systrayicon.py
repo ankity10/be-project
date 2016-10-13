@@ -1,4 +1,5 @@
 import sys
+import os
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -54,7 +55,9 @@ class MainWindow(QMainWindow):
         self.layout = QHBoxLayout()
         self.vbox = QVBoxLayout()
         self.browser = QWebEngineView() 
-        self.browser.load(QUrl("file:///home/kartik/Projects/firepad/examples/richtext-simple.html#-KTnBzQ2axjbmqlJ6NRL"))
+        folder_path = os.path.abspath('./')
+        abs_path = "file://" + folder_path + '/firepad/examples/richtext-simple.html'
+        self.browser.load(QUrl(abs_path))
         self.setCentralWidget(self.browser)
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
         self.setPosition()
