@@ -22,11 +22,9 @@ class WebPage(QWebEnginePage):
             hashed_key = sys.argv[1]
             process_name = sys.argv[2]
             window_title = sys.argv[3]
-
             time = datetime.datetime.now().time()
             current_time = time.isoformat()
             text = msg
-
             if self.status == "new":
                 storage.insert(hashed_key, text, current_time, window_title, process_name)
                 self.status = "old"
@@ -48,18 +46,14 @@ class NoteWindow(QWebEngineView):
         self.show()
 
 
-
-
 app = QApplication([])
 print(sys.argv)
 
 hashed_key = sys.argv[1]
 process_name = sys.argv[2]
 window_title = sys.argv[3]
-
 time = datetime.datetime.now().time()
 current_time = time.isoformat()
-
 storage = db_api()
 note = storage.read_note_from_db(hashed_key)
 
@@ -72,12 +66,8 @@ else:
 
 note_window = NoteWindow()
 # note_window.setWindowFlags(Qt.WindowStaysOnTopHint)
-
 page = WebPage(status)
 note_window.setPage(page)
-
-
 note_window.page().runJavaScript(str("window.onload = function() { init();firepad.setHtml('" + default_text + "')}"))
-
 note_window.load(QUrl(note_window.abs_path))
 app.exec_()
