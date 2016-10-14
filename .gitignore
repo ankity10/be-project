@@ -47,4 +47,5 @@ target/
 # IPython Notebook
 .ipynb_checkpoints
 
-
+# node
+node_modules/*
