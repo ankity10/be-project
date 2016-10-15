@@ -59,6 +59,7 @@ class WIRM:
 			return None				#return
 		w = (self.active).get_full_property(atom, Xlib.X.AnyPropertyType).value
 		self.active_window_title = w.decode("utf8")
+		print(self.active_window_title)
 		return (self.active_window_title)
 
 	def get_active_window_name(self):
@@ -70,9 +71,11 @@ class WIRM:
 
 
 def main():
-	w=wirm()
-	s = w.get_active_window_title()
-	print (s)
+	w = WIRM()
+	while True:
+		title = w.get_active_window_title()
+		print (title)
+		time.sleep(1)
 	
 if __name__ == '__main__':
 	main()

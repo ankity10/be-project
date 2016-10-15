@@ -110,6 +110,7 @@ class db_api:
 
 		window_attr_obj = window_attr(process_name, window_title)
 		note = notes(hash, note_attr_obj, window_attr_obj)
+		
 		self.write_note_to_db(note)
 
 	def update(self, hash, text, time, window_title, process_name):
