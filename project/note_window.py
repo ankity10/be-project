@@ -40,7 +40,7 @@ class NoteWindow(QWebEngineView):
 
     def __init__(self):
         super().__init__()
-        file_path = '/ui/examples/richtext-simple.html'
+        file_path = '/ui/richtext-simple.html'
         folder_path = os.path.abspath('./')
         self.abs_path = "file://" + folder_path + file_path
         self.show()
