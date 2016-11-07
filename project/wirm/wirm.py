@@ -13,7 +13,7 @@ import time
 
 class WIRM:
 	def __init__(self):
-		self.display = Xlib.display.Display(':1')
+		self.display = Xlib.display.Display(':0')
 		self.root = self.display.screen().root
 		self.active = self.display.screen().root
 		self.active_window_id = int 
