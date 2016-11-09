@@ -33,7 +33,7 @@ class notes:
 
 class note_attr:
 	def __init__(self, note_color = None, note_time = None, note_info = None):
-		self.note_color = note_color
+		# self.note_color = note_color
 		self.note_time = note_time
 		self.note_info = note_info
 
@@ -48,7 +48,7 @@ class note_attr:
 		return self.__dict__
 
 	def return_obj(self, d):
-		self.note_color = d['note_color']
+		# self.note_color = d['note_color']
 		self.note_time = d['note_time']
 		self.note_info = d['note_info']
 		return self
@@ -104,7 +104,19 @@ class db_api:
 	def update_note(self, note_hash, note_obj):
 		new_dict = note_obj.return_dict()
 		self.collection.find_one_and_replace({'note_hash' : note_hash}, new_dict)
- 
 
+	def insert(self, hash, text, time, window_title, process_name):
+		note_attr_obj = note_attr(None, time, text)
 
-#pytest
+		window_attr_obj = window_attr(process_name, window_title)
+		note = notes(hash, note_attr_obj, window_attr_obj)
+		
+		self.write_note_to_db(note)
+
+	def update(self, hash, text, time, window_title, process_name):
+		note_attr_obj = note_attr(None, time, text)
+		window_attr_obj = window_attr(process_name, window_title)
+		note = notes(hash, note_attr_obj, window_attr_obj)
+
+		self.update_note(hash, note)
+	
