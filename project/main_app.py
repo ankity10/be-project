@@ -32,7 +32,9 @@ class TrayIcon(QSystemTrayIcon):
         sys.exit(0)
 
     def show_note(self):
-        # position = self.geometry().topRight()
+        position = self.geometry().topRight()
+        x = position.x()
+        y = position.y()
         # print(wirm)
         w = WIRM()
         window_title = w.get_active_window_title().translate(str.maketrans({"-":  r"\-",
@@ -43,7 +45,8 @@ class TrayIcon(QSystemTrayIcon):
                                                                             "*":  r"\*",
                                                                             ".":  r"\.",
                                                                             "(":  r"-",
-                                                                            ")":  r"_"}))
+                                                                            ")":  r"_",
+                                                                            " ":  r"\ "}))
 
         print("window_title: " + window_title)
         process_name = w.get_active_window_name().translate(str.maketrans({"-":  r"\-",
@@ -54,6 +57,7 @@ class TrayIcon(QSystemTrayIcon):
                                                                             "*":  r"\*",
                                                                             ".":  r"\.",
                                                                             "(":  r"-",
+                                                                            " ":  r"\ ",
                                                                             ")":  r"_"}))
         print("process_name: " + process_name)
 
@@ -66,9 +70,10 @@ class TrayIcon(QSystemTrayIcon):
                                                                                     "*":  r"\*",
                                                                                     ".":  r"\.",
                                                                                     "(":  r"-",
+                                                                                    " ":  r"\ ",
                                                                                     ")":  r"_"}))
         print("hashed_key "+hashed_key)
-        cmd = "python3 note_window.py " + str(hashed_key) + " " + str(process_name) + " " + str(window_title)
+        cmd = "python3 note_window.py " + str(hashed_key) + " " + str(process_name) + " " + str(window_title) + " " + str(x) + " " + str(y)
         print(cmd)
         os.system(cmd)
 

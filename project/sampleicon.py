@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import *
 class TrayIcon(QSystemTrayIcon):
     def __init__(self):
         QSystemTrayIcon.__init__(self)
-        self.setIcon(QIcon('icon.png'))
+        self.setIcon(QIcon('graphics/notes.png'))
         self.activated.connect(self.trayIconActivated)
         self.createIconMenu()
         self.show()
@@ -51,7 +51,12 @@ class TrayIcon(QSystemTrayIcon):
 
     def setPosition(self):
         pos = self.geometry().topRight()
-        x = pos.x() - self.w.width()/2;
+        position = QDesktopWidget().screenGeometry().topRight()
+        x = pos.x()
+        print(x)
+        if x < 0:
+            x = position.x()
+        x = x - self.w.width()/2
         y = pos.y()
         if(pos.y() > 0):
             y = y - self.w.height()/2

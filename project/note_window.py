@@ -45,6 +45,12 @@ class NoteWindow(QWebEngineView):
         self.abs_path = "file://" + folder_path + file_path
         self.show()
 
+    def focusInEvent(self, event):
+        self.show()
+
+    def focusOutEvent(self, event):
+        self.close()
+
 
 app = QApplication([])
 print(sys.argv)
@@ -52,6 +58,8 @@ print(sys.argv)
 hashed_key = sys.argv[1]
 process_name = sys.argv[2]
 window_title = sys.argv[3]
+x = int(sys.argv[4])
+y = int(sys.argv[5])
 time = datetime.datetime.now().time()
 current_time = time.isoformat()
 storage = db_api()
@@ -65,7 +73,12 @@ else:
     status = "new"
 
 note_window = NoteWindow()
-# note_window.setWindowFlags(Qt.WindowStaysOnTopHint)
+#note_window.setWindowFlags(Qt.WindowStaysOnTopHint)
+if x < 0:
+    x = QDesktopWidget().screenGeometry().topRight().x()
+x = x - note_window.width()/2
+y = y + 5
+note_window.setGeometry(x,y,250,350)
 page = WebPage(status)
 note_window.setPage(page)
 note_window.page().runJavaScript(str("window.onload = function() { init();firepad.setHtml('" + default_text + "')}"))
