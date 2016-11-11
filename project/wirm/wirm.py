@@ -6,19 +6,28 @@ Execution Steps for python3:
 
 2. Execute program using "python3 wirm.py"
 """
-
+import threading
 import Xlib.display
+import Xlib.threaded
 import subprocess
+import os
 import time
 
 class WIRM:
+	def active_window_thread(self):
+		self.active_window_thread_flag = 1
+		t = threading.Thread(target=self.active_window_event)
+		t.start()
+
 	def __init__(self):
-		self.display = Xlib.display.Display(':0')
+		self.display = Xlib.display.Display(str(os.environ["DISPLAY"]))
 		self.root = self.display.screen().root
 		self.active = self.display.screen().root
-		self.active_window_id = int 
+		self.active_window_id = int
+		self.active_window_thread_flag = 0 
 		self.active_window_title = ""
 		self.active_window_name = ""
+		self.active_window_thread()
 
 	def is_ewmh_supported(self,atom_request, window):
 		atoms_supported = self.display.intern_atom('_NET_SUPPORTED')
@@ -28,14 +37,37 @@ class WIRM:
 				return True
 		return False
 
+	def active_window_event(self):
+		self.active_window_id = self.get_active_window_id()
+		print("*******"+str(self.active_window_id)+"*********")
+		self.root.change_attributes(event_mask=Xlib.X.PropertyChangeMask)
+		while (self.active_window_thread_flag == 1):
+			#print("***********thread started***************")
+			while self.display.pending_events():
+				event = self.display.next_event()
+				if type(event) == Xlib.protocol.event.PropertyNotify:
+					atom_name = self.display.get_atom_name(event.atom)
+					if (atom_name == '_NET_ACTIVE_WINDOW'):
+						print ('Window changed!')
+						temp_active_window_id = self.get_active_window_id()
+						if(temp_active_window_id == 0):
+							continue
+						else:
+							self.active_window_id = temp_active_window_id
+						print("*******"+str(self.active_window_id)+"*********")
+
+			time.sleep(0.1)
+		print("thread stopped!!")
+
 	#Retrieving active window id
 	def get_active_window_id(self):
 		atom = self.display.intern_atom('_NET_ACTIVE_WINDOW',True)
 		if (self.is_ewmh_supported(atom,self.root) == False):
 			print ("EWMH is not supported by your window manager!!")
 			return None				#return
-		self.active_window_id = int(self.root.get_full_property(atom, Xlib.X.AnyPropertyType).value[0])
-		return(self.active_window_id)
+		print("#################"+str(atom)+"##################")
+		active_window_id = (self.root.get_full_property(atom, Xlib.X.AnyPropertyType).value[0]) 
+		return(active_window_id)
 	
 	#Retrieving active window pid
 	def get_active_window_pid(self):
@@ -51,7 +83,7 @@ class WIRM:
 
 	#Retrieving active window title
 	def get_active_window_title(self):
-		self.get_active_window_id()
+		#self.get_active_window_id()
 		self.active = self.display.create_resource_object('window', self.active_window_id) 
 		atom = self.display.intern_atom('_NET_WM_NAME',True)
 		if (self.is_ewmh_supported(atom,self.root) == False):
@@ -63,13 +95,12 @@ class WIRM:
 		return (self.active_window_title)
 
 	def get_active_window_name(self):
-		self.get_active_window_id()
+		#self.get_active_window_id()
 		self.active = self.display.create_resource_object('window', self.active_window_id)
 		window_pid = self.get_active_window_pid()
 		self.active_window_name = self.get_process_name(window_pid)
 		return (self.active_window_name)
-
-
+	
 def main():
 	w = WIRM()
 	while True:

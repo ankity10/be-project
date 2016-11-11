@@ -49,7 +49,7 @@
       var timeout_id;
       var status = $('div.status');
 
-      code_mirror.on('keyup', function(){
+      code_mirror.on('change', function(){
 
         status.text("changes pending");
         if (timeout_id) {
