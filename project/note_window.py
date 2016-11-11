@@ -62,7 +62,7 @@ storage = db_api()
 note = storage.read_note_from_db(hashed_key)
 if x_position <= 0 :
     x_position = QCursor().pos().x()
-    y_position = QCursor.pos().y()
+    y_position = QCursor().pos().y()
     #x_position = QDesktopWidget().screenGeometry().topRight().x()
 
 if note:
