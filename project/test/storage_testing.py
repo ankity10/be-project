@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 '''
 Execution steps for testing:
 1. Install mongodb: 'sudo apt-get install -y mongodb-org'
@@ -20,7 +21,6 @@ def gen_string():
 	length = gen_length()
 	s = string.ascii_letters
 	return ''.join(random.sample(s,length))
-	# return ''.join(random.choice(string.lowercase) for i in range(length))
 
 def gen_date():
 	year = randint(2000,2020)

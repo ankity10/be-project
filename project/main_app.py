@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys
 import os
 from PyQt5.QtCore import *
@@ -12,13 +13,24 @@ from data_filter.data_filter import DataFilter
 class TrayIcon(QSystemTrayIcon):
     def __init__(self):
         super().__init__()
-
         self.wirm = WIRM()
-
         self.setIcon(QIcon('graphics/notes.png'))
         self.activated.connect(self.tray_icon_activated)
         self.create_menu()
         self.show()
+
+    def __make_cli_friendly(self, string):
+        return string.translate(str.maketrans({"-":  r"\-",
+                                                                            "]":  r"\]",
+                                                                            "\\": r"\\",
+                                                                            "^":  r"\^",
+                                                                            "$":  r"\$",
+                                                                            "*":  r"\*",
+                                                                            ".":  r"\.",
+                                                                            "(":  r"-",
+                                                                            ")":  r"_",
+                                                                            " ":  r"\ "}))
+
 
     def create_menu(self):
         self.tray_icon_menu = QMenu()
@@ -37,45 +49,14 @@ class TrayIcon(QSystemTrayIcon):
 
     def show_note(self):
         self.position = self.geometry().topRight()
-        # print(wirm)
-        window_title = self.wirm.get_active_window_title().translate(str.maketrans({"-":  r"\-",
-
-                                                                            "]":  r"\]",
-                                                                            "\\": r"\\",
-                                                                            "^":  r"\^",
-                                                                            "$":  r"\$",
-                                                                            "*":  r"\*",
-                                                                            ".":  r"\.",
-                                                                            "(":  r"-",
-
-                                                                            ")":  r"_",
-                                                                            " ":  r"\ "}))
-
+        window_title = self.__make_cli_friendly(self.wirm.get_active_window_title())
         print("window_title: " + window_title)
-        process_name = self.wirm.get_active_window_name().translate(str.maketrans({"-":  r"\-",
-                                                                            "]":  r"\]",
-                                                                            "\\": r"\\",
-                                                                            "^":  r"\^",
-                                                                            "$":  r"\$",
-                                                                            "*":  r"\*",
-                                                                            ".":  r"\.",
-                                                                            "(":  r"-",
-                                                                            ")":  r"_",
-                                                                            " ":  r"\ "}))
+        process_name = self.__make_cli_friendly(self.wirm.get_active_window_name())
         print("process_name: " + process_name)
-
         d = DataFilter()
-        hashed_key = d.get_hash(process_name, window_title).translate(str.maketrans({"-":  r"\-",
-                                                                                    "]":  r"\]",
-                                                                                    "\\": r"\\",
-                                                                                    "^":  r"\^",
-                                                                                    "$":  r"\$",
-                                                                                    "*":  r"\*",
-                                                                                    ".":  r"\.",
-                                                                                    "(":  r"-",
-                                                                                    ")":  r"_",
-                                                                                    " ":  r"\ "}))
+        hashed_key = self.__make_cli_friendly(d.get_hash(process_name, window_title))
         print("hashed_key "+hashed_key)
+
         cmd = "python3 note_window.py " + str(hashed_key) + " " + str(process_name) + " " + str(window_title) \
               + " " + str(self.position.x()) + " " + str(self.position.y())
         print(cmd)

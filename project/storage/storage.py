@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import pymongo
 import datetime
 
@@ -20,7 +21,6 @@ class notes:
 		return (isinstance(other, self.__class__) and
 			self.return_dict() == other.return_dict())
 		
-		# return self.__dict__
 
 	def return_obj(self, d):
 		self.note_hash = d['note_hash']

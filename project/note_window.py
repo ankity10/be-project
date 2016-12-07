@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# vim:fileencoding=utf-8
-
 from PyQt5.Qt import *
 import os
 import sys
@@ -44,7 +42,6 @@ class NoteWindow(QWebEngineView):
         super().__init__()
         file_path = '/ui/examples/richtext-simple.html'
         folder_path = os.path.abspath('./')
-
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
         self.abs_path = "file://" + folder_path + file_path
         self.setGeometry(x_position,y_position,250,280)
@@ -71,8 +68,6 @@ note = storage.read_note_from_db(hashed_key)
 if x_position <= 0 :
     x_position = QCursor().pos().x()
     y_position = QCursor().pos().y()
-    #x_position = QDesktopWidget().screenGeometry().topRight().x()
-
 
 if note:
     default_text = note.note_attr_obj.note_info
@@ -82,7 +77,6 @@ else:
     status = "new"
 
 note_window = NoteWindow()
-# note_window.setWindowFlags(Qt.WindowStaysOnTopHint)
 page = WebPage(status)
 note_window.setPage(page)
 note_window.page().runJavaScript(str("window.onload = function() { init();firepad.setHtml('" + default_text + "')}"))
