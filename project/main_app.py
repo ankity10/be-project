@@ -12,6 +12,9 @@ from data_filter.data_filter import DataFilter
 class TrayIcon(QSystemTrayIcon):
     def __init__(self):
         super().__init__()
+
+        self.wirm = WIRM()
+
         self.setIcon(QIcon('graphics/notes.png'))
         self.activated.connect(self.tray_icon_activated)
         self.create_menu()
@@ -29,13 +32,14 @@ class TrayIcon(QSystemTrayIcon):
         self.setContextMenu(self.tray_icon_menu)
 
     def exit_app(self):
+        self.wirm.active_window_thread_flag = 0
         sys.exit(0)
 
     def show_note(self):
-        # position = self.geometry().topRight()
+        self.position = self.geometry().topRight()
         # print(wirm)
-        w = WIRM()
-        window_title = w.get_active_window_title().translate(str.maketrans({"-":  r"\-",
+        window_title = self.wirm.get_active_window_title().translate(str.maketrans({"-":  r"\-",
+
                                                                             "]":  r"\]",
                                                                             "\\": r"\\",
                                                                             "^":  r"\^",
@@ -43,10 +47,12 @@ class TrayIcon(QSystemTrayIcon):
                                                                             "*":  r"\*",
                                                                             ".":  r"\.",
                                                                             "(":  r"-",
-                                                                            ")":  r"_"}))
+
+                                                                            ")":  r"_",
+                                                                            " ":  r"\ "}))
 
         print("window_title: " + window_title)
-        process_name = w.get_active_window_name().translate(str.maketrans({"-":  r"\-",
+        process_name = self.wirm.get_active_window_name().translate(str.maketrans({"-":  r"\-",
                                                                             "]":  r"\]",
                                                                             "\\": r"\\",
                                                                             "^":  r"\^",
@@ -54,7 +60,8 @@ class TrayIcon(QSystemTrayIcon):
                                                                             "*":  r"\*",
                                                                             ".":  r"\.",
                                                                             "(":  r"-",
-                                                                            ")":  r"_"}))
+                                                                            ")":  r"_",
+                                                                            " ":  r"\ "}))
         print("process_name: " + process_name)
 
         d = DataFilter()
@@ -66,9 +73,11 @@ class TrayIcon(QSystemTrayIcon):
                                                                                     "*":  r"\*",
                                                                                     ".":  r"\.",
                                                                                     "(":  r"-",
-                                                                                    ")":  r"_"}))
+                                                                                    ")":  r"_",
+                                                                                    " ":  r"\ "}))
         print("hashed_key "+hashed_key)
-        cmd = "python3 note_window.py " + str(hashed_key) + " " + str(process_name) + " " + str(window_title)
+        cmd = "python3 note_window.py " + str(hashed_key) + " " + str(process_name) + " " + str(window_title) \
+              + " " + str(self.position.x()) + " " + str(self.position.y())
         print(cmd)
         os.system(cmd)
 

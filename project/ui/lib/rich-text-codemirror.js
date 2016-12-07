@@ -129,6 +129,10 @@ firepad.RichTextCodeMirror = (function () {
     });
 
     if (newChanges.length > 0) {
+
+      // console.error("Changes DONE!!");
+      console.error(this.codeMirror.firepad.getHtml());
+
       this.trigger('attributesChange', this, newChanges);
     }
   };
@@ -640,6 +644,10 @@ firepad.RichTextCodeMirror = (function () {
     this.markLineSentinelCharactersForChanges_(cmChanges);
 
     if (newChanges.length > 0) {
+
+      // console.error("Changes 2 DONE!!");
+      console.error(this.codeMirror.firepad.getHtml());
+
       this.trigger('change', this, newChanges);
     }
   };
