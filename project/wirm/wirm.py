@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Execution Steps for python3:
 
@@ -37,6 +38,7 @@ class WIRM:
 				return True
 		return False
 
+
 	def active_window_event(self):
 		self.active_window_id = self.get_active_window_id()
 		print("*******"+str(self.active_window_id)+"*********")
@@ -58,6 +60,7 @@ class WIRM:
 			time.sleep(0.1)
 		print("thread stopped!!")
 
+
 	#Retrieving active window id
 	def get_active_window_id(self):
 		atom = self.display.intern_atom('_NET_ACTIVE_WINDOW',True)
@@ -67,6 +70,7 @@ class WIRM:
 		print("#################"+str(atom)+"##################")
 		active_window_id = (self.root.get_full_property(atom, Xlib.X.AnyPropertyType).value[0]) 
 		return(active_window_id)
+
 	
 	#Retrieving active window pid
 	def get_active_window_pid(self):
@@ -97,7 +101,7 @@ class WIRM:
 		window_pid = self.get_active_window_pid()
 		self.active_window_name = self.get_process_name(window_pid)
 		return (self.active_window_name)
-	
+
 def main():
 	w = WIRM()
 	while True:

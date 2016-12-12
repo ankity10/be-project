@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# vim:fileencoding=utf-8
-
 import os
 import sys
 import datetime
@@ -51,18 +49,22 @@ class NoteWindow(QWebEngineView):
         self.setWindowIcon(QIcon('graphics/notes.png'))
         self.show()
 
+
 app = QApplication([])
 print(sys.argv)
 
 hashed_key = sys.argv[1]
 process_name = sys.argv[2]
 window_title = sys.argv[3]
+
 x_position = int(sys.argv[4])
 y_position = int(sys.argv[5])
+
 time = datetime.datetime.now().time()
 current_time = time.isoformat()
 storage = db_api()
 note = storage.read_note_from_db(hashed_key)
+
 if x_position <= 0 :
     x_position = QCursor().pos().x()
     y_position = QCursor().pos().y()
