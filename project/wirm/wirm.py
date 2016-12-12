@@ -42,7 +42,6 @@ class WIRM:
 		print("*******"+str(self.active_window_id)+"*********")
 		self.root.change_attributes(event_mask=Xlib.X.PropertyChangeMask)
 		while (self.active_window_thread_flag == 1):
-			#print("***********thread started***************")
 			while self.display.pending_events():
 				event = self.display.next_event()
 				if type(event) == Xlib.protocol.event.PropertyNotify:
@@ -83,7 +82,6 @@ class WIRM:
 
 	#Retrieving active window title
 	def get_active_window_title(self):
-		#self.get_active_window_id()
 		self.active = self.display.create_resource_object('window', self.active_window_id) 
 		atom = self.display.intern_atom('_NET_WM_NAME',True)
 		if (self.is_ewmh_supported(atom,self.root) == False):
@@ -95,7 +93,6 @@ class WIRM:
 		return (self.active_window_title)
 
 	def get_active_window_name(self):
-		#self.get_active_window_id()
 		self.active = self.display.create_resource_object('window', self.active_window_id)
 		window_pid = self.get_active_window_pid()
 		self.active_window_name = self.get_process_name(window_pid)

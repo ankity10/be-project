@@ -1,10 +1,12 @@
 import sys
 import os
+import time
+import hashlib
+
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import * 
-import time
 from threading import Thread
 from wirm.wirm import WIRM
 from data_filter.data_filter import DataFilter
@@ -13,6 +15,17 @@ class TrayIcon(QSystemTrayIcon):
     def __init__(self):
         super().__init__()
         self.wirm = WIRM()
+        self.transtable = str.maketrans({"-":  r"\-",
+                                "]":  r"\]",
+                                "\\": r"\\",
+                                "^":  r"\^",
+                                "$":  r"\$",
+                                "*":  r"\*",
+                                ".":  r"\.",
+                                "(":  r"-",
+                                ")":  r"_",
+                                " ":  r"\ "})
+
         self.setIcon(QIcon('graphics/notes.png'))
         self.activated.connect(self.tray_icon_activated)
         self.create_menu()
@@ -33,44 +46,21 @@ class TrayIcon(QSystemTrayIcon):
         self.wirm.active_window_thread_flag = 0
         sys.exit(0)
 
+    def get_hash( self,active_window_name = "",active_window_title =""):
+        hash_obj = hashlib.sha256()
+        hash_obj.update((active_window_name+active_window_title).encode('utf-8'))
+        hash = hash_obj.hexdigest()
+        return hash
+
     def show_note(self):
         self.position = self.geometry().topRight()
-        # print(wirm)
-        window_title = self.wirm.get_active_window_title().translate(str.maketrans({"-":  r"\-",
-                                                                            "]":  r"\]",
-                                                                            "\\": r"\\",
-                                                                            "^":  r"\^",
-                                                                            "$":  r"\$",
-                                                                            "*":  r"\*",
-                                                                            ".":  r"\.",
-                                                                            "(":  r"-",
-                                                                            ")":  r"_",
-                                                                            " ":  r"\ "}))
+        window_title = self.wirm.get_active_window_title().translate(self.transtable)
 
         print("window_title: " + window_title)
-        process_name = self.wirm.get_active_window_name().translate(str.maketrans({"-":  r"\-",
-                                                                            "]":  r"\]",
-                                                                            "\\": r"\\",
-                                                                            "^":  r"\^",
-                                                                            "$":  r"\$",
-                                                                            "*":  r"\*",
-                                                                            ".":  r"\.",
-                                                                            "(":  r"-",
-                                                                            ")":  r"_",
-                                                                            " ":  r"\ "}))
+        process_name = self.wirm.get_active_window_name().translate(self.transtable)
         print("process_name: " + process_name)
 
-        d = DataFilter()
-        hashed_key = d.get_hash(process_name, window_title).translate(str.maketrans({"-":  r"\-",
-                                                                                    "]":  r"\]",
-                                                                                    "\\": r"\\",
-                                                                                    "^":  r"\^",
-                                                                                    "$":  r"\$",
-                                                                                    "*":  r"\*",
-                                                                                    ".":  r"\.",
-                                                                                    "(":  r"-",
-                                                                                    ")":  r"_",
-                                                                                    " ":  r"\ "}))
+        hashed_key = self.get_hash(process_name, window_title).translate(self.transtable)
         print("hashed_key "+hashed_key)
         cmd = "python3 note_window.py " + str(hashed_key) + " " + str(process_name) + " " + str(window_title) \
               + " " + str(self.position.x()) + " " + str(self.position.y())
