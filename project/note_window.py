@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-# vim:fileencoding=utf-8
-
-from PyQt5.Qt import *
 import os
 import sys
 import datetime
+
+from PyQt5.Qt import *
 from storage.storage import db_api
 from wirm.wirm import WIRM
+
 global status 
 global storage
 
@@ -42,8 +42,13 @@ class NoteWindow(QWebEngineView):
         super().__init__()
         file_path = '/ui/examples/richtext-simple.html'
         folder_path = os.path.abspath('./')
+        self.setWindowFlags(Qt.WindowStaysOnTopHint)
         self.abs_path = "file://" + folder_path + file_path
+        self.setGeometry(x_position,y_position,250,280)
+        self.setWindowTitle("LazyNotes")
+        self.setWindowIcon(QIcon('graphics/notes.png'))
         self.show()
+
 
 app = QApplication([])
 print(sys.argv)
@@ -51,10 +56,18 @@ print(sys.argv)
 hashed_key = sys.argv[1]
 process_name = sys.argv[2]
 window_title = sys.argv[3]
+
+x_position = int(sys.argv[4])
+y_position = int(sys.argv[5])
+
 time = datetime.datetime.now().time()
 current_time = time.isoformat()
 storage = db_api()
 note = storage.read_note_from_db(hashed_key)
+
+if x_position <= 0 :
+    x_position = QCursor().pos().x()
+    y_position = QCursor().pos().y()
 
 if note:
     default_text = note.note_attr_obj.note_info
@@ -64,7 +77,6 @@ else:
     status = "new"
 
 note_window = NoteWindow()
-# note_window.setWindowFlags(Qt.WindowStaysOnTopHint)
 page = WebPage(status)
 note_window.setPage(page)
 note_window.page().runJavaScript(str("window.onload = function() { init();firepad.setHtml('" + default_text + "')}"))

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import pymongo
 import datetime
 
@@ -14,13 +15,10 @@ class notes:
 		d['window_attr_obj'] = self.window_attr_obj.return_dict()
 		return d
 
-
 	#For testing
 	def __eq__(self, other):
 		return (isinstance(other, self.__class__) and
 			self.return_dict() == other.return_dict())
-		
-		# return self.__dict__
 
 	def return_obj(self, d):
 		self.note_hash = d['note_hash']
@@ -30,29 +28,18 @@ class notes:
 		self.window_attr_obj = obj_window.return_obj(d['window_attr_obj'])
 		return self
 
-
 class note_attr:
 	def __init__(self, note_color = None, note_time = None, note_info = None):
-		# self.note_color = note_color
 		self.note_time = note_time
 		self.note_info = note_info
 
 	def return_dict(self):
-		'''
-		d = {}
-		d['note_color'] = self.note_color
-		d['note_time'] = self.note_time
-		d['note_info'] = self.note_info
-		return d
-		'''
 		return self.__dict__
 
 	def return_obj(self, d):
-		# self.note_color = d['note_color']
 		self.note_time = d['note_time']
 		self.note_info = d['note_info']
 		return self
-
 
 class window_attr:
 	def __init__(self, process_name = None, window_title = None):
@@ -60,12 +47,6 @@ class window_attr:
 		self.window_title = window_title
 
 	def return_dict(self):
-		'''
-		d = {}
-		d['process_name'] = self.process_name
-		d['window_title'] = self.window_title
-		return d
-		'''
 		return self.__dict__
 
 	def return_obj(self, d):
@@ -117,6 +98,5 @@ class db_api:
 		note_attr_obj = note_attr(None, time, text)
 		window_attr_obj = window_attr(process_name, window_title)
 		note = notes(hash, note_attr_obj, window_attr_obj)
-
 		self.update_note(hash, note)
 	
