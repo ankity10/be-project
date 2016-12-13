@@ -30,7 +30,7 @@ class WIRM:
 		self.active_window_name = ""
 		self.active_window_thread()
 
-	def is_ewmh_supported(self,atom_request, window):
+	def is_ewmh_supported(self, atom_request, window):
 		atoms_supported = self.display.intern_atom('_NET_SUPPORTED')
 		atoms_supported_list = window.get_full_property(atoms_supported, Xlib.X.AnyPropertyType).value
 		for atom in atoms_supported_list:
@@ -78,10 +78,14 @@ class WIRM:
 		return (window_pid)
 		
 	#Retrieving active window process name from process id
-	def get_process_name(self,window_pid):
-		process = subprocess.Popen(("ps -p " + str(window_pid) + " -o comm="),shell=True, stdout=subprocess.PIPE)
-		get_process_name = process.communicate()[0].decode("utf8").split('\n')[0]	#To remove \n
-		return (get_process_name)
+	def get_process_name(self, window_pid):
+		pid_path = os.path.join('/proc', str(window_pid))
+		if os.path.exists(pid_path):
+		    with open(os.path.join(pid_path, 'comm')) as f:
+		        process_name = f.read().rstrip('\n') #Read and Remove \n
+		        return (process_name)
+		else:
+			print("No such PID in Running processes!!")
 
 	#Retrieving active window title
 	def get_active_window_title(self):
