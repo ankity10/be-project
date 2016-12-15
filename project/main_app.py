@@ -2,7 +2,6 @@
 import sys
 import os
 import time
-import hashlib
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -10,6 +9,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import * 
 from threading import Thread
 from wirm.wirm import WIRM
+from storage.storage import db_api
 
 class TrayIcon(QSystemTrayIcon):
     def __init__(self):
@@ -48,19 +48,14 @@ class TrayIcon(QSystemTrayIcon):
         self.wirm.active_window_thread_flag = 0
         sys.exit(0)
 
-    def get_hash( self,active_window_name = "",active_window_title =""):
-        hash_obj = hashlib.sha256()
-        hash_obj.update((active_window_name+active_window_title).encode('utf-8'))
-        hash = hash_obj.hexdigest()
-        return hash
-
     def show_note(self):
         self.position = self.geometry().topRight()
         window_title = self.__make_cli_friendly(self.wirm.get_active_window_title())
         print("window_title: " + window_title)
         process_name = self.__make_cli_friendly(self.wirm.get_active_window_name())
         print("process_name: " + process_name)
-        hashed_key = self.__make_cli_friendly(self.get_hash(process_name, window_title))
+        storage = db_api()
+        hashed_key = self.__make_cli_friendly(storage.get_hash(process_name, window_title))
         print("hashed_key "+hashed_key)
 
         cmd = "python3 note_window.py " + str(hashed_key) + " " + str(process_name) + " " + str(window_title) \
