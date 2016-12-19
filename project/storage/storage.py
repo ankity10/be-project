@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import pymongo
 import datetime
+import hashlib
 
 class notes:
 	def __init__(self, note_hash = None, note_attr_obj = None, window_attr_obj = None):
@@ -99,4 +100,11 @@ class db_api:
 		window_attr_obj = window_attr(process_name, window_title)
 		note = notes(hash, note_attr_obj, window_attr_obj)
 		self.update_note(hash, note)
+
+	def get_hash( self,active_window_name = "",active_window_title =""):
+		hash_obj = hashlib.sha256()
+		hash_obj.update((active_window_name+active_window_title).encode('utf-8'))
+		hash = hash_obj.hexdigest()
+		return hash
+
 	
