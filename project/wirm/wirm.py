@@ -14,11 +14,13 @@ import subprocess
 import os
 import time
 
+APP_NAME = "LazyNotes"
+
 class WIRM:
 	def active_window_thread(self):
 		self.active_window_thread_flag = 1
-		if(str(os.environ["DESKTOP_SESSION"]) == "ubuntu"):
-			return
+		#if(str(os.environ["DESKTOP_SESSION"]) == "ubuntu"):
+		#	return
 		if(str(os.environ["DESKTOP_SESSION"]) == "xfce"):
 			t = threading.Thread(target=self.xfce_active_window_event)
 			t.start()
@@ -62,7 +64,9 @@ class WIRM:
 						if(temp_active_window_id == 0):
 							continue
 						else:
-							if(self.active_window_id == temp_active_window_id):
+							if(self.get_active_window_title(temp_active_window_id) == APP_NAME):
+								continue
+							elif(self.active_window_id == temp_active_window_id):
 								continue
 							self.prev_active_window_id = self.active_window_id
 							self.active_window_id = temp_active_window_id
@@ -88,6 +92,8 @@ class WIRM:
 						if(temp_active_window_id == 0):
 							continue
 						else:
+							if(self.get_active_window_title(temp_active_window_id) == APP_NAME):
+								continue
 							self.active_window_id = temp_active_window_id
 						print("*******"+str(self.active_window_id)+"*********")
 
@@ -122,12 +128,18 @@ class WIRM:
 			print("No such PID in Running processes!!")
 
 	#Retrieving active window title
-	def get_active_window_title(self):
+	def get_active_window_title(self,active_window_id = int):
+		active_window_id = self.active_window_id
 		if(str(os.environ["DESKTOP_SESSION"]) == "ubuntu"):
 			self.active_window_id = self.get_active_window_id()
+			active_window_id = self.active_window_id
+		while(self.active_window_thread_flag == 0):
+			continue
 		if(str(os.environ["DESKTOP_SESSION"]) == "xfce"):
 			self.active_window_id = self.prev_active_window_id
-		self.active = self.display.create_resource_object('window', self.active_window_id) 
+			active_window_id = self.active_window_id
+		self.active = self.display.create_resource_object('window', active_window_id) 
+		print("-----------------"+str(self.active))
 		atom = self.display.intern_atom('_NET_WM_NAME',True)
 		if (self.is_ewmh_supported(atom,self.root) == False):
 			print ("EWMH is not supported by your window manager!!")
@@ -138,6 +150,8 @@ class WIRM:
 		return (self.active_window_title)
 
 	def get_active_window_name(self):
+		while(self.active_window_thread_flag == 0):
+			continue
 		if(str(os.environ["DESKTOP_SESSION"]) == "ubuntu"):
 			self.active_window_id = self.get_active_window_id()
 		if(str(os.environ["DESKTOP_SESSION"]) == "xfce"):
