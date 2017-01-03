@@ -102,13 +102,13 @@ class WIRM:
 			atom = self.display.intern_atom('_NET_WM_NAME',True)
 			try:
 				w = (active).get_full_property(atom, Xlib.X.AnyPropertyType).value
-				if(w == APP_NAME):
+				if(w.decode("utf8") == APP_NAME):
 					continue
 			except:
 				continue
-			if(w != self.active_window_title):
+			if(w.decode("utf8") != self.active_window_title):
 				print ('Window changed!')
-				self.active_window_title = w
+				self.active_window_title = w.decode("utf8")
 				self.active_window_id = temp_active_window_id
 				print("*******"+str(self.active_window_id)+"*********")
 			time.sleep(0.1)
@@ -168,7 +168,10 @@ class WIRM:
 		except:
 			print ("************************Bad Window")
 			return (self.active_window_title)
-		self.active_window_title = w.decode("utf8")
+		try:
+			self.active_window_title = w.decode("utf8")
+		except:
+			return (self.active_window_title)	
 		return (self.active_window_title)
 
 	def get_active_window_name(self):

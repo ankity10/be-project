@@ -131,9 +131,12 @@ class TrayIcon(QSystemTrayIcon):
             active_window_id = (root.get_full_property(atom, Xlib.X.AnyPropertyType).value[0])
             active = display.create_resource_object('window', active_window_id) 
             atom = display.intern_atom('_NET_WM_NAME',True)
-            w = (active).get_full_property(atom, Xlib.X.AnyPropertyType).value
-            if(w != self.win):
-                self.win = w
+            try:
+                w = (active).get_full_property(atom, Xlib.X.AnyPropertyType).value
+            except:
+                continue
+            if(w.decode("utf8") != self.win):
+                self.win = w.decode("utf8")
                 print ('!!!Window changed!!!!')
                 if(note_visible_flag == 1):
                     print("______++++Visible")
