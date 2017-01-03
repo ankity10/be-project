@@ -40,6 +40,7 @@ class WIRM:
 		self.active_window_title = ""
 		self.active_window_name = ""
 		self.window_pid = "1"
+		self.thread_scheduler = 0
 		self.active_window_thread()
 
 	def is_ewmh_supported(self, atom_request, window):
@@ -80,7 +81,7 @@ class WIRM:
 	def default_active_window_event(self):
 		global APP_NAME
 		self.active_window_id = self.get_active_window_id()
-		print("*******"+str(self.active_window_id)+"*********")
+		# print("*******"+str(self.active_window_id)+"*********")
 		self.root.change_attributes(event_mask=Xlib.X.PropertyChangeMask)
 		# atom = self.display.intern_atom('_NET_ACTIVE_WINDOW',True)
 		# if (self.is_ewmh_supported(atom,self.root) == False):
@@ -102,16 +103,20 @@ class WIRM:
 			atom = self.display.intern_atom('_NET_WM_NAME',True)
 			try:
 				w = (active).get_full_property(atom, Xlib.X.AnyPropertyType).value
-				if(w.decode("utf8") == APP_NAME):
+				#print("-------------"+str(w.decode("utf8"))+"------------")
+				if(w.decode("utf8") == APP_NAME or w.decode("utf8") == "None"):
+					print("-------------APP ACTIVE------------")
 					continue
 			except:
 				continue
 			if(w.decode("utf8") != self.active_window_title):
+				self.thread_scheduler = not self.thread_scheduler
 				print ('Window changed!')
 				self.active_window_title = w.decode("utf8")
 				self.active_window_id = temp_active_window_id
 				print("*******"+str(self.active_window_id)+"*********")
 			time.sleep(0.1)
+		self.thread_scheduler = -1	#For Thread Stop
 		print("thread stopped!!")
 
 

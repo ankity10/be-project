@@ -89,6 +89,7 @@ class TrayIcon(QSystemTrayIcon):
         self.activated.connect(self.tray_icon_activated)
         self.create_menu()
         self.show()
+        self.thread_scheduler = 0
         self.hashed_key = ""
         self.window_title = ""
         self.process_name = ""
@@ -137,6 +138,11 @@ class TrayIcon(QSystemTrayIcon):
                 continue
             if(w.decode("utf8") != self.win):
                 self.win = w.decode("utf8")
+                while(self.wirm.thread_scheduler == self.thread_scheduler):
+                    if(self.wirm.thread_scheduler == -1):   # Wirm Thread Stopped
+                        return
+                    continue
+                self.thread_scheduler = not self.thread_scheduler
                 print ('!!!Window changed!!!!')
                 if(note_visible_flag == 1):
                     print("______++++Visible")
