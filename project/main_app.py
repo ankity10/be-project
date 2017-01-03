@@ -6,6 +6,7 @@ import sys
 import os
 import time
 import datetime
+
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -93,12 +94,16 @@ class TrayIcon(QSystemTrayIcon):
         self.process_name = ""
         self.x_position = 0
         self.y_position = 0
+        # position = QDesktopWidget().screenGeometry().topRight()
+        # self.x_position = int(position.x())
+        # self.y_position = int(position.y())
         self.default_text = ""
         self.status = ""
         self.storage = db_api()
         self.get_note()
         self.note_window = NoteWindow()
         self.note_window.window_change_event_flag = 0
+        # self.note_window.setGeometry(self.x_position,self.y_position,250,280)
         self.page = WebPage(self.status, self.hashed_key, self.process_name, self.window_title)
         self.note_window.setPage(self.page)
         self.note_window.page().runJavaScript(str("window.onload = function() { init();firepad.setHtml('" + self.default_text + "')}"))
@@ -148,12 +153,13 @@ class TrayIcon(QSystemTrayIcon):
         self.setContextMenu(self.tray_icon_menu)
 
     def show_note(self):
-        position = self.geometry().topRight()
-        self.x_position = int(position.x())
-        self.y_position = int(position.y())
-        if self.x_position <= 0 :
-            self.x_position = QCursor().pos().x()
-            self.y_position = QCursor().pos().y()
+        if self.x_position == 0:
+            position = self.geometry().topRight()
+            self.x_position = int(position.x())
+            self.y_position = int(position.y())
+            if self.x_position <= 0 :
+                self.x_position = QCursor().pos().x()
+                self.y_position = QCursor().pos().y()
         self.note_window.setGeometry(self.x_position,self.y_position,250,280)
         global note_visible_flag
         if(self.get_note() == False):
