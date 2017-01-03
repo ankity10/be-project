@@ -13,7 +13,9 @@ from PyQt5.QtWebEngineWidgets import *
 from wirm.wirm import WIRM
 from storage.storage import db_api
 
-global window_change_event_flag
+note_visible_flag = 0
+window_change_event_flag = 0
+APP_NAME = "LazyNotes"
 
 
 
@@ -53,10 +55,10 @@ class WebPage(QWebEnginePage):
             pass
 
 
-window_change_event_flag = 0
 class NoteWindow(QWebEngineView):
 
     def __init__(self,x_position,y_position):
+        global window_change_event_flag
         super().__init__()
         file_path = '/ui/examples/richtext-simple.html'
         folder_path = os.path.abspath('./')
@@ -67,17 +69,19 @@ class NoteWindow(QWebEngineView):
         self.setWindowIcon(QIcon('graphics/notes.png'))
         self.load(QUrl(self.abs_path))
         self.setVisible(True)
-        self.window_change_event_flag = 0
+        window_change_event_flag = 0
 
     def closeEvent(self,event):
+        global note_visible_flag
         self.setVisible(False) 
-        self.window_change_event_flag = 0 
+        note_visible_flag = 0
         event.ignore()      
 
 
 class TrayIcon(QSystemTrayIcon):
 
     def __init__(self):
+        self.win = ""
         super().__init__()
         self.wirm = WIRM()
         print("wirm")
@@ -105,42 +109,37 @@ class TrayIcon(QSystemTrayIcon):
         self.note_window.page().runJavaScript(str("window.onload = function() { init();firepad.setHtml('" + self.default_text + "')}"))
         self.note_window.load(QUrl(self.note_window.abs_path))
         self.note_window.setVisible(False)
+        self.window_change_thread()
+
 
     def window_change_thread(self):
-        self.note_window.window_change_event_flag = 1
+        global window_change_event_flag
+        window_change_event_flag = 1
         t = threading.Thread(target=self.window_change_event)
         t.start()
 
 
     def window_change_event(self):
+        global window_change_event_flag
+        global note_visible_flag
         display = Xlib.display.Display(str(os.environ["DISPLAY"]))
         root = display.screen().root
         root.change_attributes(event_mask=Xlib.X.PropertyChangeMask)
         print("__________in thread  "+str(self.note_window.window_change_event_flag))
-        while (self.note_window.window_change_event_flag == 1):
-            while display.pending_events():
-                event = display.next_event()
-                if type(event) == Xlib.protocol.event.PropertyNotify:
-                    atom_name = display.get_atom_name(event.atom)
-                    if (atom_name == '_NET_ACTIVE_WINDOW'):
-                        print ('!!!Window changed!!!!')
-                        if(self.note_window.isVisible()):
-                            self.show_note()
+        while (window_change_event_flag == 1):
+            atom = display.intern_atom('_NET_ACTIVE_WINDOW',True)
+            active_window_id = (root.get_full_property(atom, Xlib.X.AnyPropertyType).value[0])
+            active = display.create_resource_object('window', active_window_id) 
+            atom = display.intern_atom('_NET_WM_NAME',True)
+            w = (active).get_full_property(atom, Xlib.X.AnyPropertyType).value
+            if(w != self.win):
+                self.win = w
+                print ('!!!Window changed!!!!')
+                if(note_visible_flag == 1):
+                    print("______++++Visible")
+                    self.show_note()
             time.sleep(0.1)
         print("thread stopped!!")
-
-    def __make_cli_friendly(self, string):
-        return string.translate(str.maketrans({"-":  r"\-",
-                                                                            "]":  r"\]",
-                                                                            "\\": r"\\",
-                                                                            "^":  r"\^",
-                                                                            "$":  r"\$",
-                                                                            "*":  r"\*",
-                                                                            ".":  r"\.",
-                                                                            "(":  r"-",
-                                                                            ")":  r"_",
-                                                                            " ":  r"\ "}))
-
 
     def create_menu(self):
         self.tray_icon_menu = QMenu()
@@ -154,19 +153,33 @@ class TrayIcon(QSystemTrayIcon):
         self.setContextMenu(self.tray_icon_menu)
 
     def show_note(self):
-        self.get_note()
-        self.note_window.page().runJavaScript(str("firepad.setHtml('"+self.default_text+"')"))
+        global note_visible_flag
+        if(self.get_note() == False):
+            return
         self.page.updatePage(self.status, self.hashed_key, self.process_name, self.window_title)
+        self.note_window.page().runJavaScript(str("firepad.setHtml('"+self.default_text+"')"))
+        #self.page.updatePage(self.status, self.hashed_key, self.process_name, self.window_title)
         self.note_window.setVisible(True)
-        self.window_change_thread()
+        note_visible_flag = 1
+        
 
     def exit_app(self):
+        global window_change_event_flag
+        window_change_event_flag = 0
+        self.wirm.active_window_thread_flag = 0
         sys.exit(0)
 
     def get_note(self):
-        self.window_title = self.wirm.get_active_window_title()
-        print("window_title: " + self.window_title)
-        self.process_name = self.__make_cli_friendly(self.wirm.get_active_window_name())
+        global APP_NAME
+        while(self.wirm.active_window_thread_flag == 0):
+            continue
+        self.window_title = str(self.wirm.get_active_window_title())
+        if(self.window_title == APP_NAME):
+            print(APP_NAME)
+            return False
+        print(self.window_title)
+        self.process_name = self.wirm.get_active_window_name()
+        print("window_title: " + str(self.window_title))
         print("process_name: " + self.process_name)
         self.hashed_key = self.storage.get_hash(self.process_name, self.window_title)
         print("hashed_key "+self.hashed_key)
@@ -177,6 +190,7 @@ class TrayIcon(QSystemTrayIcon):
         else:
             self.default_text = "empty" 
             self.status = "new"
+        return True
 
     def tray_icon_activated(self, reason):
         if reason in (QSystemTrayIcon.Trigger, QSystemTrayIcon.DoubleClick):
