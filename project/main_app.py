@@ -18,9 +18,6 @@ note_visible_flag = 0
 window_change_event_flag = 0
 APP_NAME = "LazyNotes"
 
-
-
-
 class WebPage(QWebEnginePage):
 
     def __init__(self, status, hashed_key, process_name, window_title):
@@ -89,21 +86,18 @@ class TrayIcon(QSystemTrayIcon):
         self.activated.connect(self.tray_icon_activated)
         self.create_menu()
         self.show()
+        self.thread_scheduler = 0
         self.hashed_key = ""
         self.window_title = ""
         self.process_name = ""
         self.x_position = 0
         self.y_position = 0
-        # position = QDesktopWidget().screenGeometry().topRight()
-        # self.x_position = int(position.x())
-        # self.y_position = int(position.y())
         self.default_text = ""
         self.status = ""
         self.storage = db_api()
         self.get_note()
         self.note_window = NoteWindow()
         self.note_window.window_change_event_flag = 0
-        # self.note_window.setGeometry(self.x_position,self.y_position,250,280)
         self.page = WebPage(self.status, self.hashed_key, self.process_name, self.window_title)
         self.note_window.setPage(self.page)
         self.note_window.page().runJavaScript(str("window.onload = function() { init();firepad.setHtml('" + self.default_text + "')}"))
@@ -131,9 +125,17 @@ class TrayIcon(QSystemTrayIcon):
             active_window_id = (root.get_full_property(atom, Xlib.X.AnyPropertyType).value[0])
             active = display.create_resource_object('window', active_window_id) 
             atom = display.intern_atom('_NET_WM_NAME',True)
-            w = (active).get_full_property(atom, Xlib.X.AnyPropertyType).value
-            if(w != self.win):
-                self.win = w
+            try:
+                w = (active).get_full_property(atom, Xlib.X.AnyPropertyType).value
+            except:
+                continue
+            if(w.decode("utf8") != self.win):
+                self.win = w.decode("utf8")
+                while(self.wirm.thread_scheduler == self.thread_scheduler):
+                    if(self.wirm.thread_scheduler == -1):   # Wirm Thread Stopped
+                        return
+                    continue
+                self.thread_scheduler = not self.thread_scheduler
                 print ('!!!Window changed!!!!')
                 if(note_visible_flag == 1):
                     print("______++++Visible")
@@ -160,7 +162,7 @@ class TrayIcon(QSystemTrayIcon):
             if self.x_position <= 0 :
                 self.x_position = QCursor().pos().x()
                 self.y_position = QCursor().pos().y()
-        self.note_window.setGeometry(self.x_position,self.y_position,250,280)
+            self.note_window.setGeometry(self.x_position,self.y_position,250,280)
         global note_visible_flag
         if(self.get_note() == False):
             return
@@ -210,4 +212,3 @@ if __name__ == '__main__':
     app.setQuitOnLastWindowClosed(False)
     trayicon=TrayIcon()
     app.exec_()
-
