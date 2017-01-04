@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import * 
 from wirm.wirm import WIRM
 from storage.storage import db_api
+from functools import partial
 
 note_visible_flag = 0
 window_change_event_flag = 0
@@ -138,22 +139,23 @@ class TrayIcon(QSystemTrayIcon):
                 continue
             if(w.decode("utf8") != self.win):
                 self.win = w.decode("utf8")
-                while(self.wirm.thread_scheduler == self.thread_scheduler):
-                    if(self.wirm.thread_scheduler == -1):   # Wirm Thread Stopped
-                        return
-                    continue
+                if(str(os.environ["DESKTOP_SESSION"]) == "xubuntu" or str(os.environ["DESKTOP_SESSION"]) == "xfce"):
+                    while(self.wirm.thread_scheduler == self.thread_scheduler):
+                        if(self.wirm.thread_scheduler == -1):   # Wirm Thread Stopped
+                            return
+                        continue
                 self.thread_scheduler = not self.thread_scheduler
                 print ('!!!Window changed!!!!')
                 if(note_visible_flag == 1):
                     print("______++++Visible")
                     self.show_note()
             time.sleep(0.1)
-        print("thread stopped!!")
+        print("main_app thread stopped!!")
 
     def create_menu(self):
         self.tray_icon_menu = QMenu()
         shownote = QAction('Note',self)
-        shownote.triggered.connect(self.show_note)
+        shownote.triggered.connect(partial(self.show_note,0))
         self.tray_icon_menu.addAction(shownote)
         self.tray_icon_menu.addSeparator()
         exitaction = QAction('Exit',self)
@@ -161,9 +163,9 @@ class TrayIcon(QSystemTrayIcon):
         self.tray_icon_menu.addAction(exitaction)
         self.setContextMenu(self.tray_icon_menu)
 
-    def show_note(self):
+    def show_note(self,session_num = 1):    #sesion_num = 0 when note option is clicked(for xfce), else 1
         global note_visible_flag
-        if(self.get_note() == False):
+        if(self.get_note(session_num) == False):
             return
         self.page.updatePage(self.status, self.hashed_key, self.process_name, self.window_title)
         self.note_window.page().runJavaScript(str("firepad.setHtml('"+self.default_text+"')"))
@@ -178,16 +180,16 @@ class TrayIcon(QSystemTrayIcon):
         self.wirm.active_window_thread_flag = 0
         sys.exit(0)
 
-    def get_note(self):
+    def get_note(self, session_num = 1):
         global APP_NAME
         while(self.wirm.active_window_thread_flag == 0):
             continue
-        self.window_title = str(self.wirm.get_active_window_title())
+        self.window_title = str(self.wirm.get_active_window_title(session_num))
         if(self.window_title == APP_NAME):
             print(APP_NAME)
             return False
         print(self.window_title)
-        self.process_name = self.wirm.get_active_window_name()
+        self.process_name = self.wirm.get_active_window_name(session_num)
         print("window_title: " + str(self.window_title))
         print("process_name: " + self.process_name)
         self.hashed_key = self.storage.get_hash(self.process_name, self.window_title)
