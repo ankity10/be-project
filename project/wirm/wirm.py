@@ -185,6 +185,7 @@ class WIRM:
 			continue
 		if(str(os.environ["DESKTOP_SESSION"]) == "xfce" and session_num == 0):
 			self.active_window_id = self.prev_active_window_id
+			print("process name")
 		if(str(os.environ["DESKTOP_SESSION"]) == "xubuntu" and session_num == 0):
 			self.active_window_id = self.prev_active_window_id
 		else:

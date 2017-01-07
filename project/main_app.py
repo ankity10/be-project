@@ -146,22 +146,27 @@ class TrayIcon(QSystemTrayIcon):
                         continue
                 self.thread_scheduler = not self.thread_scheduler
                 print ('!!!Window changed!!!!')
-                if(note_visible_flag == 1):
-                    print("______++++Visible")
-                    self.show_note()
+                self.show_note()
             time.sleep(0.1)
         print("main_app thread stopped!!")
 
     def create_menu(self):
         self.tray_icon_menu = QMenu()
         shownote = QAction('Note',self)
-        shownote.triggered.connect(partial(self.show_note,0))
+        shownote.triggered.connect(partial(self.show_note_menu,0))
         self.tray_icon_menu.addAction(shownote)
         self.tray_icon_menu.addSeparator()
         exitaction = QAction('Exit',self)
         exitaction.triggered.connect(self.exit_app)
         self.tray_icon_menu.addAction(exitaction)
         self.setContextMenu(self.tray_icon_menu)
+
+    def show_note_menu(self,session_num = 1):   # To separate thread function from show_note function
+        global note_visible_flag
+        self.show_note(session_num)
+        self.note_window.setVisible(True)
+        note_visible_flag = 1
+
 
     def show_note(self,session_num = 1):    #sesion_num = 0 when note option is clicked(for xfce), else 1
         global note_visible_flag
@@ -170,8 +175,6 @@ class TrayIcon(QSystemTrayIcon):
         self.page.updatePage(self.status, self.hashed_key, self.process_name, self.window_title)
         self.note_window.page().runJavaScript(str("firepad.setHtml('"+self.default_text+"')"))
         #self.page.updatePage(self.status, self.hashed_key, self.process_name, self.window_title)
-        self.note_window.setVisible(True)
-        note_visible_flag = 1
         
 
     def exit_app(self):
