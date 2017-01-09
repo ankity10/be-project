@@ -34,6 +34,7 @@ class WIRM:
 		self.display = Xlib.display.Display(str(os.environ["DISPLAY"]))
 		self.root = self.display.screen().root
 		self.active = self.display.screen().root
+		self.thread_toggle = 0
 		self.active_window_id = 0
 		self.prev_active_window_id = 1
 		self.active_window_thread_flag = 0 
@@ -54,9 +55,12 @@ class WIRM:
 	def xfce_active_window_event(self):
 		print("!!!!!!!!!!!!xfce event!!!!!!!!!!")
 		self.active_window_id = self.get_active_window_id()
+		#self.prev_active_window_id = self.active_window_id
 		print("*******"+str(self.active_window_id)+"*********")
 		self.root.change_attributes(event_mask=Xlib.X.PropertyChangeMask)
 		while (self.active_window_thread_flag == 1):
+			if(self.thread_toggle == 1):
+				continue
 			atom = self.display.intern_atom('_NET_ACTIVE_WINDOW',True)
 			try:
 				temp_active_window_id = (self.root.get_full_property(atom, Xlib.X.AnyPropertyType).value[0])
@@ -75,6 +79,8 @@ class WIRM:
 			if(w.decode("utf8") != self.active_window_title):
 				self.thread_scheduler = not self.thread_scheduler	#to ensure this thread executes before main_app thread
 				print ('Window changed!')
+				print("prev :"+str(self.active_window_title))
+				print("curr :"+str(w.decode("utf8")))
 				self.active_window_title = w.decode("utf8")
 				if(self.active_window_id == temp_active_window_id):
 					continue
@@ -122,12 +128,15 @@ class WIRM:
 
 	#Retrieving active window id
 	def get_active_window_id(self):
-		atom = self.display.intern_atom('_NET_ACTIVE_WINDOW',True)
-		if (self.is_ewmh_supported(atom,self.root) == False):
-			print ("EWMH is not supported by your window manager!!")
-			return None				#return
+		atom = self.display.intern_atom('_NET_ACTIVE_WINDOW',True)				
 		print("#################"+str(atom)+"##################")
-		active_window_id = (self.root.get_full_property(atom, Xlib.X.AnyPropertyType).value[0]) 
+		try:
+			active_window_id = (self.root.get_full_property(atom, Xlib.X.AnyPropertyType).value[0]) 
+			if (self.is_ewmh_supported(atom,self.root) == False):
+				print ("EWMH is not supported by your window manager!!")
+				return None
+		except:
+			return None
 		return(active_window_id)
 	
 	#Retrieving active window pid
@@ -162,6 +171,8 @@ class WIRM:
 		else:
 			self.active_window_id = self.get_active_window_id()
 			active_window_id = self.active_window_id
+		self.thread_toggle = not self.thread_toggle
+		print("ACTIVE EINDOW ID = "+str(active_window_id))
 		self.active = self.display.create_resource_object('window', active_window_id) 
 		#print("-----------------"+str(self.active))
 		atom = self.display.intern_atom('_NET_WM_NAME',True)
@@ -186,13 +197,15 @@ class WIRM:
 		if(str(os.environ["DESKTOP_SESSION"]) == "xfce" and session_num == 0):
 			self.active_window_id = self.prev_active_window_id
 			print("process name")
-		if(str(os.environ["DESKTOP_SESSION"]) == "xubuntu" and session_num == 0):
+		elif(str(os.environ["DESKTOP_SESSION"]) == "xubuntu" and session_num == 0):
 			self.active_window_id = self.prev_active_window_id
 		else:
 			self.active_window_id = self.get_active_window_id()
+		print("ACTIVE EINDOW ID = "+str(self.active_window_id))
 		self.active = self.display.create_resource_object('window', self.active_window_id)
 		window_pid = self.get_active_window_pid()
 		self.active_window_name = self.get_process_name(window_pid)
+		self.thread_toggle = not self.thread_toggle
 		return (self.active_window_name)
 
 def main():
