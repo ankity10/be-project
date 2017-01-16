@@ -89,6 +89,8 @@ class TrayIcon(QSystemTrayIcon):
         self.activated.connect(self.tray_icon_activated)
         self.create_menu()
         self.show()
+        self.x_position = 0
+        self.y_position = 0
         self.thread_scheduler = 0
         self.hashed_key = ""
         self.window_title = ""
