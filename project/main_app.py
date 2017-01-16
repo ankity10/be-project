@@ -100,7 +100,7 @@ class TrayIcon(QSystemTrayIcon):
         self.storage = db_api()
         self.get_note()
         self.note_window = NoteWindow()
-        self.note_window.window_change_event_flag = 0
+        #self.note_window.window_change_event_flag = 0
         self.page = WebPage(self.status, self.hashed_key, self.process_name, self.window_title)
         self.note_window.setPage(self.page)
         self.note_window.page().runJavaScript(str("window.onload = function() { init();firepad.setHtml('" + self.default_text + "')}"))
@@ -122,15 +122,18 @@ class TrayIcon(QSystemTrayIcon):
         display = Xlib.display.Display(str(os.environ["DISPLAY"]))
         root = display.screen().root
         root.change_attributes(event_mask=Xlib.X.PropertyChangeMask)
-        print("__________in thread  "+str(self.note_window.window_change_event_flag))
+        #print("__________in thread  "+str(self.note_window.window_change_event_flag))
         while (window_change_event_flag == 1):
+            print(".")
             atom = display.intern_atom('_NET_ACTIVE_WINDOW',True)
             active_window_id = (root.get_full_property(atom, Xlib.X.AnyPropertyType).value[0])
             active = display.create_resource_object('window', active_window_id) 
             atom = display.intern_atom('_NET_WM_NAME',True)
             try:
+                print(".")
                 w = (active).get_full_property(atom, Xlib.X.AnyPropertyType).value
             except:
+                print("*")
                 continue
             if(w.decode("utf8") != self.win):
                 self.win = w.decode("utf8")
@@ -143,6 +146,7 @@ class TrayIcon(QSystemTrayIcon):
                 print ('!!!Window changed!!!!')
                 self.show_note()
             time.sleep(0.1)
+            print(".")
         print("main_app thread stopped!!")
 
     def create_menu(self):
