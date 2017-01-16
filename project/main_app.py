@@ -58,14 +58,13 @@ class WebPage(QWebEnginePage):
 
 class NoteWindow(QWebEngineView):
 
-    def __init__(self,x_position,y_position):
+    def __init__(self):
         global window_change_event_flag
         super().__init__()
         file_path = '/ui/examples/richtext-simple.html'
         folder_path = os.path.abspath('./')
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
         self.abs_path = "file://" + folder_path + file_path
-        self.setGeometry(x_position,y_position,250,280)
         self.setWindowTitle("LazyNotes")
         self.setWindowIcon(QIcon('graphics/notes.png'))
         self.load(QUrl(self.abs_path))
@@ -94,17 +93,11 @@ class TrayIcon(QSystemTrayIcon):
         self.hashed_key = ""
         self.window_title = ""
         self.process_name = ""
-        self.position = self.geometry().topRight()
-        self.x_position = int(self.position.x())
-        self.y_position = int(self.position.y())
-        if self.x_position <= 0 :
-            self.x_position = QCursor().pos().x()
-            self.y_position = QCursor().pos().y()
         self.default_text = ""
         self.status = ""
         self.storage = db_api()
         self.get_note()
-        self.note_window = NoteWindow(self.x_position,self.y_position)
+        self.note_window = NoteWindow()
         self.note_window.window_change_event_flag = 0
         self.page = WebPage(self.status, self.hashed_key, self.process_name, self.window_title)
         self.note_window.setPage(self.page)
@@ -164,6 +157,14 @@ class TrayIcon(QSystemTrayIcon):
     def show_note_menu(self,session_num = 1):   # To separate thread function from show_note function
         global note_visible_flag
         self.show_note(session_num)
+        if self.x_position == 0:
+            position = self.geometry().topRight()
+            self.x_position = int(position.x())
+            self.y_position = int(position.y())
+            if self.x_position <= 0 :
+                self.x_position = QCursor().pos().x()
+                self.y_position = QCursor().pos().y()
+            self.note_window.setGeometry(self.x_position,self.y_position,250,280)
         self.note_window.setVisible(True)
         note_visible_flag = 1
 
