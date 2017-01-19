@@ -2617,7 +2617,7 @@ firepad.RichTextCodeMirror = (function () {
     });
 
     if (newChanges.length > 0) {
-      console.error(this.codeMirror.firepad.getHtml());
+      console.error("note_text:" + this.codeMirror.firepad.getHtml());
 
       this.trigger('attributesChange', this, newChanges);
     }
@@ -3131,7 +3131,7 @@ firepad.RichTextCodeMirror = (function () {
 
     if (newChanges.length > 0) {
 
-      console.error(this.codeMirror.firepad.getHtml());
+      console.error("note_text:" + this.codeMirror.firepad.getHtml());
 
       this.trigger('change', this, newChanges);
     }

@@ -20,17 +20,12 @@ APP_NAME = "LazyNotes"
 class WIRM:
 	def active_window_thread(self):
 		self.active_window_thread_flag = 1
-		if(str(os.environ["DESKTOP_SESSION"]) == "ubuntu" or str(os.environ["DESKTOP_SESSION"]) == "gnome"):
-			return
-		elif(str(os.environ["DESKTOP_SESSION"]) == "xfce" or str(os.environ["DESKTOP_SESSION"]) == "xubuntu"):
-			t = threading.Thread(target=self.xfce_active_window_event)
-			t.start()
-		else:		
-			t = threading.Thread(target=self.default_active_window_event)
-			t.start()
+		t = threading.Thread(target=self.window_change_event)
+		t.start()
 
 		
-	def __init__(self):
+	def __init__(self, main_app):
+		self.main_app = main_app
 		self.display = Xlib.display.Display(str(os.environ["DISPLAY"]))
 		self.root = self.display.screen().root
 		self.active = self.display.screen().root
@@ -52,46 +47,30 @@ class WIRM:
 				return True
 		return False
 
-	def xfce_active_window_event(self):
-		print("!!!!!!!!!!!!xfce event!!!!!!!!!!")
-		self.active_window_id = self.get_active_window_id()
-		#self.prev_active_window_id = self.active_window_id
-		print("*******"+str(self.active_window_id)+"*********")
-		self.root.change_attributes(event_mask=Xlib.X.PropertyChangeMask)
+
+	def window_change_event(self):
 		while (self.active_window_thread_flag == 1):
-			if(self.thread_toggle == 1):
-				continue
 			atom = self.display.intern_atom('_NET_ACTIVE_WINDOW',True)
-			try:
-				temp_active_window_id = (self.root.get_full_property(atom, Xlib.X.AnyPropertyType).value[0])
-			except:
-				continue
+			temp_active_window_id = (self.root.get_full_property(atom, Xlib.X.AnyPropertyType).value[0])
 			active = self.display.create_resource_object('window', temp_active_window_id) 
 			atom = self.display.intern_atom('_NET_WM_NAME',True)
 			try:
-				w = (active).get_full_property(atom, Xlib.X.AnyPropertyType).value
-				#print("-------------"+str(w.decode("utf8"))+"------------")
-				if(w.decode("utf8") == APP_NAME or w.decode("utf8") == "None"):
-					print("-------------APP ACTIVE------------")
-					continue
+			    #print(".")
+			    w = (active).get_full_property(atom, Xlib.X.AnyPropertyType).value
 			except:
-				continue
+			    print("*")
+			    continue
 			if(w.decode("utf8") != self.active_window_title):
-				self.thread_scheduler = not self.thread_scheduler	#to ensure this thread executes before main_app thread
-				print ('Window changed!')
-				print("prev :"+str(self.active_window_title))
-				print("curr :"+str(w.decode("utf8")))
+				print("----------------------------------------------------")
+				self.win = w.decode("utf8")
+				print ('!!!Window changed!!!!')
 				self.active_window_title = w.decode("utf8")
-				if(self.active_window_id == temp_active_window_id):
-					continue
 				self.prev_active_window_id = self.active_window_id
 				self.active_window_id = temp_active_window_id
-				print("previous :" + str(self.prev_active_window_id))
-				print("next :" + str(self.active_window_id))
-				print("*******"+str(self.active_window_id)+"*********")
+				self.main_app.show_note()
 			time.sleep(0.1)
-		self.thread_scheduler = -1	#For Thread Stop
-		print("wirm thread stopped!!")
+			#print(".")
+		print("main_app thread stopped!!")
 
 
 	def default_active_window_event(self):
@@ -129,7 +108,7 @@ class WIRM:
 	#Retrieving active window id
 	def get_active_window_id(self):
 		atom = self.display.intern_atom('_NET_ACTIVE_WINDOW',True)				
-		print("#################"+str(atom)+"##################")
+		# print("#################"+str(atom)+"##################")
 		try:
 			active_window_id = (self.root.get_full_property(atom, Xlib.X.AnyPropertyType).value[0]) 
 			if (self.is_ewmh_supported(atom,self.root) == False):
@@ -161,8 +140,10 @@ class WIRM:
 
 	#Retrieving active window title
 	def get_active_window_title(self,session_num = 1,active_window_id = int):	#session_num = 0 if note option is clicked else 1
+		#print("\nSession Number" + str(session_num))
 		active_window_id = self.active_window_id
 		if(str(os.environ["DESKTOP_SESSION"]) == "xfce" and session_num == 0):
+			print("Session Number 0")
 			self.active_window_id = self.prev_active_window_id
 			active_window_id = self.active_window_id
 		elif(str(os.environ["DESKTOP_SESSION"]) == "xubuntu" and session_num == 0):
@@ -172,7 +153,7 @@ class WIRM:
 			self.active_window_id = self.get_active_window_id()
 			active_window_id = self.active_window_id
 		self.thread_toggle = not self.thread_toggle
-		print("ACTIVE EINDOW ID = "+str(active_window_id))
+		# print("ACTIVE EINDOW ID = "+str(active_window_id))
 		self.active = self.display.create_resource_object('window', active_window_id) 
 		#print("-----------------"+str(self.active))
 		atom = self.display.intern_atom('_NET_WM_NAME',True)
