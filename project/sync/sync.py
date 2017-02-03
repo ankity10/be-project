@@ -3,7 +3,7 @@ import threading
 import asyncio
 import websockets
 
-from storage.storage2 import Local_Log
+from storage.storage2 import *
 from urllib.request import urlopen
 
 class sync:
@@ -33,7 +33,13 @@ class sync:
 				if(log['conflict_flag'] == True):
 					local_log = self.main_app.storage.read_log(str(log['note_hash']))
 					if(local_log == None):
-						self.main_app.storage.insert_note()
+						old_note = self.storage.read_note(str(log['note_hash']))
+						#self.main_app.storage.insert_note()
+		                old_text = old_note["text"]
+		               # note_dict["text"] = old_text
+		                old_text["text"][log['from_client_id']] = log['note_text']
+		                note = Note(**note_dict)
+		                self.storage.update_note(note)
 
 
 	async def send_offline_logs(self,websocket):

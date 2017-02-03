@@ -28,6 +28,7 @@ class WebPage(QWebEnginePage):
 
     def __init__(self, status, hashed_key, process_name, window_title):
         super().__init__()
+        self.client_id = ""
         self.status = status
         self.storage = Db()
         self.hashed_key = hashed_key
@@ -57,7 +58,7 @@ class WebPage(QWebEnginePage):
 
     def save_note(self, msg):
         try:
-            note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "text": msg, "process_name": self.process_name, "window_title": self.window_title}
+            note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "text": {self.client_id : msg}, "process_name": self.process_name, "window_title": self.window_title}
             note = Note(**note_dict)
             #############################################
             local_log_dict = {"hash_value" :self.hashed_key,"text" :msg}
@@ -72,6 +73,11 @@ class WebPage(QWebEnginePage):
                 self.status = "old"
                 print("new note inserted")
             elif self.status == "old":
+                old_note = self.storage.read_note(self.hashed_key)
+                old_text = old_note["text"]
+                note_dict["text"] = old_text
+                note_dict["text"][self.client_id] = msg
+                note = Note(**note_dict)
                 self.storage.update_note(note)
         except OSError:
             pass # replace this with error handeling
