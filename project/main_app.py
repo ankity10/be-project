@@ -13,6 +13,7 @@ from PyQt5.QtWebEngineWidgets import *
 from wirm.wirm import WIRM
 from storage.storage2 import Db
 from storage.storage2 import Note
+from storage.storage2 import Local_Log
 import hashlib
 from functools import partial
 
@@ -58,6 +59,14 @@ class WebPage(QWebEnginePage):
         try:
             note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "text": msg, "process_name": self.process_name, "window_title": self.window_title}
             note = Note(**note_dict)
+            #############################################
+            local_log_dict = {"hash_value" :self.hashed_key,"text" :msg}
+            local_log = Local_Log(**local_log_dict)
+            if(self.storage.read_log(self.hashed_key) == None):
+                self.storage.insert_log(local_log)
+            else:
+                self.storage.update_log(local_log)
+            #############################################    
             if self.status == "new":
                 self.storage.insert_note(note)
                 self.status = "old"
