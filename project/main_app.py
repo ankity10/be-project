@@ -112,6 +112,7 @@ class TrayIcon(QSystemTrayIcon):
         self.win = ""
         super().__init__()
         print("wirm")
+        self.client_id = ""
         self.setIcon(QIcon('graphics/notes.png'))
         self.activated.connect(self.tray_icon_activated)
         self.create_menu()

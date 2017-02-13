@@ -47,6 +47,7 @@ class sync:
 	def send_offline_logs(self,websocket):
 		while(self.send_offline_logs_flag == 1):
 			log_collection = self.main_app.storage.log_collection.find({})
+			delete_count = self.main_app.storage.log_collection.delete_many({}) 
 			for log in log_collection:
 				websocket.emit('sendmsg',log)		
 
@@ -134,12 +135,12 @@ class sync:
 		while(self.sync_thread_flag == 1):
 			if(self.internet_on() == True):	#internet on
 				self.log_count = 0
+				socket = Socketcluster.socket("ws://localhost:8000/socketcluster/")
+				socket.setBasicListener(self.onconnect, self.ondisconnect, self.onConnectError)
+				socket.setAuthenticationListener(self.onSetAuthentication, self.onAuthentication)
+				socket.setreconnection(False)
+				socket.connect()
 				while(True):
-					socket = Socketcluster.socket("ws://localhost:8000/socketcluster/")
-					socket.setBasicListener(self.onconnect, self.ondisconnect, self.onConnectError)
-					socket.setAuthenticationListener(self.onSetAuthentication, self.onAuthentication)
-					socket.setreconnection(False)
-					socket.connect()
 					if(self.internet_on() == False):
 						break
     		else:
