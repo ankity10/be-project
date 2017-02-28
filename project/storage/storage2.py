@@ -2,6 +2,7 @@
 import pymongo
 import datetime
 import hashlib
+import uuid
 
 
 DEBUG = True
@@ -19,6 +20,7 @@ class Local_Log:
 	def __init__(self, **kwargs):
 		self.hash_value = kwargs['hash_value']
 		self.text = kwargs['text']
+		self.conflict_flag = kwargs['conflict_flag']
 
 	def __iter__(self):
 		for key in self.__dict__:
@@ -36,11 +38,28 @@ class Online_Log:
 		for key in self.__dict__:
 			yield(key, self.__dict__[key])
 
+class Saved_Password:
+	def __init__(self, **kwargs):
+		self.user_name = kwargs['user_name']
+		self.password = kwargs['password']
+
+	def __iter__(self):
+		for key in self.__dict__:
+			yield(key, self.__dict__[key])
+
+class Login_Credentials:
+	def __init__(self, **kwargs):
+		self.client_id = kwargs['client_id']
+		self.token = kwargs['token']
+
+	def __iter__(self):
+		for key in self.__dict__:
+			yield(key, self.__dict__[key])
+
 class Note:
 
 	def __init__(self, **kwargs):
 		self.create_time = kwargs['create_time']
-		self.text = {}
 		self.text = kwargs['text']
 		self.process_name = kwargs['process_name']
 		self.window_title = kwargs['window_title']
@@ -78,8 +97,41 @@ class Db:
 			exit()
 
 		self.db = self.db_client.notes_db
-		self.notes_collection = self.db.notes_collection
-		self.log_collection = self.db.log_collection
+		self.login_credentials_collection = self.db.login_credentials_collection
+		if(self.login_credentials_collection.count() == 0):	# First time running the app
+			login_credentials_dict = {"client_id" : uuid.uuid1().int>>64, "token" : 0}
+			self.login_credentials_collection.insert_one(dict(login_credentials_dict))
+		self.login_credentials_dict = self.login_credentials_collection.find_one({})
+		self.client_id = self.login_credentials_dict["client_id"]
+		self.notes_collection = self.db.notes_collection_temp3
+		self.log_collection = self.db.log_collection_temp3
+		self.saved_password_collection = self.db.saved_password_collection
+
+	def delete_saved_password(self):
+		self.saved_password_collection.delete_many({})
+
+	def read_saved_password(self):
+		saved_login_info_dict = self.saved_password_collection.find_one({})
+		if(saved_login_info_dict == None):
+			return None
+		else:
+			return Saved_Password(**saved_login_info_dict)
+
+	def insert_saved_password(self,user_name,password):
+		self.saved_password_collection.delete_many({})
+		saved_login_info_dict = {"user_name" : user_name,"password" : password}
+		return self.saved_password_collection.insert_one(dict(saved_login_info_dict))
+
+
+	def read_login_credentials(self):
+		login_credentials_dict = self.login_credentials_collection.find_one({})
+		return Login_Credentials(**login_credentials_dict)
+
+	def update_login_token(self,token):
+		self.login_credentials_collection.find_one_and_replace({'client_id' : self.client_id}, {'client_id' : self.client_id, 'token' : token})
+
+	def delete_login_token(self):
+		self.login_credentials_collection.find_one_and_replace({'client_id' : self.client_id}, {'client_id' : self.client_id, 'token' : ""})		
 
 	def close(self):
 		self.db_client.close()
