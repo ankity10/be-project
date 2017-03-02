@@ -29,19 +29,19 @@ APP_NAME = "LazyNotes"
 
 class WebPage(QWebEnginePage):
 
-    def __init__(self,main_app, status, hashed_key, process_name, window_title):
+    def __init__(self,main_app, status, note_hash, process_name, window_title):
         super().__init__()
         self.main_app = main_app
         self.status = status
         self.storage = Db()
-        self.hashed_key = hashed_key
+        self.note_hash = note_hash
         self.process_name = process_name
         self.window_title = window_title
 
-    def updatePage(self, status, hashed_key, process_name, window_title):
+    def updatePage(self, status, note_hash, process_name, window_title):
         self.status = status
         self.storage = Db()
-        self.hashed_key = hashed_key
+        self.note_hash = note_hash
         self.process_name = process_name
         self.window_title = window_title
 
@@ -61,16 +61,16 @@ class WebPage(QWebEnginePage):
 
     def save_note(self, msg):
         try:
-            note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "text": {str(self.main_app.client_id) : msg}, "process_name": self.process_name, "window_title": self.window_title, "hash_value":self.hashed_key}
+            note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": msg, "process_name": self.process_name, "window_title": self.window_title, "note_hash":self.note_hash}
             note = Note(**note_dict)
             local_log_dict = {}
             #############################################
-            if(self.main_app.internet_on_flag != 1 or self.main_app.login_credentials.token == 0):
-                local_log_dict = {"hash_value" :self.hashed_key,"text" :msg,"conflict_flag":False}
-            else:
-                local_log_dict = {"hash_value" :self.hashed_key,"text" :msg,"conflict_flag":True}
+            # if(self.main_app.internet_on_flag != 1 or self.main_app.login_credentials.token == 0):
+            local_log_dict = {"note_hash" :self.note_hash,"note_text" :msg,"process_name": self.process_name, "window_title": self.window_title,"from_client_id" : self.main_app.client_id}
+            # else:
+            # local_log_dict = {"note_hash" :self.note_hash,"text" :msg}
             local_log = Local_Log(**local_log_dict)
-            if(self.storage.read_log(self.hashed_key) == None):
+            if(self.storage.read_log(self.note_hash) == None):
                 self.storage.insert_log(local_log)
             else:
                 self.storage.update_log(local_log)
@@ -80,11 +80,11 @@ class WebPage(QWebEnginePage):
                 self.status = "old"
                 print("new note inserted")
             elif self.status == "old":
-                if(self.main_app.internet_on_flag != 1 or self.main_app.login_credentials.token == 0):
-                    old_note = self.storage.read_note(self.hashed_key)
-                    note_dict["text"] = old_note.text
-                    note_dict["text"][str(self.main_app.client_id)] = msg
-                note = Note(**note_dict)
+                # if(self.main_app.internet_on_flag != 1 or self.main_app.login_credentials.token == 0):
+                #     old_note = self.storage.read_note(self.note_hash)
+                #     note_dict["text"] = old_note.text
+                #     note_dict["text"][str(self.main_app.client_id)] = msg
+                # note = Note(**note_dict)
                 self.storage.update_note(note)
         except OSError:
             pass # replace this with error handeling
@@ -158,11 +158,14 @@ class LoginWindow(QWidget):
             self.main_app.logout.setVisible(False)
         else:
             self.token = login_response["token"]
+            self.main_app.login_credentials.token = self.token
+            self.main_app.storage.update_login_token(self.token)
             self.client_flag = login_response["client_flag"]
             self.main_app.storage.update_login_token(self.token)
             self.main_app.storage.insert_saved_password(self.username_text, self.password_text)
             if(self.client_flag == 0):   #New Client
                 notes_dict = urlopen(self.main_app.notes_retrieve_url,timeout=5)
+
             self.main_app.sync = sync(self.main_app)
             self.main_app.login.setVisible(False)
             self.main_app.logout.setVisible(True)
@@ -171,10 +174,10 @@ class LoginWindow(QWidget):
         self.show()
 
 class ConflictResolveWidget(QWidget):
-    def __init(self,main_app,note, window_title, hashed_key, process_name):
+    def __init(self,main_app,note, window_title, note_hash, process_name):
         super().__init__()
         self.window_title = window_title
-        self.hashed_key = hashed_key
+        self.note_hash = note_hash
         self.process_name = process_name
         self.merged_text = ""
         self.note = note_window
@@ -189,22 +192,22 @@ class ConflictResolveWidget(QWidget):
             button.clicked.connect(partial(self.resolve_conflict,text))
 
     def resolve_conflict(self,text):
-        local_log_dict = {"hash_value" :self.hashed_key,"text" :msg,"conflict_flag":True}
+        local_log_dict = {"note_hash" :self.note_hash,"note_text" :msg,"conflict_flag":True}
         local_log = Local_Log(**local_log_dict)
-        if(self.storage.read_log(self.hashed_key) == None):
+        if(self.storage.read_log(self.note_hash) == None):
             self.storage.insert_log(local_log)
         else:
             self.storage.update_log(local_log)
-        note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "text": {self.main_app.client_id : text}, "process_name": self.process_name, "window_title": self.window_title, "hash_value":self.hashed_key}
+        note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": {self.main_app.client_id : text}, "process_name": self.process_name, "window_title": self.window_title, "note_hash":self.note_hash}
         note = Note(**note_dict)
         self.storage.update_note(note)
 
 
 class ConflictMsgBox(QMessageBox):
-    def __init__(self, main_app, note, window_title, hashed_key, process_name):
+    def __init__(self, main_app, note, window_title, note_hash, process_name):
         super().__init__()
         self.window_title = window_title
-        self.hashed_key = hashed_key
+        self.note_hash = note_hash
         self.process_name = process_name
         self.option_flag = 0     # = 0, if box closed without selecting any option, else 1
         self.note = note    #Conflicting Notes
@@ -234,7 +237,7 @@ class ConflictMsgBox(QMessageBox):
                 logged_out_msg.show()
             else:
                 self.conflict_resolve_widget = ConflictResolveWidget(self.main_app,self.note,self.window_title,
-                                                                     self.hashed_key, self.process_name)
+                                                                     self.note_hash, self.process_name)
 
 
 class TrayIcon(QSystemTrayIcon):
@@ -242,11 +245,11 @@ class TrayIcon(QSystemTrayIcon):
     def __init__(self):
         self.notes_retrieve_url = ""
         self.login_url = ""
-        self.internet_on_flag = -1
+        self.internet_on_flag = -1  # = -1 if thread has not checked even once, = 0 if offline, = 1 if online
+        self.internet_check_thread_flag = 1
         self.win = ""
         super().__init__()
         print("wirm")
-        self.internet_check_thread_flag = 1
         self.storage = Db()
         self.login_credentials = self.storage.read_login_credentials()
         self.client_id = self.login_credentials.client_id
@@ -259,7 +262,7 @@ class TrayIcon(QSystemTrayIcon):
         self.x_position = 0
         self.y_position = 0
         self.thread_scheduler = 0
-        self.hashed_key = ""
+        self.note_hash = ""
         self.window_title = ""
         self.process_name = ""
         self.default_text = ""
@@ -268,7 +271,7 @@ class TrayIcon(QSystemTrayIcon):
         self.note_window = NoteWindow()
         #self.note_window.window_change_event_flag = 0
         self.init_login()   # Login attempt from stored username & password
-        self.page = WebPage(self,self.status, self.hashed_key, self.process_name, self.window_title)
+        self.page = WebPage(self,self.status, self.note_hash, self.process_name, self.window_title)
         self.note_window.setPage(self.page)
         self.note_window.page().runJavaScript(str("window.onload = function() { init();firepad.setHtml('"+self.default_text+"');}"))
         self.note_window.load(QUrl(self.note_window.abs_path))
@@ -356,9 +359,9 @@ class TrayIcon(QSystemTrayIcon):
         global note_visible_flag
         if(self.get_note(session_num) == False):
             return False
-        self.page.updatePage(self.status, self.hashed_key, self.process_name, self.window_title)
+        self.page.updatePage(self.status, self.note_hash, self.process_name, self.window_title)
         self.note_window.page().runJavaScript(str("firepad.setHtml('"+self.default_text+"')"))
-        #self.page.updatePage(self.status, self.hashed_key, self.process_name, self.window_title)
+        #self.page.updatePage(self.status, self.note_hash, self.process_name, self.window_title)
         
 
     def exit_app(self):
@@ -371,8 +374,8 @@ class TrayIcon(QSystemTrayIcon):
     def calc_hash(self, **kwargs):
         sha256 = hashlib.sha256()
         sha256.update((kwargs['process_name'] + kwargs['window_title']).encode('utf-8'))
-        hash_value = sha256.hexdigest()
-        return hash_value
+        note_hash = sha256.hexdigest()
+        return note_hash
 
     def get_note(self, session_num = 1):
         global APP_NAME
@@ -384,19 +387,18 @@ class TrayIcon(QSystemTrayIcon):
             return False
         #print(self.window_title)
         self.process_name = self.wirm.get_active_window_name(session_num)
-        self.hashed_key = self.calc_hash(process_name = self.process_name,window_title = self.window_title)
-        #print("hashed_key "+self.hashed_key)
-        note = self.storage.read_note(self.hashed_key)
+        self.note_hash = self.calc_hash(process_name = self.process_name,window_title = self.window_title)
+        #print("note_hash "+self.note_hash)
+        note = self.storage.read_note(self.note_hash)
         if note:
-            #self.default_text = note.note_attr_obj.note_info
-            if(len (note.text) == 1):   # No merge conflict to resolve
-                for text in list(note.text.values()):
-                    self.default_text = text
-            else:   # Merge conflict
-                self.note_window.setVisible(False)
-                conflict_msg_box = ConflictMsgBox(self, note, self.window_title, self.hashed_key, self.process_name)
-                return False
-                
+            # #self.default_text = note.note_attr_obj.note_info
+            # if(len (note.text) == 1):   # No merge conflict to resolve
+            #     for text in list(note.text.values()):
+            self.default_text = note.note_text
+            # else:   # Merge conflict
+            #     self.note_window.setVisible(False)
+            #     conflict_msg_box = ConflictMsgBox(self, note, self.window_title, self.note_hash, self.process_name)
+            #     return False
             self.status = "old"
         else:
             self.default_text = "empty" 
