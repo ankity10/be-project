@@ -18,9 +18,11 @@ def dprint(text):
 class Local_Log:
 
 	def __init__(self, **kwargs):
-		self.hash_value = kwargs['hash_value']
-		self.text = kwargs['text']
-		self.conflict_flag = kwargs['conflict_flag']
+		self.note_hash = kwargs['note_hash']
+		self.note_text = kwargs['note_text']
+		self.from_client_id = kwargs['from_client_id']
+		self.window_title = kwargs['window_title']
+		self.process_name = kwargs['process_name']
 
 	def __iter__(self):
 		for key in self.__dict__:
@@ -40,7 +42,7 @@ class Online_Log:
 
 class Saved_Password:
 	def __init__(self, **kwargs):
-		self.user_name = kwargs['user_name']
+		self.username = kwargs['username']
 		self.password = kwargs['password']
 
 	def __iter__(self):
@@ -60,10 +62,10 @@ class Note:
 
 	def __init__(self, **kwargs):
 		self.create_time = kwargs['create_time']
-		self.text = kwargs['text']
+		self.note_text = kwargs['note_text']
 		self.process_name = kwargs['process_name']
 		self.window_title = kwargs['window_title']
-		self.hash_value = self.calc_hash(process_name=self.process_name, window_title=self.window_title)
+		self.note_hash = self.calc_hash(process_name=self.process_name, window_title=self.window_title)
 
 	def __iter__(self):
 		for key in self.__dict__:
@@ -72,8 +74,8 @@ class Note:
 	def calc_hash(self, **kwargs):
 		sha256 = hashlib.sha256()
 		sha256.update((kwargs['process_name'] + kwargs['window_title']).encode('utf-8'))
-		hash_value = sha256.hexdigest()
-		return hash_value
+		note_hash = sha256.hexdigest()
+		return note_hash
 
 	# For testing
 	def __eq__(self, other):
@@ -99,7 +101,7 @@ class Db:
 		self.db = self.db_client.notes_db
 		self.login_credentials_collection = self.db.login_credentials_collection
 		if(self.login_credentials_collection.count() == 0):	# First time running the app
-			login_credentials_dict = {"client_id" : uuid.uuid1().int>>64, "token" : 0}
+			login_credentials_dict = {"client_id" : uuid.uuid1().int>>64, "token" : "0"}
 			self.login_credentials_collection.insert_one(dict(login_credentials_dict))
 		self.login_credentials_dict = self.login_credentials_collection.find_one({})
 		self.client_id = self.login_credentials_dict["client_id"]
@@ -117,9 +119,9 @@ class Db:
 		else:
 			return Saved_Password(**saved_login_info_dict)
 
-	def insert_saved_password(self,user_name,password):
+	def insert_saved_password(self,username,password):
 		self.saved_password_collection.delete_many({})
-		saved_login_info_dict = {"user_name" : user_name,"password" : password}
+		saved_login_info_dict = {"username" : username,"password" : password}
 		return self.saved_password_collection.insert_one(dict(saved_login_info_dict))
 
 
@@ -139,33 +141,33 @@ class Db:
 	def insert_note(self, note):
 		return self.notes_collection.insert_one(dict(note))
 
-	def read_note(self, hash_value):
-		note_dict = self.notes_collection.find_one({'hash_value' : hash_value})
+	def read_note(self, note_hash):
+		note_dict = self.notes_collection.find_one({'note_hash' : note_hash})
 		print("read note")
 		if not note_dict:
 			return None
 		return Note(**note_dict)
 
 	def update_note(self, note):
-		self.notes_collection.find_one_and_replace({'hash_value' : note.hash_value}, dict(note))
+		self.notes_collection.find_one_and_replace({'note_hash' : note.note_hash}, dict(note))
 
-	def delete_note(self, hash_value):
-		self.notes_collection.find_one_and_delete({'hash_value' : hash_value})
+	def delete_note(self, note_hash):
+		self.notes_collection.find_one_and_delete({'note_hash' : note_hash})
 
 	def insert_log(self, local_log):
 		return self.log_collection.insert_one(dict(local_log))
 
-	def read_log(self, hash_value):
-		log_dict = self.log_collection.find_one({'hash_value' : hash_value})
+	def read_log(self, note_hash):
+		log_dict = self.log_collection.find_one({'note_hash' : note_hash})
 		print("read log")
 		if not log_dict:
 			return None
 		return Local_Log(**log_dict)
 
 	def update_log(self, local_log):
-		self.log_collection.find_one_and_replace({'hash_value' : local_log.hash_value}, dict(local_log))
+		self.log_collection.find_one_and_replace({'note_hash' : local_log.note_hash}, dict(local_log))
 
-	def delete_note(self, hash_value):
-		self.log_collection.find_one_and_delete({'hash_value' : hash_value})
+	def delete_note(self, note_hash):
+		self.log_collection.find_one_and_delete({'note_hash' : note_hash})
 
 

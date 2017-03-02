@@ -2,6 +2,8 @@ import urllib.error
 import threading
 import asyncio
 import websockets
+import time
+import datetime
 
 from storage.storage2 import *
 
@@ -64,27 +66,33 @@ class sync:
 		online_log = json.dumps(data,sort_keys=True)
 		from_client_id = online_log['from_client_id']
     	ackmessage(None, True)
-    	if(online_log['conflict_flag'] == True):	#Conflict has been resolved by some client
-    		local_log = self.main_app.storage.read_log(str(online_log['note_hash']))
-    		if(local_log == None):	#No local log present corresponding to the hash
-    			old_note = self.storage.read_note(str(online_log['note_hash']))
-    			new_text = {from_client_id : online_log['note_text']}
-    			old_note["text"] = new_text
-    			note = Note(**old_note)
-    			self.storage.update_note(note)
-    		else:	#Local log present corresponding to the hash
-    			old_note = self.storage.read_note(str(online_log['note_hash']))
-    			new_text = {from_client_id : online_log['note_text'],self.main_app.client_id : local_log["text"]}
-				old_note["text"] = new_text
+    	# if(online_log['conflict_flag'] == True):	#Conflict has been resolved by some client
+		local_log = self.main_app.storage.read_log(str(online_log['note_hash']))
+		old_note = self.main_app.storage.read_note(str(online_log['note_hash']))
+		if(old_note == None):	# No note stored for that hash
+			note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": msg, "process_name": online_log["process_name"], "window_title": online_log["window_title"], "note_hash":online_log["note_hash"]}
+			self.main_app.storage.insert_note()
+		else:	#Note is stored for that hash
+			if(local_log == None):	#No local log present corresponding to the hash
+				old_note = self.main_app.storage.read_note(str(online_log['note_hash']))
+				# new_text = {from_client_id : online_log['note_text']}
+				old_note["note_text"] = online_log['note_text']
 				note = Note(**old_note)
-				self.storage.update_note(note)
-    	else:	#Conflict has not been resolved
-    		old_note = self.storage.read_note(str(online_log['note_hash']))
-			old_text = old_note["text"]
-			old_text[online_log['from_client_id']] = online_log['note_text']
-			old_note["text"] = old_text
-			note = Note(**old_note)
-			self.storage.update_note(note)
+				self.main_app.storage.update_note(note)
+			else:	#Local log present corresponding to the hash
+				old_note = self.main_app.storage.read_note(str(online_log['note_hash']))
+				## new_text = merge(old_note,online_log['note_text'])
+				# new_text = {from_client_id : online_log['note_text'],self.main_app.client_id : local_log["text"]}
+				old_note["note_text"] = new_text
+				note = Note(**old_note)
+				self.main_app.storage.update_note(note)
+		#  	else:	#Conflict has not been resolved
+		#  		old_note = self.main_app.storage.read_note(str(online_log['note_hash']))
+				# old_text = old_note["text"]
+				# old_text[online_log['from_client_id']] = online_log['note_text']
+				# old_note["text"] = old_text
+				# note = Note(**old_note)
+				# self.storage.main_app.update_note(note)
 		if(self.log_count > 0):
     		self.log_count -= 1
     	if(self.log_count == 0):	#All logs which were present while offline have been retrieved
@@ -109,11 +117,23 @@ class sync:
 	    logging.info("Token received " + token)
 	    #socket.setAuthtoken(token)
 
+	def on_auth_success(self,event):
+		socket.onack("msg",self.onmessage)
+
+	def on_disconnect(self,event,data):
+		self.internet_on_flag = False
+		self.send_offline_logs_flag = 0
+
 	def onAuthentication(self,socket, isauthenticated):
 	    logging.info("Authenticated is " + str(isauthenticated))
 	    time.sleep(1)
-	    socket.set
-	    socket.onack("msg",onmessage)
+	    if(self.main_app.login_credentials.token == "0"):
+	    	self.internet_on_flag = False
+			self.send_offline_logs_flag = 0
+			return	
+	    socket.setAuthtoken(self.main_app.login_credentials.token)
+		socket.on("#disconnect", self.on_disconnect)
+		socket.on("auth-success", self.on_auth_success)
 
 #################################################################################
 
