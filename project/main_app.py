@@ -118,7 +118,8 @@ class LoginWindow(QWidget):
         super().__init__()
         self.main_app = main_app
         self.visible_flag = visible_flag
-        self.setMinimumSize(400, 400)
+        #self.setMinimumSize(200, 400)
+        self.resize(400,200)
         self.setWindowTitle('Login/Sign Up')
         self.username_lbl = QLabel("Username :", self)
         self.username_lbl.move(5, 5) 
