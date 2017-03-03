@@ -3,6 +3,7 @@ import threading
 import Xlib.display
 import Xlib.threaded
 import sys
+import requests
 import os
 import time
 import datetime
@@ -103,7 +104,7 @@ class NoteWindow(QWebEngineView):
         self.setWindowTitle("LazyNotes")
         self.setWindowIcon(QIcon('graphics/notes.png'))
         self.load(QUrl(self.abs_path))
-        self.setVisible(True)
+        self.setVisible(False)
         window_change_event_flag = 0
 
     def closeEvent(self,event):
@@ -144,8 +145,8 @@ class LoginWindow(QWidget):
         else:
             self.username_text = username
             self.password_text = password
-        login_response=urlopen(self.main_app.login_url,timeout=5)
-        self.authentication_flag = login_response["authentication_flag"] 
+        login_response=requests.post(self.main_app.login_url,data = {'username' : self.username_text,'password' : self.password_text,'client_id' : self.main_app.client_id}).json()
+        self.authentication_flag = login_response["success"] 
         if(self.authentication_flag == False):
             auth_fail_msg = QMessageBox()
             auth_fail_msg.setIcon(QMessageBox.Information)
@@ -159,10 +160,10 @@ class LoginWindow(QWidget):
             self.token = login_response["token"]
             self.main_app.login_credentials.token = self.token
             self.main_app.storage.update_login_token(self.token)
-            self.client_flag = login_response["client_flag"]
+            self.is_new = login_response["is_new"]
             self.main_app.storage.update_login_token(self.token)
             self.main_app.storage.insert_saved_password(self.username_text, self.password_text)
-            if(self.client_flag == 0):   #New Client
+            if(self.is_new == 0):   #New Client
                 notes_dict = urlopen(self.main_app.notes_retrieve_url,timeout=5)
                 for note in notes_dict:
                     note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": note["note_text"], "process_name": note["process_name"], "window_title": note["window_title"], "note_hash":note["note_hash"]}
@@ -352,6 +353,7 @@ class TrayIcon(QSystemTrayIcon):
 
 
     def show_note_menu(self,session_num = 1):   # To separate thread function from show_note function
+        self.note_window.page().runJavaScript("init()")
         global note_visible_flag
         if(self.show_note(session_num) == False):
             return
