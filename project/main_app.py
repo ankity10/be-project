@@ -135,7 +135,7 @@ class LoginWindow(QWidget):
         self.login_button = QPushButton("Log In",self)
         self.login_button.move(120,60)
         self.login_button.clicked.connect(self.login_method)
-        self.setVisible(True)
+        self.setVisible(visible_flag)
 
     def login_method(self,username = "",password = ""):
         if(username == ""):
@@ -164,7 +164,20 @@ class LoginWindow(QWidget):
             self.main_app.storage.insert_saved_password(self.username_text, self.password_text)
             if(self.client_flag == 0):   #New Client
                 notes_dict = urlopen(self.main_app.notes_retrieve_url,timeout=5)
-
+                for note in notes_dict:
+                    note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": note["note_text"], "process_name": note["process_name"], "window_title": note["window_title"], "note_hash":note["note_hash"]}
+                    note_hash = note["note_hash"]
+                    window_title = note["window_title"]
+                    process_name = note["process_name"]
+                    note_text = note["note_text"]
+                    old_note = self.main_app.storage.read_note(note_hash)
+                    if(old_note == None):    # No note is present for that hash in local db
+                        note = Note(**note_dict)
+                        self.main_app.storage.insert_note(note)
+                    else:   # Note is present for that hash in local db
+                        merged_text = self.main_app.merge(note_text,old_note.note_text)
+                        old_note.note_text = merged_text
+                        self.main_app.storage.update_note(old_note)
             self.main_app.sync = sync(self.main_app)
             self.main_app.login.setVisible(False)
             self.main_app.logout.setVisible(True)
@@ -281,7 +294,7 @@ class TrayIcon(QSystemTrayIcon):
 
 
     def init_login(self):
-        while(self.internet_on_flag == -1):
+        while(self.internet_on_flag == -1): #To prevent this function from starting before internet is checked
             continue
         if(self.internet_on_flag == 0):
             self.logout.setVisible(True)
