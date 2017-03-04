@@ -240,7 +240,8 @@ class LoginWindow(QWidget):
         if('success' in data):
             new_token = data['token']
             self.main_app.login_credentials.token = new_token
-            self.main_app.storage.update_login_token(new_token)  
+            self.main_app.storage.update_login_token(new_token) 
+            self.main_app.storage.insert_saved_password(self.new_username, self.new_password) 
             signup_success_msg = QMessageBox()
             signup_success_msg.setIcon(QMessageBox.Information)
             signup_success_msg.setText("Signed up successfully")
@@ -248,6 +249,7 @@ class LoginWindow(QWidget):
             signup_success_msg.setWindowTitle("Message")
             signup_success_msg.buttonClicked.connect(self.clear_textedit)
             signup_success_msg.exec_()
+            self.close()
         else:
             err_msg = data['errors']['username']['message']
             signup_fail_msg = QMessageBox()
@@ -337,7 +339,7 @@ class TrayIcon(QSystemTrayIcon):
 
     def __init__(self):
         self.notes_retrieve_url = ""
-        self.login_url = "http://localhost:8000/api/user/auth/signup"
+        self.login_url = "http://localhost:8000/api/user/auth/login"
         self.signup_url = "http://localhost:8000/api/user/auth/signup"
         self.internet_on_flag = -1  # = -1 if thread has not checked even once, = 0 if offline, = 1 if online
         self.internet_check_thread_flag = 1
