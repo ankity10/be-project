@@ -101,7 +101,7 @@ class Db:
 		self.db = self.db_client.notes_db
 		self.login_credentials_collection = self.db.login_credentials_collection
 		if(self.login_credentials_collection.count() == 0):	# First time running the app
-			login_credentials_dict = {"client_id" : uuid.uuid1().int>>64, "token" : "0"}
+			login_credentials_dict = {"client_id" : uuid.uuid1().int>>8, "token" : "0"}
 			self.login_credentials_collection.insert_one(dict(login_credentials_dict))
 		self.login_credentials_dict = self.login_credentials_collection.find_one({})
 		self.client_id = self.login_credentials_dict["client_id"]
@@ -123,6 +123,7 @@ class Db:
 		self.saved_password_collection.delete_many({})
 		saved_login_info_dict = {"username" : username,"password" : password}
 		return self.saved_password_collection.insert_one(dict(saved_login_info_dict))
+
 
 
 	def read_login_credentials(self):

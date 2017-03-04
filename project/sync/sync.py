@@ -155,7 +155,7 @@ class sync:
 					continue
 				self.log_count_response = self.log_count_response.json()
 				if(self.log_count_response["success"] == 0):
-					print(log_count_response["message"])
+					print(self.log_count_response["message"])
 					continue
 				print(self.log_count_response)
 				return
