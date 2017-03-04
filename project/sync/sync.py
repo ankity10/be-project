@@ -4,7 +4,10 @@ import asyncio
 import websockets
 import time
 import datetime
+import requests
 
+from PyQt5.QtWidgets import *
+from socketclusterclient import Socketcluster
 from storage.storage2 import *
 
 class sync:
@@ -51,7 +54,8 @@ class sync:
 			log_collection = self.main_app.storage.log_collection.find({})
 			delete_count = self.main_app.storage.log_collection.delete_many({}) 
 			for log in log_collection:
-				websocket.emit('sendmsg',log)		
+				websocket.emit('sendmsg',log)
+				print("log sent")		
 
 	# def internet_on():
 	#     for timeout in [1,5,10,15]:
@@ -65,8 +69,8 @@ class sync:
 	def onmessage(self,eventname,data, ackmessage):
 		online_log = json.dumps(data,sort_keys=True)
 		from_client_id = online_log['from_client_id']
-    	ackmessage(None, True)
-    	# if(online_log['conflict_flag'] == True):	#Conflict has been resolved by some client
+		ackmessage(None, True)
+		# if(online_log['conflict_flag'] == True):	#Conflict has been resolved by some client
 		local_log = self.main_app.storage.read_log(str(online_log['note_hash']))
 		old_note = self.main_app.storage.read_note(str(online_log['note_hash']))
 		if(old_note == None):	# No note stored for that hash
@@ -94,10 +98,10 @@ class sync:
 				# note = Note(**old_note)
 				# self.storage.main_app.update_note(note)
 		if(self.log_count > 0):
-    		self.log_count -= 1
-    	if(self.log_count == 0):	#All logs which were present while offline have been retrieved
-    		self.send_offline_logs_flag = 1
-    		t = threading.Thread(target=self.send_offline_logs)
+			self.log_count -= 1
+		if(self.log_count == 0):	#All logs which were present while offline have been retrieved
+			self.send_offline_logs_flag = 1
+			t = threading.Thread(target=self.send_offline_logs)
 			t.start()
 			self.log_count -= 1
 
@@ -125,39 +129,46 @@ class sync:
 		self.send_offline_logs_flag = 0
 
 	def onAuthentication(self,socket, isauthenticated):
-	    logging.info("Authenticated is " + str(isauthenticated))
-	    time.sleep(1)
-	    if(self.main_app.login_credentials.token == "0"):
-	    	self.internet_on_flag = False
+		logging.info("Authenticated is " + str(isauthenticated))
+		time.sleep(1)
+		if(self.main_app.login_credentials.token == "0"):
+			self.internet_on_flag = False
 			self.send_offline_logs_flag = 0
 			return	
-	    socket.setAuthtoken(self.main_app.login_credentials.token)
+		socket.setAuthtoken(self.main_app.login_credentials.token)
 		socket.on("#disconnect", self.on_disconnect)
 		socket.on("auth-success", self.on_auth_success)
 
-#################################################################################
+	#################################################################################
 
 	def sync_event(self):
 		while(self.sync_thread_flag == 1):
 			socket = Socketcluster.socket("ws://localhost:8000/socketcluster/")
-			if(self.internet_on() == True):	#internet on
+			if(self.main_app.internet_on() == True):	#internet on
 				self.log_count = 0
 				self.internet_on_flag = True
 
 				#Retrieve log_count
-
+				self.log_count_response = requests.get(self.main_app.log_count_retrieval_url+str(self.main_app.client_id),headers={"Authorization" : "JWT "+self.main_app.login_credentials.token})
+				if(self.log_count_response.text == "Unauthorized"):
+					print("Unauthorized!!!")
+					continue
+				self.log_count_response = self.log_count_response.json()
+				if(self.log_count_response["success"] == 0):
+					print(self.log_count_response["message"])
+					continue
+				print(self.log_count_response)
+				return
 				socket.setBasicListener(self.onconnect, self.ondisconnect, self.onConnectError)
 				socket.setAuthenticationListener(self.onSetAuthentication, self.onAuthentication)
 				socket.setreconnection(False)
 				socket.connect()
 				
-    		else:
-    			socket.disconnect()
-    			self.internet_on_flag = False
-    			self.send_offline_logs_flag = 0
-			
+			else:
+				socket.disconnect()
+				self.internet_on_flag = False
+				self.send_offline_logs_flag = 0
 
-if(internet_on() == True):
-	print("Internet on")
-else:
-	print("Internet OFF")
+	def fail_msg_btn(self):
+		return	
+			
