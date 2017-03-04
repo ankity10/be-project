@@ -6,6 +6,7 @@ import sys
 import requests
 import os
 import time
+import logging
 import datetime
 import hashlib
 from PyQt5.QtCore import *
@@ -18,10 +19,10 @@ from storage.storage2 import Note
 from storage.storage2 import Local_Log
 from storage.storage2 import Login_Credentials
 from storage.storage2 import Saved_Password
-from urllib.request import urlopen
+from sync.sync import sync
 from functools import partial
-from requests_jwt import JWTAuth
 
+logging.getLogger('requests').setLevel(logging.CRITICAL) #Display logs of critical type only
 note_visible_flag = 0
 window_change_event_flag = 0
 APP_NAME = "LazyNotes"
@@ -117,6 +118,7 @@ class NoteWindow(QWebEngineView):
 class LoginWindow(QWidget):
     def __init__(self,main_app,visible_flag = True):
         super().__init__()
+        self.flag = 1
         self.main_app = main_app
         self.visible_flag = visible_flag
         #self.setMinimumSize(200, 400)
@@ -140,22 +142,26 @@ class LoginWindow(QWidget):
         self.login_button.clicked.connect(self.login_method)
         self.setVisible(visible_flag)
 
-    def login_method(self,username = "",password = ""):
-        if(username == ""):
-            self.username_text = self.username.text()
-            self.password_text = self.password.text()
-        else:
-            self.username_text = username
-            self.password_text = password
+    def login_method(self):
+        # print(self.username.text())
+        # print(username)
+        # if(username == ""):
+        #     print("USER"+str(self.username.text()))
+        #     self.username_text = self.username.text()
+        #     self.password_text = self.password.text()
+        # else:
+        self.username_text = self.username.text()
+        self.password_text = self.password.text()   
         login_response=requests.post(self.main_app.login_url,data = {'username' : self.username_text,'password' : self.password_text,'client_id' : self.main_app.client_id}).json()
         self.authentication_flag = login_response["success"] 
-        if(self.authentication_flag == False):
-            auth_fail_msg = QMessageBox()
-            auth_fail_msg.setIcon(QMessageBox.Information)
-            auth_fail_msg.setText("Wrong User Name or Password!!")
-            auth_fail_msg.setStandardButtons(QMessageBox.Ok)
-            auth_fail_msg.show()
-            auth_fail_msg.buttonClicked.connect(self.auth_fail_msg_btn)
+        # print("authentication flag = "+str(self.authentication_flag))
+        if(self.authentication_flag == 0):
+            print("in if")
+            self.main_app.auth_fail_msg.setIcon(QMessageBox.Information)
+            self.main_app.auth_fail_msg.setText("Wrong User Name or Password!!")
+            self.main_app.auth_fail_msg.setStandardButtons(QMessageBox.Ok)
+            self.main_app.auth_fail_msg.show()
+            self.main_app.auth_fail_msg.buttonClicked.connect(self.auth_fail_msg_btn)
             self.main_app.login.setVisible(True)
             self.main_app.logout.setVisible(False)
         else:
@@ -166,7 +172,7 @@ class LoginWindow(QWidget):
             self.main_app.storage.update_login_token(self.token)
             self.main_app.storage.insert_saved_password(self.username_text, self.password_text)
             if(self.is_new == 0):   #New Client
-                notes_dict = requests.get(self.main_app.notes_retrieve_url, headers={"Authorization" : "JWT "+self.token}).json()
+                notes_dict = requests.get(self.main_app.notes_retrieve_url, headers={"Authorization" : "JWT "+self.token}).json()['notes']
                 for note in notes_dict:
                     note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": note["note_text"], "process_name": note["process_name"], "window_title": note["window_title"], "note_hash":note["note_hash"]}
                     note_hash = note["note_hash"]
@@ -181,11 +187,13 @@ class LoginWindow(QWidget):
                         merged_text = self.main_app.merge(note_text,old_note.note_text)
                         old_note.note_text = merged_text
                         self.main_app.storage.update_note(old_note)
+            print("login successful")
             self.main_app.sync = sync(self.main_app)
             self.main_app.login.setVisible(False)
             self.main_app.logout.setVisible(True)
 
     def auth_fail_msg_btn(self):
+        self.flag = 0
         self.show()
 
 class ConflictResolveWidget(QWidget):
@@ -258,8 +266,10 @@ class ConflictMsgBox(QMessageBox):
 class TrayIcon(QSystemTrayIcon):
 
     def __init__(self):
-        self.notes_retrieve_url = ""
-        self.login_url = ""
+        self.auth_fail_msg = QMessageBox()
+        self.log_count_retrieval_url = "http://localhost:8000/api/queue/count?queue="
+        self.notes_retrieve_url = "http://localhost:8000/api/notes"
+        self.login_url = "http://localhost:8000/api/user/auth/login"
         self.internet_on_flag = -1  # = -1 if thread has not checked even once, = 0 if offline, = 1 if online
         self.internet_check_thread_flag = 1
         self.win = ""
@@ -297,6 +307,7 @@ class TrayIcon(QSystemTrayIcon):
 
 
     def init_login(self):
+        print("in init login")
         while(self.internet_on_flag == -1): #To prevent this function from starting before internet is checked
             continue
         if(self.internet_on_flag == 0):
@@ -304,10 +315,13 @@ class TrayIcon(QSystemTrayIcon):
         else:
             saved_password = self.storage.read_saved_password()
             if(saved_password == None):
-                self.logout.setVisible(True)
+                self.logout.setVisible(False)
             else:
+                print("Logging in From saved password")
                 login_window = LoginWindow(self,False)
-                login_window.login_method(saved_password.username,saved_password.password)
+                login_window.username.setText(saved_password.username)
+                login_window.password.setText(saved_password.password)
+                login_window.login_method()
 
 
     def internet_check_thread(self):
@@ -316,14 +330,15 @@ class TrayIcon(QSystemTrayIcon):
                 self.internet_on_flag = 1
             else:
                 self.internet_on_flag = 0
+            time.sleep(1)
 
 
     def internet_on(self):
-        for timeout in [1,5,10,15]:
-            try:
-                response=urlopen('http://google.com',timeout=timeout)
-                return True
-            except urllib.error.URLError as err: pass
+        try:
+            response=requests.get('http://google.com')
+            return True
+        except:
+            pass
         return False
 
     def create_menu(self):
