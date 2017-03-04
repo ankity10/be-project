@@ -4,7 +4,9 @@ import asyncio
 import websockets
 import time
 import datetime
+import logging
 import requests
+import json
 
 from PyQt5.QtWidgets import *
 from socketclusterclient import Socketcluster
@@ -18,6 +20,7 @@ class sync:
 		self.log_count = 0
 		self.main_app = main_app
 		self.sync_thread_flag = 1
+		self.socket = None
 		t = threading.Thread(target=self.sync_event)
 		t.start()
 
@@ -49,13 +52,21 @@ class sync:
 	# 	                self.storage.update_note(note)
 
 
-	def send_offline_logs(self,websocket):
+	def send_offline_logs(self):
+		print("log sending started")
 		while(self.send_offline_logs_flag == 1):
 			log_collection = self.main_app.storage.log_collection.find({})
-			delete_count = self.main_app.storage.log_collection.delete_many({}) 
 			for log in log_collection:
-				websocket.emit('sendmsg',log)
+				json_log = json.loads('{}')
+				json_log["note_text"] = log['note_text']
+				json_log["process_name"] = log['process_name']
+				json_log["note_hash"] = log['note_hash']
+				json_log["from_client_id"] = log['from_client_id']
+				json_log["window_title"] = log['window_title']
+				print("str of log is ", json.dumps(json_log, sort_keys=True))
+				self.socket.emit('sendmsg', json.dumps(json_log, sort_keys=True))
 				print("log sent")		
+			delete_count = self.main_app.storage.log_collection.delete_many({}) 
 
 	# def internet_on():
 	#     for timeout in [1,5,10,15]:
@@ -67,7 +78,10 @@ class sync:
 ##########################################################################
 
 	def onmessage(self,eventname,data, ackmessage):
-		online_log = json.dumps(data,sort_keys=True)
+		# online_log = json.dumps(data,sort_keys=True)
+		online_log = data
+		print(online_log)
+		# return
 		from_client_id = online_log['from_client_id']
 		ackmessage(None, True)
 		# if(online_log['conflict_flag'] == True):	#Conflict has been resolved by some client
@@ -121,8 +135,14 @@ class sync:
 	    logging.info("Token received " + token)
 	    #socket.setAuthtoken(token)
 
-	def on_auth_success(self,event):
-		socket.onack("msg",self.onmessage)
+	def on_auth_success(self,event, data):
+		self.socket.emit("set-client-id", self.main_app.client_id)
+		logging.info("Auth Success")
+		if(self.log_count == 0):
+			self.send_offline_logs_flag = 1
+			t = threading.Thread(target=self.send_offline_logs)
+			t.start()
+			self.log_count -= 1
 
 	def on_disconnect(self,event,data):
 		self.internet_on_flag = False
@@ -131,25 +151,29 @@ class sync:
 	def onAuthentication(self,socket, isauthenticated):
 		logging.info("Authenticated is " + str(isauthenticated))
 		time.sleep(1)
+		socket.setAuthtoken(self.main_app.login_credentials.token)
 		if(self.main_app.login_credentials.token == "0"):
+			print("in if")
 			self.internet_on_flag = False
 			self.send_offline_logs_flag = 0
 			return	
-		socket.setAuthtoken(self.main_app.login_credentials.token)
+		print("not in if")
 		socket.on("#disconnect", self.on_disconnect)
 		socket.on("auth-success", self.on_auth_success)
+		socket.onack("msg",self.onmessage)
+
 
 	#################################################################################
 
 	def sync_event(self):
 		while(self.sync_thread_flag == 1):
-			socket = Socketcluster.socket("ws://localhost:8000/socketcluster/")
+			self.socket = socket = Socketcluster.socket("ws://localhost:8000/socketcluster/")
 			if(self.main_app.internet_on() == True):	#internet on
 				self.log_count = 0
 				self.internet_on_flag = True
 
 				#Retrieve log_count
-				self.log_count_response = requests.get(self.main_app.log_count_retrieval_url+str(self.main_app.client_id),headers={"Authorization" : "JWT "+self.main_app.login_credentials.token})
+				self.log_count_response = requests.get(self.main_app.log_count_retrieval_url +self.main_app.storage.read_saved_password().username+ ":" + str(self.main_app.client_id),headers={"Authorization" : "JWT "+self.main_app.login_credentials.token})
 				if(self.log_count_response.text == "Unauthorized"):
 					print("Unauthorized!!!")
 					continue
@@ -158,7 +182,7 @@ class sync:
 					print(self.log_count_response["message"])
 					continue
 				print(self.log_count_response)
-				return
+				self.log_count = self.log_count_response["message_count"]
 				socket.setBasicListener(self.onconnect, self.ondisconnect, self.onConnectError)
 				socket.setAuthenticationListener(self.onSetAuthentication, self.onAuthentication)
 				socket.setreconnection(False)

@@ -226,6 +226,7 @@ class LoginWindow(QWidget):
             self.main_app.sync = sync(self.main_app)
             self.main_app.login.setVisible(False)
             self.main_app.logout.setVisible(True)
+            self.close()
 
     def auth_fail_msg_btn(self):
         self.flag = 0
@@ -260,6 +261,9 @@ class LoginWindow(QWidget):
             signup_success_msg.setWindowTitle("Message")
             signup_success_msg.buttonClicked.connect(self.clear_textedit)
             signup_success_msg.exec_()
+            self.main_app.login.setVisible(False)
+            self.main_app.logout.setVisible(True)
+            self.main_app.sync = sync(self.main_app)
             self.close()
         else:
             err_msg = data['errors']['username']['message']
@@ -363,6 +367,7 @@ class TrayIcon(QSystemTrayIcon):
         self.storage = Db()
         self.login_credentials = self.storage.read_login_credentials()
         self.client_id = self.login_credentials.client_id
+        print("Client id :"+str(self.client_id))
         t = threading.Thread(target=self.internet_check_thread)
         t.start()
         self.setIcon(QIcon('graphics/notes.png'))
@@ -377,7 +382,6 @@ class TrayIcon(QSystemTrayIcon):
         self.process_name = ""
         self.default_text = ""
         self.status = ""
-        #self.get_note()
         self.note_window = NoteWindow()
         #self.note_window.window_change_event_flag = 0
         self.init_login()   # Login attempt from stored username & password
@@ -449,9 +453,11 @@ class TrayIcon(QSystemTrayIcon):
         self.login_window = LoginWindow(self)
 
     def logout_menu(self):
-    	self.storage.delete_login_token()
-    	self.storage.delete_saved_password()
-    	self.sync.sync_thread_flag = 0
+        self.storage.delete_login_token()
+        self.storage.delete_saved_password()
+        self.logout.setVisible(False)
+        self.login.setVisible(True)
+        self.sync.sync_thread_flag = 0
 
 
     def show_note_menu(self,session_num = 1):   # To separate thread function from show_note function

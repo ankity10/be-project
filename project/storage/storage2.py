@@ -100,13 +100,21 @@ class Db:
 
 		self.db = self.db_client.notes_db
 		self.login_credentials_collection = self.db.login_credentials_collection
+
 		if(self.login_credentials_collection.count() == 0):	# First time running the app
-			login_credentials_dict = {"client_id" : uuid.uuid1().int>>8, "token" : "0"}
+			login_credentials_dict = {"client_id" : uuid.uuid1().hex, "token" : "0"}
 			self.login_credentials_collection.insert_one(dict(login_credentials_dict))
+			print("New client id created!!!!!!!!!!")
+		else:
+			print("Using old client id!!!!")
+
 		self.login_credentials_dict = self.login_credentials_collection.find_one({})
 		self.client_id = self.login_credentials_dict["client_id"]
+
 		self.notes_collection = self.db.notes_collection_temp3
+
 		self.log_collection = self.db.log_collection_temp3
+
 		self.saved_password_collection = self.db.saved_password_collection
 
 	def delete_saved_password(self):
