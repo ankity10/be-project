@@ -342,6 +342,7 @@ class TrayIcon(QSystemTrayIcon):
         self.internet_on_flag = -1  # = -1 if thread has not checked even once, = 0 if offline, = 1 if online
         self.internet_check_thread_flag = 1
         self.win = ""
+        self.window_close = False
         super().__init__()
         print("wirm")
         self.storage = Db()
@@ -501,8 +502,12 @@ class TrayIcon(QSystemTrayIcon):
         return True
 
     def tray_icon_activated(self, reason):
-        if reason in (QSystemTrayIcon.Trigger, QSystemTrayIcon.DoubleClick):
-            self.get_note()
+        self.window_close = not self.window_close
+        if(reason == QSystemTrayIcon.Trigger):
+            if(self.window_close):
+                self.show_note_menu(0)
+            else:
+                self.note_window.setVisible(False)
 
 
 if __name__ == '__main__':
