@@ -42,6 +42,7 @@ class WebPage(QWebEnginePage):
 
     def javaScriptConsoleMessage(self, level, msg, linenumber, source_id):
         try:
+            print("error message is: ",msg, " at linenumber ", linenumber)
             delimeter = ":"
             delimeter_index = 9
             index = msg.index(delimeter)
@@ -81,7 +82,7 @@ class NoteWindow(QWebEngineView):
         self.setWindowTitle("LazyNotes")
         self.setWindowIcon(QIcon('graphics/notes.png'))
         self.load(QUrl(self.abs_path))
-        self.setVisible(True)
+        self.setVisible(False)
         window_change_event_flag = 0
 
     def closeEvent(self,event):
@@ -115,7 +116,7 @@ class TrayIcon(QSystemTrayIcon):
         #self.note_window.window_change_event_flag = 0
         self.page = WebPage(self.status, self.hashed_key, self.process_name, self.window_title)
         self.note_window.setPage(self.page)
-        self.note_window.page().runJavaScript(str("window.onload = function() { init();firepad.setHtml('"+self.default_text+"');}"))
+        # self.note_window.page().runJavaScript(str())
         self.note_window.load(QUrl(self.note_window.abs_path))
         print("--------------------------------------------------------------------")
         self.wirm = WIRM(self)
@@ -135,6 +136,8 @@ class TrayIcon(QSystemTrayIcon):
 
     def show_note_menu(self,session_num = 1):   # To separate thread function from show_note function
         global note_visible_flag
+        # self.note_window.page().runJavaScript(str("init();"))
+
         self.show_note(session_num)
         if self.x_position == 0:
             position = self.geometry().topRight()

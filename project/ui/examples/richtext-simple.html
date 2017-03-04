@@ -36,7 +36,7 @@
   <script>
   var firepad;
   var code_mirror;
-    function init() {
+    (function init() {
       //// Create CodeMirror (with lineWrapping on).
       code_mirror = CodeMirror(document.getElementById('firepad-container'), { lineWrapping: true });
 
@@ -61,7 +61,7 @@
         }, 800);
 
       })
-    }
+    })()
   </script>
 </body>
 </html>
