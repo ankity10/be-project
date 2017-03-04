@@ -3,6 +3,7 @@ import threading
 import Xlib.display
 import Xlib.threaded
 import sys
+import requests
 import os
 import time
 import datetime
@@ -108,7 +109,7 @@ class NoteWindow(QWebEngineView):
         self.setWindowIcon(QIcon('graphics/notes.png'))
         self.load(QUrl(self.abs_path))
         self.setWindowFlags(Qt.FramelessWindowHint)
-        self.setVisible(True)
+        self.setVisible(False)
         window_change_event_flag = 0
 
     def closeEvent(self,event):
@@ -160,7 +161,7 @@ class LoginWindow(QWidget):
         self.back_button.move(120,110)
         self.back_button.hide()
         self.back_button.clicked.connect(self.back_method)
-        self.setVisible(True)
+        self.setVisible(visible_flag)
 
     def back_method(self):
         self.email_lbl.hide()
@@ -178,8 +179,8 @@ class LoginWindow(QWidget):
         else:
             self.username_text = username
             self.password_text = password
-        login_response=urlopen(self.main_app.login_url,timeout=5)
-        self.authentication_flag = login_response["authentication_flag"] 
+        login_response=requests.post(self.main_app.login_url,data = {'username' : self.username_text,'password' : self.password_text,'client_id' : self.main_app.client_id}).json()
+        self.authentication_flag = login_response["success"] 
         if(self.authentication_flag == False):
             auth_fail_msg = QMessageBox()
             auth_fail_msg.setIcon(QMessageBox.Information)
@@ -193,12 +194,25 @@ class LoginWindow(QWidget):
             self.token = login_response["token"]
             self.main_app.login_credentials.token = self.token
             self.main_app.storage.update_login_token(self.token)
-            self.client_flag = login_response["client_flag"]
+            self.is_new = login_response["is_new"]
             self.main_app.storage.update_login_token(self.token)
             self.main_app.storage.insert_saved_password(self.username_text, self.password_text)
-            if(self.client_flag == 0):   #New Client
-                notes_dict = urlopen(self.main_app.notes_retrieve_url,timeout=5)
-
+            if(self.is_new == 0):   #New Client
+                notes_dict = requests.get(self.main_app.notes_retrieve_url, headers={"Authorization" : "JWT "+self.token}).json()
+                for note in notes_dict:
+                    note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": note["note_text"], "process_name": note["process_name"], "window_title": note["window_title"], "note_hash":note["note_hash"]}
+                    note_hash = note["note_hash"]
+                    window_title = note["window_title"]
+                    process_name = note["process_name"]
+                    note_text = note["note_text"]
+                    old_note = self.main_app.storage.read_note(note_hash)
+                    if(old_note == None):    # No note is present for that hash in local db
+                        note = Note(**note_dict)
+                        self.main_app.storage.insert_note(note)
+                    else:   # Note is present for that hash in local db
+                        merged_text = self.main_app.merge(note_text,old_note.note_text)
+                        old_note.note_text = merged_text
+                        self.main_app.storage.update_note(old_note)
             self.main_app.sync = sync(self.main_app)
             self.main_app.login.setVisible(False)
             self.main_app.logout.setVisible(True)
@@ -322,7 +336,7 @@ class TrayIcon(QSystemTrayIcon):
 
     def __init__(self):
         self.notes_retrieve_url = ""
-        self.login_url = ""
+        self.login_url = "http://localhost:8000/api/user/auth/signup"
         self.signup_url = "http://localhost:8000/api/user/auth/signup"
         self.internet_on_flag = -1  # = -1 if thread has not checked even once, = 0 if offline, = 1 if online
         self.internet_check_thread_flag = 1
@@ -361,10 +375,10 @@ class TrayIcon(QSystemTrayIcon):
 
 
     def init_login(self):
-        while(self.internet_on_flag == -1):
+        while(self.internet_on_flag == -1): #To prevent this function from starting before internet is checked
             continue
         if(self.internet_on_flag == 0):
-            self.logout.setVisible(True)
+            self.logout.setVisible(False)
         else:
             saved_password = self.storage.read_saved_password()
             if(saved_password == None):
@@ -419,6 +433,7 @@ class TrayIcon(QSystemTrayIcon):
 
 
     def show_note_menu(self,session_num = 1):   # To separate thread function from show_note function
+        self.note_window.page().runJavaScript("init()")
         global note_visible_flag
         if(self.show_note(session_num) == False):
             return
