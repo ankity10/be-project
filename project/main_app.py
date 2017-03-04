@@ -103,12 +103,13 @@ class NoteWindow(QWebEngineView):
         super().__init__()
         file_path = '/ui/examples/richtext-simple.html'
         folder_path = os.path.abspath('./')
-        self.setWindowFlags(Qt.WindowStaysOnTopHint)
+        flags = Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint
+        self.setWindowFlags(flags)
         self.abs_path = "file://" + folder_path + file_path
         self.setWindowTitle("LazyNotes")
         self.setWindowIcon(QIcon('graphics/notes.png'))
         self.load(QUrl(self.abs_path))
-        self.setWindowFlags(Qt.FramelessWindowHint)
+       # self.setWindowFlags()
         self.setVisible(False)
         window_change_event_flag = 0
 
