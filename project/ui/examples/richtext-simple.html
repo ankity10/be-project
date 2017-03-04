@@ -61,7 +61,36 @@
         }, 800);
 
       })
-    })()
+    })();
+
+
+    $.fn.lastHandler = function(events,handler) {
+      var element = $(this);
+      events = events.split(' ');
+      for (var evt in events) {
+          var event = $(element).data("events")[events[evt]];
+          var hsucess = null;
+          $.each(event, function (i, h) {
+              if (h.handler == handler) {
+                  hsucess = h;
+              }
+          });
+          var index = event.indexOf(hsucess);
+          if (index > -1) {
+              event.splice(index, 1);
+              event.push(hsucess);
+          }
+      }
+  };
+
+    onClickHandler = function() {
+      console.error(firepad.getHtml());
+    };
+    
+    $(".firepad-btn").click(onClickHandler);
+
+    $(".firepad-btn").lastHandler(onClickHandler);
+
   </script>
 </body>
 </html>
