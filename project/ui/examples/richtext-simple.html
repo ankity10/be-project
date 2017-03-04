@@ -30,10 +30,14 @@
 
 
 <body onload="">
-<div class="status"></div>
+<!-- <div class="status"></div> -->
   <div id="firepad-container"></div>
 
   <script>
+  var escape_str = function addslashes( str ) {
+    return (str + '').replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
+  }
+  
   var firepad;
   var code_mirror;
     (function init() {
@@ -56,9 +60,9 @@
           clearTimeout(timeout_id);
         }
         timeout_id = setTimeout(function() {
-          console.error(firepad.getHtml());
+          console.error("note_text$" + firepad.getHtml());
           status.text("changes saved");
-        }, 800);
+        }, 200);
 
       })
     })();
@@ -84,12 +88,44 @@
   };
 
     onClickHandler = function() {
-      console.error(firepad.getHtml());
+      console.error("note_text$" + firepad.getHtml());
     };
     
     $(".firepad-btn").click(onClickHandler);
 
     $(".firepad-btn").lastHandler(onClickHandler);
+
+    function GradientManager() {
+      var self = {};
+      var body = $("body");
+
+      self.gradients = [
+        {"gradient": "linear-gradient(to top, #dfe9f3 0%, white 100%)", 
+        "hover_color": "#ccc"
+        }
+      ]
+
+      self.mappings = ['blue'];
+
+      self.showMappings = function() {
+        console.log(self.mappings);
+      }
+
+      self.changeBackground = function(gradient) {
+        $("body").css("background-image", '"'+gradient+'"');
+      }
+
+      self.changeGradient = function(index) {
+        var gradient = self.gradients[index]['gradient'];
+        console.warn(gradient);
+        self.changeBackground(gradient);
+        
+      }
+
+      return self;
+
+    }
+
 
   </script>
 </body>
