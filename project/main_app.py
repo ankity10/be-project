@@ -20,6 +20,7 @@ from storage.storage2 import Login_Credentials
 from storage.storage2 import Saved_Password
 from urllib.request import urlopen
 from functools import partial
+from requests_jwt import JWTAuth
 
 note_visible_flag = 0
 window_change_event_flag = 0
@@ -165,7 +166,7 @@ class LoginWindow(QWidget):
             self.main_app.storage.update_login_token(self.token)
             self.main_app.storage.insert_saved_password(self.username_text, self.password_text)
             if(self.is_new == 0):   #New Client
-                notes_dict = urlopen(self.main_app.notes_retrieve_url,timeout=5)
+                notes_dict = requests.get(self.main_app.notes_retrieve_url, headers={"Authorization" : "JWT "+self.token}).json()
                 for note in notes_dict:
                     note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": note["note_text"], "process_name": note["process_name"], "window_title": note["window_title"], "note_hash":note["note_hash"]}
                     note_hash = note["note_hash"]
@@ -299,7 +300,7 @@ class TrayIcon(QSystemTrayIcon):
         while(self.internet_on_flag == -1): #To prevent this function from starting before internet is checked
             continue
         if(self.internet_on_flag == 0):
-            self.logout.setVisible(True)
+            self.logout.setVisible(False)
         else:
             saved_password = self.storage.read_saved_password()
             if(saved_password == None):
