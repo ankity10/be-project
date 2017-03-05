@@ -27,6 +27,10 @@ from storage.storage2 import Saved_Password
 from sync.sync import sync
 from functools import partial
 
+global IP
+IP = "192.168.0.107"
+global PORT
+PORT = "8000"
 
 logging.getLogger('requests').setLevel(logging.CRITICAL) #Display logs of critical type only
 note_visible_flag = 0
@@ -362,10 +366,10 @@ class TrayIcon(QSystemTrayIcon):
 
     def __init__(self):
         self.auth_fail_msg = QMessageBox()
-        self.log_count_retrieval_url = "http://localhost:8000/api/queue/count?queue="
-        self.notes_retrieve_url = "http://localhost:8000/api/notes"
-        self.login_url = "http://localhost:8000/api/user/auth/login"
-        self.signup_url = "http://localhost:8000/api/user/auth/signup"
+        self.log_count_retrieval_url = "http://"+IP+":"+PORT+"/api/queue/count?queue="
+        self.notes_retrieve_url = "http://"+IP+":"+PORT+"/api/notes"
+        self.login_url = "http://"+IP+":"+PORT+"/api/user/auth/login"
+        self.signup_url = "http://"+IP+":"+PORT+"/api/user/auth/signup"
         self.internet_on_flag = -1  # = -1 if thread has not checked even once, = 0 if offline, = 1 if online
         self.internet_check_thread_flag = 1
         self.win = ""

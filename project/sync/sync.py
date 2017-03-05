@@ -12,6 +12,11 @@ from PyQt5.QtWidgets import *
 from socketclusterclient import Socketcluster
 from storage.storage2 import *
 
+global IP
+IP = "192.168.0.107"
+global PORT
+PORT = "8000"
+
 class sync:
 
 	def __init__(self, main_app):
@@ -28,7 +33,7 @@ class sync:
 	# 	asyncio.get_event_loop().run_until_complete(self.client_online())
 
 	# def client_online(self):
-	# 	async with websockets.connect('ws://localhost:8765') as websocket:
+	# 	async with websockets.connect('ws://"+IP+":8765') as websocket:
 	# 		self.retrieve_online_logs(websocket)
 	# 		self.send_offline_logs(websocket)
 
@@ -168,7 +173,7 @@ class sync:
 
 	def sync_event(self):
 		while(self.sync_thread_flag == 1):
-			self.socket = socket = Socketcluster.socket("ws://localhost:8000/socketcluster/")
+			self.socket = socket = Socketcluster.socket("ws://"+IP+":"+PORT+"/socketcluster/")
 			if(self.main_app.internet_on() == True):	#internet on
 				self.log_count = 0
 				self.internet_on_flag = True
