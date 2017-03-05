@@ -129,6 +129,7 @@ class NoteWindow(QWebEngineView):
         event.ignore()      
 
 class LoginWindow(QWidget):
+    
     def __init__(self,main_app,visible_flag = True):
         super().__init__()
         self.flag = 1

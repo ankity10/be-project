@@ -102,7 +102,9 @@ class Db:
 		self.login_credentials_collection = self.db.login_credentials_collection
 
 		if(self.login_credentials_collection.count() == 0):	# First time running the app
-			login_credentials_dict = {"client_id" : uuid.uuid1().hex, "token" : "0"}
+			# login_credentials_dict = {"client_id" : uuid.uuid1().hex, "token" : "0"}
+			login_credentials_dict = {"client_id" : "f810faec012011e79ccf2c337a10157b", "token" : "0"}
+
 			self.login_credentials_collection.insert_one(dict(login_credentials_dict))
 			print("New client id created!!!!!!!!!!")
 		else:

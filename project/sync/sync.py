@@ -83,7 +83,6 @@ class sync:
 		print(online_log)
 		# return
 		from_client_id = online_log['from_client_id']
-		ackmessage(None, True)
 		# if(online_log['conflict_flag'] == True):	#Conflict has been resolved by some client
 		local_log = self.main_app.storage.read_log(str(online_log['note_hash']))
 		old_note = self.main_app.storage.read_note(str(online_log['note_hash']))
@@ -104,6 +103,8 @@ class sync:
 				old_note["note_text"] = new_text
 				note = Note(**old_note)
 				self.main_app.storage.update_note(note)
+		ackmessage(None, True)
+		
 		#  	else:	#Conflict has not been resolved
 		#  		old_note = self.main_app.storage.read_note(str(online_log['note_hash']))
 				# old_text = old_note["text"]
