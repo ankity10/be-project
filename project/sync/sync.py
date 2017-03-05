@@ -115,6 +115,7 @@ class sync:
 				# note = Note(**old_note)
 				self.main_app.storage.update_note(old_note)
 		ackmessage(None, True)
+		self.main_app.show_note()
 		
 		#  	else:	#Conflict has not been resolved
 		#  		old_note = self.main_app.storage.read_note(str(online_log['note_hash']))
