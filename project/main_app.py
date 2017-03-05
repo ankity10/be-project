@@ -530,8 +530,11 @@ class TrayIcon(QSystemTrayIcon):
         window_change_event_flag = 0
         self.wirm.active_window_thread_flag = 0
         self.internet_check_thread_flag = 0
+
         try:
+            self.sync.disconnect()
             self.sync.sync_thread_flag = 0
+            
         except:
             pass
         sys.exit(0)

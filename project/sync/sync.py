@@ -29,6 +29,10 @@ class sync:
 		t = threading.Thread(target=self.sync_event)
 		t.start()
 
+
+	def disconnect(self):
+		self.socket.disconnect()
+
 	# def client_online_thread(self):
 	# 	asyncio.get_event_loop().run_until_complete(self.client_online())
 
@@ -181,6 +185,7 @@ class sync:
 	def sync_event(self):
 		while(self.sync_thread_flag == 1):
 			self.socket = socket = Socketcluster.socket("ws://"+IP+":"+PORT+"/socketcluster/")
+			socket.setreconnection(False)
 			if(self.main_app.internet_on() == True):	#internet on
 				self.log_count = 0
 				self.internet_on_flag = True

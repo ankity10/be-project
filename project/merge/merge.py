@@ -146,7 +146,7 @@ def merge(s1, s2):
 			final_l.append(l2[in2])
 		else:  #Same rich texts
 			if l1[in1][0] == 1:  #div
-				if l1[in1][1] == l2[in1][1]:  #Same
+				if l1[in1][1] == l2[in2][1]:  #Same
 					final_l.append(l1[in1])
 				else:  #Different
 					final_l.append(l1[in1])
