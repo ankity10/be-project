@@ -81,6 +81,12 @@ class Note:
 	def __eq__(self, other):
 		return (isinstance(other, self.__class__) and dict(self) == dict(other))
 
+	def __setitem__(self, key, val):
+		setattr(self, key, val)
+
+	def __getitem__(self, key):
+		return getattr(self, key)
+
 
 class Db:
 

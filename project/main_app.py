@@ -27,6 +27,8 @@ from storage.storage2 import Saved_Password
 from sync.sync import sync
 from functools import partial
 
+from merge import merge as Merge
+
 global IP
 IP = "192.168.0.107"
 global PORT
@@ -177,6 +179,7 @@ class LoginWindow(QWidget):
         self.back_button.move(120,110)
         self.back_button.hide()
         self.back_button.clicked.connect(self.back_method)
+        self.main_app.merge = Merge.merge
         self.setVisible(visible_flag)
 
     def back_method(self):

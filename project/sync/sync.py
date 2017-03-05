@@ -99,8 +99,8 @@ class sync:
 				old_note = self.main_app.storage.read_note(str(online_log['note_hash']))
 				# new_text = {from_client_id : online_log['note_text']}
 				old_note["note_text"] = online_log['note_text']
-				note = Note(**old_note)
-				self.main_app.storage.update_note(note)
+				# note = Note(**old_note)
+				self.main_app.storage.update_note(old_note)
 			else:	#Local log present corresponding to the hash
 				old_note = self.main_app.storage.read_note(str(online_log['note_hash']))
 				## new_text = merge(old_note,online_log['note_text'])
