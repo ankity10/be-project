@@ -116,6 +116,8 @@ class sync:
 				new_text = self.main_app.merge(old_note['note_text'],online_log['note_text'])
 				# new_text = {from_client_id : online_log['note_text'],self.main_app.client_id : local_log["text"]}
 				old_note["note_text"] = new_text
+				local_log.note_text = new_text
+				self.main_app.storage.update_log(local_log)
 				# note = Note(**old_note)
 				self.main_app.storage.update_note(old_note)
 		ackmessage(None, True)
@@ -210,6 +212,9 @@ class sync:
 				socket.disconnect()
 				self.internet_on_flag = False
 				self.send_offline_logs_flag = 0
+		self.send_offline_logs_flag = 0
+
+
 
 	def fail_msg_btn(self):
 		return	

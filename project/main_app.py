@@ -48,14 +48,14 @@ class WebPage(QWebEnginePage):
         super().__init__()
         self.main_app = main_app
         self.status = status
-        self.storage = Db()
+        self.storage = self.main_app.storage
         self.note_hash = note_hash
         self.process_name = process_name
         self.window_title = window_title
 
     def updatePage(self, status, note_hash, process_name, window_title):
         self.status = status
-        self.storage = Db()
+        # self.storage = self.main_app.storage
         self.note_hash = note_hash
         self.process_name = process_name
         self.window_title = window_title
@@ -221,7 +221,7 @@ class LoginWindow(QWidget):
             self.is_new = login_response["is_new"]
             self.main_app.storage.update_login_token(self.token)
             self.main_app.storage.insert_saved_password(self.username_text, self.password_text)
-            if(self.is_new == 0):   #New Client
+            if(self.is_new == 1):   #New Client
                 notes_dict = requests.get(str(self.main_app.notes_retrieve_url), headers={"Authorization" : "JWT "+self.token}).json()['notes']
                 for note in notes_dict:
                     note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": note["note_text"], "process_name": note["process_name"], "window_title": note["window_title"], "note_hash":note["note_hash"]}
