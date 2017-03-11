@@ -30,7 +30,7 @@ from functools import partial
 from merge import merge as Merge
 
 global IP
-IP = "192.168.0.107"
+IP = "10.42.0.1"
 global PORT
 PORT = "8000"
 
@@ -569,7 +569,7 @@ class TrayIcon(QSystemTrayIcon):
             #     return False
             self.status = "old"
         else:
-            self.default_text = "empty" 
+            self.default_text = ""
             self.status = "new"
         return True
 
