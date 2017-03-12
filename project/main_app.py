@@ -67,7 +67,6 @@ class WebPage(QWebEnginePage):
         delimeter_index = 9
         try:
             index = msg.index(delimeter)
-            print(msg)
             if index == delimeter_index:
                 self.save_note(msg[index+1:])
         except Exception as e:
