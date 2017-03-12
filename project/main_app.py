@@ -30,7 +30,7 @@ from functools import partial
 from merge import merge as Merge
 
 global IP
-IP = "192.168.43.96"
+IP = "192.168.0.110"
 global PORT
 PORT = "8000"
 
@@ -199,6 +199,7 @@ class LoginWindow(QWidget):
         print("username :"+self.username_text)
         print("password :"+self.password_text)
         login_response=requests.post(self.main_app.login_url,data = {'username' : self.username_text,'password' : self.password_text,'client_id' : self.main_app.client_id}).json()
+        print(login_response)
         self.authentication_flag = login_response["success"] 
         # print("authentication flag = "+str(self.authentication_flag))
         if(self.authentication_flag == 0):
@@ -216,10 +217,13 @@ class LoginWindow(QWidget):
             self.main_app.login_credentials.token = self.token
             self.main_app.storage.update_login_token(self.token)
             self.is_new = login_response["is_new"]
-            self.main_app.storage.update_login_token(self.token)
             self.main_app.storage.insert_saved_password(self.username_text, self.password_text)
+            print("is_new = ", self.is_new)
             if(self.is_new == 1):   #New Client
-                notes_dict = requests.get(str(self.main_app.notes_retrieve_url), headers={"Authorization" : "JWT "+self.token}).json()['notes']
+                notes_json = requests.get(str(self.main_app.notes_retrieve_url), headers={"Authorization" : "JWT "+self.token}).json()
+                print("JSON " + "="*30, notes_json)
+                notes_dict = notes_json['notes']
+                print("Dict " + "="*30, notes_dict)
                 for note in notes_dict:
                     note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": note["note_text"], "process_name": note["process_name"], "window_title": note["window_title"], "note_hash":note["note_hash"]}
                     note_hash = note["note_hash"]

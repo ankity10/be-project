@@ -13,13 +13,14 @@ from socketclusterclient import Socketcluster
 from storage.storage2 import *
 
 global IP
-IP = "192.168.43.96"
+IP = "192.168.0.110"
 global PORT
 PORT = "8000"
 
 class sync:
 
 	def __init__(self, main_app):
+		print("sync started")
 		self.internet_on_flag = False
 		self.send_offline_logs_flag = 0
 		self.log_count = 0
@@ -66,6 +67,8 @@ class sync:
 		while(self.send_offline_logs_flag == 1):
 			log_collection = self.main_app.storage.log_collection.find({})
 			for log in log_collection:
+				print("Log : ",log)
+				cont_flag = 0
 				json_log = json.loads('{}')
 				json_log["note_text"] = log['note_text']
 				json_log["process_name"] = log['process_name']
@@ -73,9 +76,14 @@ class sync:
 				json_log["from_client_id"] = log['from_client_id']
 				json_log["window_title"] = log['window_title']
 				print("str of log is ", json.dumps(json_log, sort_keys=True))
-				self.socket.emit('sendmsg', json.dumps(json_log, sort_keys=True))
-				print("log sent")		
-			delete_count = self.main_app.storage.log_collection.delete_many({}) 
+				try:
+					self.socket.emit('sendmsg', json.dumps(json_log, sort_keys=True))
+					print("log sent")
+					self.main_app.storage.delete_log(log['note_hash'])
+				except:
+					print("Socket not created")
+					break			
+				 
 
 	# def internet_on():
 	#     for timeout in [1,5,10,15]:
@@ -87,6 +95,7 @@ class sync:
 ##########################################################################
 
 	def onmessage(self,eventname,data, ackmessage):
+		print("on messsage got called")
 		# online_log = json.dumps(data,sort_keys=True)
 		online_log = data
 		print(online_log)
@@ -156,6 +165,7 @@ class sync:
 
 	def on_auth_success(self,event, data):
 		self.socket.emit("set-client-id", self.main_app.client_id)
+		print("Client auth success")
 		logging.info("Auth Success")
 		if(self.log_count == 0):
 			self.send_offline_logs_flag = 1
@@ -203,6 +213,11 @@ class sync:
 					continue
 				print(self.log_count_response)
 				self.log_count = self.log_count_response["message_count"]
+				if self.log_count == 0:
+					self.send_offline_logs_flag = 1
+					t = threading.Thread(target=self.send_offline_logs)
+					t.start()
+					self.log_count -= 1
 				socket.setBasicListener(self.onconnect, self.ondisconnect, self.onConnectError)
 				socket.setAuthenticationListener(self.onSetAuthentication, self.onAuthentication)
 				socket.setreconnection(False)
