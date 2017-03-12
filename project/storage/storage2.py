@@ -81,6 +81,12 @@ class Note:
 	def __eq__(self, other):
 		return (isinstance(other, self.__class__) and dict(self) == dict(other))
 
+	def __setitem__(self, key, val):
+		setattr(self, key, val)
+
+	def __getitem__(self, key):
+		return getattr(self, key)
+
 
 class Db:
 
@@ -103,6 +109,8 @@ class Db:
 
 		if(self.login_credentials_collection.count() == 0):	# First time running the app
 			login_credentials_dict = {"client_id" : uuid.uuid1().hex, "token" : "0"}
+			# login_credentials_dict = {"client_id" : "f810faec012011e79ccf2c337a10157b", "token" : "0"}
+
 			self.login_credentials_collection.insert_one(dict(login_credentials_dict))
 			print("New client id created!!!!!!!!!!")
 		else:

@@ -30,13 +30,17 @@
 
 
 <body onload="">
-<div class="status"></div>
+<!-- <div class="status"></div> -->
   <div id="firepad-container"></div>
 
   <script>
+  var escape_str = function addslashes( str ) {
+    return (str + '').replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
+  }
+  
   var firepad;
   var code_mirror;
-    function init() {
+    (function init() {
       //// Create CodeMirror (with lineWrapping on).
       code_mirror = CodeMirror(document.getElementById('firepad-container'), { lineWrapping: true });
 
@@ -49,19 +53,80 @@
       var timeout_id;
       var status = $('div.status');
 
-      code_mirror.on('change', function(){
+      code_mirror.on('keypress', function(){
 
         status.text("changes pending");
         if (timeout_id) {
           clearTimeout(timeout_id);
         }
         timeout_id = setTimeout(function() {
-          console.error(firepad.getHtml());
+          console.error("note_text$" + firepad.getHtml());
           status.text("changes saved");
-        }, 800);
+        }, 1400);
 
       })
+    })();
+
+
+    $.fn.lastHandler = function(events,handler) {
+      var element = $(this);
+      events = events.split(' ');
+      for (var evt in events) {
+          var event = $(element).data("events")[events[evt]];
+          var hsucess = null;
+          $.each(event, function (i, h) {
+              if (h.handler == handler) {
+                  hsucess = h;
+              }
+          });
+          var index = event.indexOf(hsucess);
+          if (index > -1) {
+              event.splice(index, 1);
+              event.push(hsucess);
+          }
+      }
+  };
+
+    onClickHandler = function() {
+      console.error("note_text$" + firepad.getHtml());
+    };
+    
+    $(".firepad-btn").click(onClickHandler);
+
+    $(".firepad-btn").lastHandler(onClickHandler);
+
+    function GradientManager() {
+      var self = {};
+      var body = $("body");
+
+      self.gradients = [
+        {"gradient": "linear-gradient(to top, #dfe9f3 0%, white 100%)", 
+        "hover_color": "#ccc"
+        }
+      ]
+
+      self.mappings = ['blue'];
+
+      self.showMappings = function() {
+        console.log(self.mappings);
+      }
+
+      self.changeBackground = function(gradient) {
+        $("body").css("background-image", '"'+gradient+'"');
+      }
+
+      self.changeGradient = function(index) {
+        var gradient = self.gradients[index]['gradient'];
+        console.warn(gradient);
+        self.changeBackground(gradient);
+        
+      }
+
+      return self;
+
     }
+
+
   </script>
 </body>
 </html>

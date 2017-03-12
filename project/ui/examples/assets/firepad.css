@@ -351,7 +351,7 @@ a.firepad-btn:active {
 .firepad-tb-bubble:before {
   content: "\e00f";
 }
-
+/*
 #firepad-container > div > div.firepad-toolbar > div > div:nth-child(6) {
   display: none;
 }
@@ -365,4 +365,42 @@ a.firepad-btn:active {
 
 #firepad-container > div > div.firepad-toolbar > div > div:nth-child(9) {
   display: none;
+}
+*/
+
+.firepad-btn-group > .firepad-btn {
+    border-radius: 100% !important;
+}
+
+a.firepad-btn, a.firepad-btn:visited, a.firepad-btn:active {
+    padding: 8px 8px 4px 8px;
+    border-bottom-width: 1px;
+}
+
+div.CodeMirror.cm-s-default.CodeMirror-wrap {
+  background: transparent;
+  margin-top: -25px;
+}
+
+body {
+  background-image: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
+}
+
+.firepad-toolbar {
+    text-align: center;
+    height: 60px;
+    line-height: 60px;
+    padding-left: 0;
+}
+
+a.firepad-btn, a.firepad-btn:visited, a.firepad-btn:active {
+    padding: 7px 7px 4px 7px;
+    box-shadow: 1px 1px 1px 0px #7a68a3;
+}
+
+a.firepad-btn:hover {
+    color: #fff;
+    background-color: #d07ee5;
+    border-color: #d07ee5;
+    text-decoration: none;
 }

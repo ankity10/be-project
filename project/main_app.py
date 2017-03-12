@@ -23,8 +23,16 @@ from storage.storage2 import Note
 from storage.storage2 import Local_Log
 from storage.storage2 import Login_Credentials
 from storage.storage2 import Saved_Password
+
 from sync.sync import sync
 from functools import partial
+
+from merge import merge as Merge
+
+global IP
+IP = "192.168.43.96"
+global PORT
+PORT = "8000"
 
 logging.getLogger('requests').setLevel(logging.CRITICAL) #Display logs of critical type only
 note_visible_flag = 0
@@ -40,34 +48,39 @@ class WebPage(QWebEnginePage):
         super().__init__()
         self.main_app = main_app
         self.status = status
-        self.storage = Db()
+        self.storage = self.main_app.storage
         self.note_hash = note_hash
         self.process_name = process_name
         self.window_title = window_title
 
     def updatePage(self, status, note_hash, process_name, window_title):
         self.status = status
-        self.storage = Db()
+        # self.storage = self.main_app.storage
         self.note_hash = note_hash
         self.process_name = process_name
         self.window_title = window_title
 
+    
+
     def javaScriptConsoleMessage(self, level, msg, linenumber, source_id):
+       
+        
+        delimeter = "$"
+        delimeter_index = 9
         try:
-            delimeter = ":"
-            delimeter_index = 9
             index = msg.index(delimeter)
             if index == delimeter_index:
                 msg_list = msg.split(delimeter)[1]
                 self.save_note(str(msg_list))
-        except ValueError:
-            pass # relace this with proper error handeling
-            # Error raised by javascript
-            # msg: error message
-
+        except Exception as e:
+            print("JavaScript error==>",msg, " at linenumber=", linenumber, " source id=", source_id) 
+    
 
     def save_note(self, msg):
         try:
+            # print(" before escaping",msg)
+            # msg = msg.encode("string-escape")
+            # print("after escaping", msg)
             note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": msg, "process_name": self.process_name, "window_title": self.window_title, "note_hash":self.note_hash}
             note = Note(**note_dict)
             local_log_dict = {}
@@ -122,6 +135,7 @@ class NoteWindow(QWebEngineView):
         event.ignore()      
 
 class LoginWindow(QWidget):
+    
     def __init__(self,main_app,visible_flag = True):
         super().__init__()
         self.flag = 1
@@ -165,6 +179,7 @@ class LoginWindow(QWidget):
         self.back_button.move(120,110)
         self.back_button.hide()
         self.back_button.clicked.connect(self.back_method)
+        self.main_app.merge = Merge.merge
         self.setVisible(visible_flag)
 
     def back_method(self):
@@ -206,7 +221,7 @@ class LoginWindow(QWidget):
             self.is_new = login_response["is_new"]
             self.main_app.storage.update_login_token(self.token)
             self.main_app.storage.insert_saved_password(self.username_text, self.password_text)
-            if(self.is_new == 0):   #New Client
+            if(self.is_new == 1):   #New Client
                 notes_dict = requests.get(str(self.main_app.notes_retrieve_url), headers={"Authorization" : "JWT "+self.token}).json()['notes']
                 for note in notes_dict:
                     note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": note["note_text"], "process_name": note["process_name"], "window_title": note["window_title"], "note_hash":note["note_hash"]}
@@ -354,14 +369,14 @@ class TrayIcon(QSystemTrayIcon):
 
     def __init__(self):
         self.auth_fail_msg = QMessageBox()
-        self.log_count_retrieval_url = "http://localhost:8000/api/queue/count?queue="
-        self.notes_retrieve_url = "http://localhost:8000/api/notes"
-        self.login_url = "http://localhost:8000/api/user/auth/login"
-        self.signup_url = "http://localhost:8000/api/user/auth/signup"
+        self.log_count_retrieval_url = "http://"+IP+":"+PORT+"/api/queue/count?queue="
+        self.notes_retrieve_url = "http://"+IP+":"+PORT+"/api/notes"
+        self.login_url = "http://"+IP+":"+PORT+"/api/user/auth/login"
+        self.signup_url = "http://"+IP+":"+PORT+"/api/user/auth/signup"
         self.internet_on_flag = -1  # = -1 if thread has not checked even once, = 0 if offline, = 1 if online
         self.internet_check_thread_flag = 1
         self.win = ""
-        self.window_close = False
+        self.window_close = True
         super().__init__()
         print("wirm")
         self.storage = Db()
@@ -387,7 +402,7 @@ class TrayIcon(QSystemTrayIcon):
         self.init_login()   # Login attempt from stored username & password
         self.page = WebPage(self,self.status, self.note_hash, self.process_name, self.window_title)
         self.note_window.setPage(self.page)
-        self.note_window.page().runJavaScript(str("window.onload = function() { init();firepad.setHtml('"+self.default_text+"');}"))
+        # self.note_window.page().runJavaScript(str())
         self.note_window.load(QUrl(self.note_window.abs_path))
         print("--------------------------------------------------------------------")
         self.wirm = WIRM(self)
@@ -444,6 +459,11 @@ class TrayIcon(QSystemTrayIcon):
         self.logout.triggered.connect(self.logout_menu)
         self.tray_icon_menu.addAction(self.logout)
         self.tray_icon_menu.addSeparator()
+        self.close_window = QAction('Close',self)
+        self.close_window.triggered.connect(partial(self.close_window_method))
+        self.tray_icon_menu.addAction(self.close_window)
+        self.tray_icon_menu.addSeparator()
+        self.close_window.setVisible(False)
         exitaction = QAction('Exit',self)
         exitaction.triggered.connect(self.exit_app)
         self.tray_icon_menu.addAction(exitaction)
@@ -459,12 +479,17 @@ class TrayIcon(QSystemTrayIcon):
         self.login.setVisible(True)
         self.sync.sync_thread_flag = 0
 
+    def close_window_method(self):
+        self.note_window.close()
+        self.close_window.setVisible(False)
 
     def show_note_menu(self,session_num = 1):   # To separate thread function from show_note function
-        self.note_window.page().runJavaScript("init()")
+        # self.note_window.page().runJavaScript("init()")
+        self.close_window.setVisible(True)
         global note_visible_flag
         if(self.show_note(session_num) == False):
             return
+
         if self.x_position == 0:
             position = self.geometry().topRight()
             self.x_position = int(position.x())
@@ -482,17 +507,43 @@ class TrayIcon(QSystemTrayIcon):
         if(self.get_note(session_num) == False):
             return False
         self.page.updatePage(self.status, self.note_hash, self.process_name, self.window_title)
-        self.note_window.page().runJavaScript(str("firepad.setHtml('"+self.default_text+"')"))
+        self.format_note()
+        js_cmd = str("firepad.setHtml('"+self.default_text+"')")
+        # print(js_cmd)
+        self.note_window.page().runJavaScript(js_cmd)
+        # self.note_window.page().runJavaScript(str("firepad.setHtml('"+"sda"+"')"))
+        # self.note_window.page().runJavaScript(str("alert()")
+
+ 
         #self.page.updatePage(self.status, self.note_hash, self.process_name, self.window_title)
         
+
+    def format_note(self):
+        style_tag = "</style>"
+        if style_tag in self.default_text:
+            # print("present", self.default_text.split("</style>")[1])
+            self.default_text = self.default_text.split("</style>")[1]
+            self.default_text = self.default_text.replace('"', '\\"')
+            self.default_text = self.default_text.strip()
+
+            # print("default text is ", self.default_text)
+            # print(type(self.default_text))
+
+        else:
+            # print("not resent")
+            pass
+
 
     def exit_app(self):
         global window_change_event_flag
         window_change_event_flag = 0
         self.wirm.active_window_thread_flag = 0
         self.internet_check_thread_flag = 0
+
         try:
+            self.sync.disconnect()
             self.sync.sync_thread_flag = 0
+            
         except:
             pass
         sys.exit(0)
@@ -527,17 +578,18 @@ class TrayIcon(QSystemTrayIcon):
             #     return False
             self.status = "old"
         else:
-            self.default_text = "empty" 
+            self.default_text = ""
             self.status = "new"
         return True
 
     def tray_icon_activated(self, reason):
         self.window_close = not self.window_close
         if(reason == QSystemTrayIcon.Trigger):
-            if(self.window_close):
+            if(not self.window_close):
                 self.show_note_menu(0)
             else:
                 self.note_window.setVisible(False)
+                self.close_window.setVisible(False)
 
 
 if __name__ == '__main__':

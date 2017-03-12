@@ -3,108 +3,75 @@ import pymongo
 import datetime
 import hashlib
 
-class notes:
-	def __init__(self, note_hash = None, note_attr_obj = None, window_attr_obj = None):
-		self.note_hash = note_hash
-		self.note_attr_obj = note_attr_obj
-		self.window_attr_obj = window_attr_obj
 
-	def return_dict(self):
-		d = {}
-		d['note_hash'] = self.note_hash
-		d['note_attr_obj'] = self.note_attr_obj.return_dict()
-		d['window_attr_obj'] = self.window_attr_obj.return_dict()
-		return d
+DEBUG = True
+if DEBUG:
+	from colorama import init, Fore, Style
+	init(autoreset=True)
 
-	#For testing
+def dprint(text):
+	if DEBUG:
+		print(Fore.RED + Style.BRIGHT 
+			  + text)
+
+
+class Note:
+
+	def __init__(self, **kwargs):
+		self.create_time = kwargs['create_time']
+		self.text = kwargs['text']
+		self.process_name = kwargs['process_name']
+		self.window_title = kwargs['window_title']
+		self.hash_value = self.calc_hash(process_name=self.process_name, window_title=self.window_title)
+
+	def __iter__(self):
+		for key in self.__dict__:
+			yield(key, self.__dict__[key])
+
+	def calc_hash(self, **kwargs):
+		sha256 = hashlib.sha256()
+		sha256.update((kwargs['process_name'] + kwargs['window_title']).encode('utf-8'))
+		hash_value = sha256.hexdigest()
+		return hash_value
+
+	# For testing
 	def __eq__(self, other):
-		return (isinstance(other, self.__class__) and
-			self.return_dict() == other.return_dict())
-
-	def return_obj(self, d):
-		self.note_hash = d['note_hash']
-		obj_note = note_attr()
-		self.note_attr_obj = obj_note.return_obj(d['note_attr_obj'])
-		obj_window = window_attr()
-		self.window_attr_obj = obj_window.return_obj(d['window_attr_obj'])
-		return self
-
-class note_attr:
-	def __init__(self, note_color = None, note_time = None, note_info = None):
-		self.note_time = note_time
-		self.note_info = note_info
-
-	def return_dict(self):
-		return self.__dict__
-
-	def return_obj(self, d):
-		self.note_time = d['note_time']
-		self.note_info = d['note_info']
-		return self
-
-class window_attr:
-	def __init__(self, process_name = None, window_title = None):
-		self.process_name = process_name
-		self.window_title = window_title
-
-	def return_dict(self):
-		return self.__dict__
-
-	def return_obj(self, d):
-		self.process_name = d['process_name']
-		self.window_title = d['window_title']
-		return self
+		return (isinstance(other, self.__class__) and dict(self) == dict(other))
 
 
-class db_api:
+class Db:
+
 	def __init__(self):
-		# Connection to Mongo DB
+		self.db_client = pymongo.MongoClient(host='localhost',
+											 port=27017,
+											 connectTimeoutMS=10000, 
+											 serverSelectionTimeoutMS=8000)
 		try:
-		    conn = pymongo.MongoClient()
-		    print ("Connected successfully!!!")
-		except (pymongo.errors.ConnectionFailure, e):
-			print ("Could not connect to MongoDB: %s" % e) 
+			self.db_client.admin.command('ismaster')	
+			print("Connected to database....!!")
+		except pymongo.errors.ConnectionFailure:
+			dprint("Could not connect to MongoDB")
+			dprint("Application startup cannot proceed. Apllication is exiting.")
+			dprint("Please check your mongoDB connection and try again.")
+			exit()
 
-		db = conn.notes_db
-		self.collection = db.notes_collection
+		self.db = self.db_client.notes_db
+		self.collection = self.db.notes_collection
 
-	def write_note_to_db(self, note_obj):    
-		d = note_obj.return_dict()
-		self.collection.insert_one(d)
+	def close(self):
+		self.db_client.close()
 
-	def read_note_from_db(self, note_hash):
-		note_obj_dict = self.collection.find_one({'note_hash' : note_hash})
-		if not note_obj_dict:
+	def insert_note(self, note):
+		return self.collection.insert_one(dict(note))
+
+	def read_note(self, hash_value):
+		note_dict = self.collection.find_one({'hash_value' : hash_value})
+		if not note_dict:
 			return None
-		note_obj = notes()
-		note_obj = note_obj.return_obj(note_obj_dict)
-		return note_obj
+		return Note(**note_dict)
 
-	def delete_note(self, note_hash):
-		note_obj_dict = self.collection.find_one_and_delete({'note_hash' : note_hash})
+	def update_note(self, note):
+		self.collection.find_one_and_replace({'hash_value' : note.hash_value}, dict(note))
 
-	def update_note(self, note_hash, note_obj):
-		new_dict = note_obj.return_dict()
-		self.collection.find_one_and_replace({'note_hash' : note_hash}, new_dict)
-
-	def insert(self, hash, text, time, window_title, process_name):
-		note_attr_obj = note_attr(None, time, text)
-
-		window_attr_obj = window_attr(process_name, window_title)
-		note = notes(hash, note_attr_obj, window_attr_obj)
-		
-		self.write_note_to_db(note)
-
-	def update(self, hash, text, time, window_title, process_name):
-		note_attr_obj = note_attr(None, time, text)
-		window_attr_obj = window_attr(process_name, window_title)
-		note = notes(hash, note_attr_obj, window_attr_obj)
-		self.update_note(hash, note)
-
-	def get_hash( self,active_window_name = "",active_window_title =""):
-		hash_obj = hashlib.sha256()
-		hash_obj.update((active_window_name+active_window_title).encode('utf-8'))
-		hash = hash_obj.hexdigest()
-		return hash
-
-	
+	def delete_note(self, hash_value):
+		self.collection.find_one_and_delete({'hash_value' : hash_value})

@@ -120,6 +120,8 @@ def generate_string(l):
 	return s
 
 def merge(s1, s2):
+	print("string s1 is : ", s1)
+	print("string s2 is : ", s2)
 	parser = MyHTMLParser()
 	parser.feed(s1)
 	l1 = parser.obj
@@ -146,7 +148,7 @@ def merge(s1, s2):
 			final_l.append(l2[in2])
 		else:  #Same rich texts
 			if l1[in1][0] == 1:  #div
-				if l1[in1][1] == l2[in1][1]:  #Same
+				if l1[in1][1] == l2[in2][1]:  #Same
 					final_l.append(l1[in1])
 				else:  #Different
 					final_l.append(l1[in1])
@@ -170,4 +172,6 @@ def merge(s1, s2):
 		final_l.append(conflict)	
 
 	final_l += l1[in1:] + l2[in2:]
-	return generate_string(final_l)
+	result = generate_string(final_l)
+	print("Merged String is : ", result)
+	return result

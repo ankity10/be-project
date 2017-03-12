@@ -12,6 +12,11 @@ from PyQt5.QtWidgets import *
 from socketclusterclient import Socketcluster
 from storage.storage2 import *
 
+global IP
+IP = "192.168.43.96"
+global PORT
+PORT = "8000"
+
 class sync:
 
 	def __init__(self, main_app):
@@ -24,11 +29,15 @@ class sync:
 		t = threading.Thread(target=self.sync_event)
 		t.start()
 
+
+	def disconnect(self):
+		self.socket.disconnect()
+
 	# def client_online_thread(self):
 	# 	asyncio.get_event_loop().run_until_complete(self.client_online())
 
 	# def client_online(self):
-	# 	async with websockets.connect('ws://localhost:8765') as websocket:
+	# 	async with websockets.connect('ws://"+IP+":8765') as websocket:
 	# 		self.retrieve_online_logs(websocket)
 	# 		self.send_offline_logs(websocket)
 
@@ -83,27 +92,37 @@ class sync:
 		print(online_log)
 		# return
 		from_client_id = online_log['from_client_id']
-		ackmessage(None, True)
 		# if(online_log['conflict_flag'] == True):	#Conflict has been resolved by some client
 		local_log = self.main_app.storage.read_log(str(online_log['note_hash']))
 		old_note = self.main_app.storage.read_note(str(online_log['note_hash']))
+
 		if(old_note == None):	# No note stored for that hash
-			note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": msg, "process_name": online_log["process_name"], "window_title": online_log["window_title"], "note_hash":online_log["note_hash"]}
-			self.main_app.storage.insert_note()
+			note_dict = {"create_time": datetime.datetime.now().time().isoformat(),
+			 "note_text": online_log["note_text"],
+			  "process_name": online_log["process_name"],
+			   "window_title": online_log["window_title"], 
+			   "note_hash":online_log["note_hash"]}
+
+			self.main_app.storage.insert_note(Note(**note_dict))
 		else:	#Note is stored for that hash
 			if(local_log == None):	#No local log present corresponding to the hash
 				old_note = self.main_app.storage.read_note(str(online_log['note_hash']))
 				# new_text = {from_client_id : online_log['note_text']}
 				old_note["note_text"] = online_log['note_text']
-				note = Note(**old_note)
-				self.main_app.storage.update_note(note)
+				# note = Note(**old_note)
+				self.main_app.storage.update_note(old_note)
 			else:	#Local log present corresponding to the hash
 				old_note = self.main_app.storage.read_note(str(online_log['note_hash']))
-				## new_text = merge(old_note,online_log['note_text'])
+				new_text = self.main_app.merge(old_note['note_text'],online_log['note_text'])
 				# new_text = {from_client_id : online_log['note_text'],self.main_app.client_id : local_log["text"]}
 				old_note["note_text"] = new_text
-				note = Note(**old_note)
-				self.main_app.storage.update_note(note)
+				local_log.note_text = new_text
+				self.main_app.storage.update_log(local_log)
+				# note = Note(**old_note)
+				self.main_app.storage.update_note(old_note)
+		ackmessage(None, True)
+		self.main_app.show_note()
+		
 		#  	else:	#Conflict has not been resolved
 		#  		old_note = self.main_app.storage.read_note(str(online_log['note_hash']))
 				# old_text = old_note["text"]
@@ -167,7 +186,8 @@ class sync:
 
 	def sync_event(self):
 		while(self.sync_thread_flag == 1):
-			self.socket = socket = Socketcluster.socket("ws://localhost:8000/socketcluster/")
+			self.socket = socket = Socketcluster.socket("ws://"+IP+":"+PORT+"/socketcluster/")
+			socket.setreconnection(False)
 			if(self.main_app.internet_on() == True):	#internet on
 				self.log_count = 0
 				self.internet_on_flag = True
@@ -192,6 +212,9 @@ class sync:
 				socket.disconnect()
 				self.internet_on_flag = False
 				self.send_offline_logs_flag = 0
+		self.send_offline_logs_flag = 0
+
+
 
 	def fail_msg_btn(self):
 		return	
