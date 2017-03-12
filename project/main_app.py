@@ -62,16 +62,14 @@ class WebPage(QWebEnginePage):
 
     
 
-    def javaScriptConsoleMessage(self, level, msg, linenumber, source_id):
-       
-        
+    def javaScriptConsoleMessage(self, level, msg, linenumber, source_id):        
         delimeter = "$"
         delimeter_index = 9
         try:
             index = msg.index(delimeter)
+            print(msg)
             if index == delimeter_index:
-                msg_list = msg.split(delimeter)[1]
-                self.save_note(str(msg_list))
+                self.save_note(msg[index+1:])
         except Exception as e:
             print("JavaScript error==>",msg, " at linenumber=", linenumber, " source id=", source_id) 
     
