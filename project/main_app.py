@@ -30,7 +30,7 @@ from functools import partial
 from merge import merge as Merge
 
 global IP
-IP = "192.168.0.107"
+IP = "192.168.43.96"
 global PORT
 PORT = "8000"
 
@@ -48,14 +48,14 @@ class WebPage(QWebEnginePage):
         super().__init__()
         self.main_app = main_app
         self.status = status
-        self.storage = Db()
+        self.storage = self.main_app.storage
         self.note_hash = note_hash
         self.process_name = process_name
         self.window_title = window_title
 
     def updatePage(self, status, note_hash, process_name, window_title):
         self.status = status
-        self.storage = Db()
+        # self.storage = self.main_app.storage
         self.note_hash = note_hash
         self.process_name = process_name
         self.window_title = window_title
@@ -219,7 +219,7 @@ class LoginWindow(QWidget):
             self.is_new = login_response["is_new"]
             self.main_app.storage.update_login_token(self.token)
             self.main_app.storage.insert_saved_password(self.username_text, self.password_text)
-            if(self.is_new == 0):   #New Client
+            if(self.is_new == 1):   #New Client
                 notes_dict = requests.get(str(self.main_app.notes_retrieve_url), headers={"Authorization" : "JWT "+self.token}).json()['notes']
                 for note in notes_dict:
                     note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": note["note_text"], "process_name": note["process_name"], "window_title": note["window_title"], "note_hash":note["note_hash"]}
@@ -374,7 +374,7 @@ class TrayIcon(QSystemTrayIcon):
         self.internet_on_flag = -1  # = -1 if thread has not checked even once, = 0 if offline, = 1 if online
         self.internet_check_thread_flag = 1
         self.win = ""
-        self.window_close = False
+        self.window_close = True
         super().__init__()
         print("wirm")
         self.storage = Db()
@@ -457,6 +457,11 @@ class TrayIcon(QSystemTrayIcon):
         self.logout.triggered.connect(self.logout_menu)
         self.tray_icon_menu.addAction(self.logout)
         self.tray_icon_menu.addSeparator()
+        self.close_window = QAction('Close',self)
+        self.close_window.triggered.connect(partial(self.close_window_method))
+        self.tray_icon_menu.addAction(self.close_window)
+        self.tray_icon_menu.addSeparator()
+        self.close_window.setVisible(False)
         exitaction = QAction('Exit',self)
         exitaction.triggered.connect(self.exit_app)
         self.tray_icon_menu.addAction(exitaction)
@@ -472,9 +477,13 @@ class TrayIcon(QSystemTrayIcon):
         self.login.setVisible(True)
         self.sync.sync_thread_flag = 0
 
+    def close_window_method(self):
+        self.note_window.close()
+        self.close_window.setVisible(False)
 
     def show_note_menu(self,session_num = 1):   # To separate thread function from show_note function
         # self.note_window.page().runJavaScript("init()")
+        self.close_window.setVisible(True)
         global note_visible_flag
         if(self.show_note(session_num) == False):
             return
@@ -567,17 +576,18 @@ class TrayIcon(QSystemTrayIcon):
             #     return False
             self.status = "old"
         else:
-            self.default_text = "empty" 
+            self.default_text = ""
             self.status = "new"
         return True
 
     def tray_icon_activated(self, reason):
         self.window_close = not self.window_close
         if(reason == QSystemTrayIcon.Trigger):
-            if(self.window_close):
+            if(not self.window_close):
                 self.show_note_menu(0)
             else:
                 self.note_window.setVisible(False)
+                self.close_window.setVisible(False)
 
 
 if __name__ == '__main__':
