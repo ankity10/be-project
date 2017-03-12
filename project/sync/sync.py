@@ -13,7 +13,7 @@ from socketclusterclient import Socketcluster
 from storage.storage2 import *
 
 global IP
-IP = "localhost"
+IP = "192.168.43.96"
 global PORT
 PORT = "8000"
 

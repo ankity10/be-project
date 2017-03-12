@@ -30,7 +30,7 @@ from functools import partial
 from merge import merge as Merge
 
 global IP
-IP = "10.42.0.1"
+IP = "192.168.43.96"
 global PORT
 PORT = "8000"
 
@@ -376,7 +376,7 @@ class TrayIcon(QSystemTrayIcon):
         self.internet_on_flag = -1  # = -1 if thread has not checked even once, = 0 if offline, = 1 if online
         self.internet_check_thread_flag = 1
         self.win = ""
-        self.window_close = False
+        self.window_close = True
         super().__init__()
         print("wirm")
         self.storage = Db()
@@ -459,6 +459,11 @@ class TrayIcon(QSystemTrayIcon):
         self.logout.triggered.connect(self.logout_menu)
         self.tray_icon_menu.addAction(self.logout)
         self.tray_icon_menu.addSeparator()
+        self.close_window = QAction('Close',self)
+        self.close_window.triggered.connect(partial(self.close_window_method))
+        self.tray_icon_menu.addAction(self.close_window)
+        self.tray_icon_menu.addSeparator()
+        self.close_window.setVisible(False)
         exitaction = QAction('Exit',self)
         exitaction.triggered.connect(self.exit_app)
         self.tray_icon_menu.addAction(exitaction)
@@ -474,9 +479,13 @@ class TrayIcon(QSystemTrayIcon):
         self.login.setVisible(True)
         self.sync.sync_thread_flag = 0
 
+    def close_window_method(self):
+        self.note_window.close()
+        self.close_window.setVisible(False)
 
     def show_note_menu(self,session_num = 1):   # To separate thread function from show_note function
         # self.note_window.page().runJavaScript("init()")
+        self.close_window.setVisible(True)
         global note_visible_flag
         if(self.show_note(session_num) == False):
             return
@@ -576,10 +585,11 @@ class TrayIcon(QSystemTrayIcon):
     def tray_icon_activated(self, reason):
         self.window_close = not self.window_close
         if(reason == QSystemTrayIcon.Trigger):
-            if(self.window_close):
+            if(not self.window_close):
                 self.show_note_menu(0)
             else:
                 self.note_window.setVisible(False)
+                self.close_window.setVisible(False)
 
 
 if __name__ == '__main__':
