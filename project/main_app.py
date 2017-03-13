@@ -124,9 +124,44 @@ class NoteWindow(QWebEngineView):
         self.setWindowTitle("LazyNotes")
         self.setWindowIcon(QIcon('graphics/notes.png'))
         self.load(QUrl(self.abs_path))
-       # self.setWindowFlags()
         self.setVisible(False)
+        self.child = None
         window_change_event_flag = 0
+        self.installEventFilter(self)
+        self.setMouseTracking(True)
+        self.min_dist = 5
+        self.mouse_press_pos = None
+        self.mouse_move_pos = None
+
+    def eventFilter(self, object, event):
+        if(event.type() == QEvent.ChildAdded and object is self and event.child().isWidgetType() and self.child==None):
+            self.child = event.child()
+            self.child.installEventFilter(self)
+        elif (event.type() == QEvent.MouseButtonPress and
+                object is self.child):
+            if event.button() == Qt.LeftButton:
+                self.mouse_press_pos = event.globalPos()                
+                self.mouse_move_pos = event.globalPos() - self.pos() 
+
+        elif (event.type() == QEvent.MouseMove and object is self.child):
+            if event.buttons() & Qt.LeftButton:
+                globalPos = event.globalPos()
+                moved = globalPos - self.mouse_press_pos
+                if moved.manhattanLength() > self.min_dist:
+                    diff = globalPos - self.mouse_move_pos
+                    self.move(diff)
+                    self.mouse_move_pos = globalPos - self.pos()
+            
+        elif (event.type() == QEvent.MouseButtonRelease and object is self.child):
+            if self.mouse_press_pos is not None:
+                if event.button() == Qt.LeftButton:
+                    moved = event.globalPos() - self.mouse_press_pos
+                    if moved.manhattanLength() > self.min_dist:
+                        event.ignore()
+                    self.mouse_press_pos = None
+        
+        return super().eventFilter(object, event)
+
 
     def closeEvent(self,event):
         global note_visible_flag
@@ -181,6 +216,9 @@ class LoginWindow(QWidget):
         self.back_button.clicked.connect(self.back_method)
         self.main_app.merge = Merge.merge
         self.setVisible(visible_flag)
+
+
+   
 
     def back_method(self):
         self.email_lbl.hide()
