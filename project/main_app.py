@@ -30,7 +30,7 @@ from functools import partial
 from merge import merge as Merge
 
 global IP
-IP = "192.168.0.110"
+IP = "192.168.0.106"
 global PORT
 PORT = "8000"
 
@@ -129,6 +129,27 @@ class NoteWindow(QWebEngineView):
         self.min_dist = 5
         self.mouse_press_pos = None
         self.mouse_move_pos = None
+        self.mouse_press_x = 0
+        self.cursor = QCursor()
+        self.window_menu = QMenu()
+        move = QAction('Move',self)
+        move.triggered.connect(self.move_selected)
+        self.window_menu.addAction(move)
+        self.window_menu.addSeparator()
+        select = QAction('Select', self)
+        select.triggered.connect(self.select_selected)
+        self.window_menu.addAction(select)
+        self.draggable = False
+        self.select = False
+        #self.setContextMenu(self.window_menu)
+
+    def move_selected(self):
+        self.draggable = True
+        self.select = True
+
+    def select_selected(self):
+        self.draggable = False
+        self.select = True
 
     def eventFilter(self, object, event):
         if(event.type() == QEvent.ChildAdded and object is self and event.child().isWidgetType() and self.child==None):
@@ -137,25 +158,30 @@ class NoteWindow(QWebEngineView):
         elif (event.type() == QEvent.MouseButtonPress and
                 object is self.child):
             if event.button() == Qt.LeftButton:
-                self.mouse_press_pos = event.globalPos()                
-                self.mouse_move_pos = event.globalPos() - self.pos() 
+                if(self.select == 0):
+                    self.window_menu.exec_(self.pos())
+                self.mouse_press_pos = event.globalPos()          
+                self.mouse_move_pos = event.globalPos() - self.pos()
 
-        elif (event.type() == QEvent.MouseMove and object is self.child):
+
+        elif (event.type() == QEvent.MouseMove and object is self.child and self.draggable):
             if event.buttons() & Qt.LeftButton:
                 globalPos = event.globalPos()
                 moved = globalPos - self.mouse_press_pos
-                if moved.manhattanLength() > self.min_dist:
+                print(self.pos())
+                if(moved.manhattanLength() > self.min_dist):
                     diff = globalPos - self.mouse_move_pos
                     self.move(diff)
                     self.mouse_move_pos = globalPos - self.pos()
-            
+                
         elif (event.type() == QEvent.MouseButtonRelease and object is self.child):
             if self.mouse_press_pos is not None:
                 if event.button() == Qt.LeftButton:
                     moved = event.globalPos() - self.mouse_press_pos
-                    if moved.manhattanLength() > self.min_dist:
+                    if(moved.manhattanLength() > self.min_dist):
                         event.ignore()
                     self.mouse_press_pos = None
+                    self.select = False
         
         return super().eventFilter(object, event)
 
