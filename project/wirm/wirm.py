@@ -15,6 +15,7 @@ import subprocess
 import os
 import time
 
+global APP_NAME
 APP_NAME = "LazyNotes"
 
 class WIRM:

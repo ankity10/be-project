@@ -30,7 +30,7 @@ from functools import partial
 from merge import merge as Merge
 
 global IP
-IP = "192.168.43.96"
+IP = "192.168.0.106"
 global PORT
 PORT = "8000"
 
@@ -201,7 +201,15 @@ class LoginWindow(QWidget):
         self.password_text = self.password.text()  
         print("username :"+self.username_text)
         print("password :"+self.password_text)
-        login_response=requests.post(self.main_app.login_url,data = {'username' : self.username_text,'password' : self.password_text,'client_id' : self.main_app.client_id}).json()
+        try:
+            login_response=requests.post(self.main_app.login_url,data = {'username' : self.username_text,'password' : self.password_text,'client_id' : self.main_app.client_id}).json()
+        except:
+            server_fail_msg = QMessageBox()
+            server_fail_msg.setIcon(QMessageBox.Information)
+            server_fail_msg.setText("Server is offline")
+            server_fail_msg.setStandardButtons(QMessageBox.Ok)
+            server_fail_msg.setWindowTitle("Message")
+            server_fail_msg.exec_()
         self.authentication_flag = login_response["success"] 
         # print("authentication flag = "+str(self.authentication_flag))
         if(self.authentication_flag == 0):
@@ -237,6 +245,11 @@ class LoginWindow(QWidget):
                         merged_text = self.main_app.merge(note_text,old_note.note_text)
                         old_note.note_text = merged_text
                         self.main_app.storage.update_note(old_note)
+                        self.main_app.storage
+                        old_log = self.main_app.storage.read_log(note_hash)
+                        if(old_log != None):
+                            old_log.note_text = merged_text
+                            self.main_app.update_log(old_log)
             print("login successful")
             self.main_app.sync = sync(self.main_app)
             self.main_app.login.setVisible(False)
@@ -276,9 +289,7 @@ class LoginWindow(QWidget):
             signup_success_msg.setWindowTitle("Message")
             signup_success_msg.buttonClicked.connect(self.clear_textedit)
             signup_success_msg.exec_()
-            self.main_app.login.setVisible(False)
-            self.main_app.logout.setVisible(True)
-            self.main_app.sync = sync(self.main_app)
+            self.init_login()
             self.close()
         else:
             err_msg = data['errors']['username']['message']
@@ -297,74 +308,6 @@ class LoginWindow(QWidget):
         self.password.clear()
 
 
-
-class ConflictResolveWidget(QWidget):
-    def __init(self,main_app,note, window_title, note_hash, process_name):
-        super().__init__()
-        self.window_title = window_title
-        self.note_hash = note_hash
-        self.process_name = process_name
-        self.merged_text = ""
-        self.note = note_window
-        self.main_app = main_app
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
-        for client,text in self.note.items():
-            self.client_lbl = QLabel("Client Id :"+str(client), self)
-            view = QWebEngineView()
-            view.setHtml(text)
-            button = QPushButton("Keep Note!!")
-            button.clicked.connect(partial(self.resolve_conflict,text))
-
-    def resolve_conflict(self,text):
-        local_log_dict = {"note_hash" :self.note_hash,"note_text" :msg,"conflict_flag":True}
-        local_log = Local_Log(**local_log_dict)
-        if(self.storage.read_log(self.note_hash) == None):
-            self.storage.insert_log(local_log)
-        else:
-            self.storage.update_log(local_log)
-        note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": {self.main_app.client_id : text}, "process_name": self.process_name, "window_title": self.window_title, "note_hash":self.note_hash}
-        note = Note(**note_dict)
-        self.storage.update_note(note)
-
-
-class ConflictMsgBox(QMessageBox):
-    def __init__(self, main_app, note, window_title, note_hash, process_name):
-        super().__init__()
-        self.window_title = window_title
-        self.note_hash = note_hash
-        self.process_name = process_name
-        self.option_flag = 0     # = 0, if box closed without selecting any option, else 1
-        self.note = note    #Conflicting Notes
-        self.main_app = main_app
-        self.setIcon(QMessageBox.Information)
-        self.setText("There is a Merge Conflict for this note!")
-        self.setInformativeText("Do you want to resolve the merge conflict?")
-        self.setWindowTitle("Merge Conflict")
-        self.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
-        self.buttonClicked.connect(self.msg_btn)
-        self.show()
-
-    def msg_btn(self,btn):
-        if(btn == "&Yes"):
-            self.option_flag = 1
-            if(self.main_app.internet_on_flag != 1):
-                net_off_msg = QMessageBox()
-                net_off_msg.setIcon(QMessageBox.Information)
-                net_off_msg.setText("You are offline!")
-                net_off_msg.setStandardButtons(QMessageBox.Ok)
-                net_off_msg.show()
-            elif(self.main_app.login_credentials.token == 0):
-                logged_out_msg = QMessageBox()
-                logged_out_msg.setIcon(QMessageBox.Information)
-                logged_out_msg.setText("You are not Logged In!")
-                logged_out_msg.setStandardButtons(QMessageBox.Ok)
-                logged_out_msg.show()
-            else:
-                self.conflict_resolve_widget = ConflictResolveWidget(self.main_app,self.note,self.window_title,
-                                                                     self.note_hash, self.process_name)
-
-
 class TrayIcon(QSystemTrayIcon):
 
     def __init__(self):
@@ -373,8 +316,8 @@ class TrayIcon(QSystemTrayIcon):
         self.notes_retrieve_url = "http://"+IP+":"+PORT+"/api/notes"
         self.login_url = "http://"+IP+":"+PORT+"/api/user/auth/login"
         self.signup_url = "http://"+IP+":"+PORT+"/api/user/auth/signup"
-        self.internet_on_flag = -1  # = -1 if thread has not checked even once, = 0 if offline, = 1 if online
         self.internet_check_thread_flag = 1
+        self.internet_on_flag = -1
         self.win = ""
         self.window_close = True
         super().__init__()
@@ -383,7 +326,7 @@ class TrayIcon(QSystemTrayIcon):
         self.login_credentials = self.storage.read_login_credentials()
         self.client_id = self.login_credentials.client_id
         print("Client id :"+str(self.client_id))
-        t = threading.Thread(target=self.internet_check_thread)
+        t = threading.Thread(target = self.internet_check_thread)
         t.start()
         self.setIcon(QIcon('graphics/notes.png'))
         self.activated.connect(self.tray_icon_activated)
@@ -412,7 +355,7 @@ class TrayIcon(QSystemTrayIcon):
 
     def init_login(self):
         print("in init login")
-        while(self.internet_on_flag == -1): #To prevent this function from starting before internet is checked
+        while(self.internet_on_flag == -1):
             continue
         if(self.internet_on_flag == 0):
             self.logout.setVisible(False)
@@ -470,13 +413,22 @@ class TrayIcon(QSystemTrayIcon):
         self.setContextMenu(self.tray_icon_menu)
 
     def login_menu(self):
-        self.login_window = LoginWindow(self)
+        if(self.internet_on_flag == 0):
+            internet_off_msg = QMessageBox()
+            internet_off_msg.setIcon(QMessageBox.Information)
+            internet_off_msg.setText("You are Offline!!")
+            internet_off_msg.setStandardButtons(QMessageBox.Ok)
+            internet_off_msg.setWindowTitle("Message")
+            internet_off_msg.exec_()
+        else:
+            self.login_window = LoginWindow(self)
 
     def logout_menu(self):
         self.storage.delete_login_token()
         self.storage.delete_saved_password()
         self.logout.setVisible(False)
         self.login.setVisible(True)
+        self.sync.disconnect()
         self.sync.sync_thread_flag = 0
 
     def close_window_method(self):
@@ -543,7 +495,7 @@ class TrayIcon(QSystemTrayIcon):
         try:
             self.sync.disconnect()
             self.sync.sync_thread_flag = 0
-            
+            self.sync.send_offline_logs_flag = 0
         except:
             pass
         sys.exit(0)
