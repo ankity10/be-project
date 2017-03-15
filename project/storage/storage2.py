@@ -184,6 +184,9 @@ class Db:
 	def update_log(self, local_log):
 		self.log_collection.find_one_and_replace({'note_hash' : local_log.note_hash}, dict(local_log))
 
+	def delete_log(self, note_hash):
+		self.log_collection.find_one_and_delete({'note_hash' : note_hash})		
+
 	def delete_note(self, note_hash):
 		self.log_collection.find_one_and_delete({'note_hash' : note_hash})
 

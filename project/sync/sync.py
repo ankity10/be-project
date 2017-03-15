@@ -13,6 +13,7 @@ from socketclusterclient import Socketcluster
 from storage.storage2 import *
 
 global IP
+
 IP = "192.168.0.106"
 global PORT
 PORT = "8000"
@@ -20,6 +21,7 @@ PORT = "8000"
 class sync:
 
 	def __init__(self, main_app):
+		print("sync started")
 		self.send_offline_logs_flag = 0
 		self.log_count = 0
 		self.main_app = main_app
@@ -41,6 +43,8 @@ class sync:
 				return
 			log_collection = self.main_app.storage.log_collection.find({})
 			for log in log_collection:
+				print("Log : ",log)
+				cont_flag = 0
 				json_log = json.loads('{}')
 				json_log["note_text"] = log['note_text']
 				json_log["process_name"] = log['process_name']
@@ -48,11 +52,17 @@ class sync:
 				json_log["from_client_id"] = log['from_client_id']
 				json_log["window_title"] = log['window_title']
 				print("str of log is ", json.dumps(json_log, sort_keys=True))
-				self.socket.emit('sendmsg', json.dumps(json_log, sort_keys=True))
-				print("log sent")		
-			delete_count = self.main_app.storage.log_collection.delete_many({}) 
+				try:
+					self.socket.emit('sendmsg', json.dumps(json_log, sort_keys=True))
+					print("log sent")
+					self.main_app.storage.delete_log(log['note_hash'])
+				except:
+					print("Socket not created")
+					break			
+				 
 
 	def onmessage(self,eventname,data, ackmessage):
+		print("on messsage got called")
 		# online_log = json.dumps(data,sort_keys=True)
 		if(data != None):	
 			print("on message got called")
@@ -184,8 +194,7 @@ class sync:
 					socket.connect()
 				except:
 					print("Server offline!!")
-					continue
-				
+					continue				
 			else:
 				try:
 					socket.disconnect()

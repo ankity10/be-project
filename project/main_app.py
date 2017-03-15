@@ -62,16 +62,13 @@ class WebPage(QWebEnginePage):
 
     
 
-    def javaScriptConsoleMessage(self, level, msg, linenumber, source_id):
-       
-        
+    def javaScriptConsoleMessage(self, level, msg, linenumber, source_id):        
         delimeter = "$"
         delimeter_index = 9
         try:
             index = msg.index(delimeter)
             if index == delimeter_index:
-                msg_list = msg.split(delimeter)[1]
-                self.save_note(str(msg_list))
+                self.save_note(msg[index+1:])
         except Exception as e:
             print("JavaScript error==>",msg, " at linenumber=", linenumber, " source id=", source_id) 
     
@@ -124,9 +121,70 @@ class NoteWindow(QWebEngineView):
         self.setWindowTitle("LazyNotes")
         self.setWindowIcon(QIcon('graphics/notes.png'))
         self.load(QUrl(self.abs_path))
-       # self.setWindowFlags()
         self.setVisible(False)
+        self.child = None
         window_change_event_flag = 0
+        self.installEventFilter(self)
+        self.setMouseTracking(True)
+        self.min_dist = 5
+        self.mouse_press_pos = None
+        self.mouse_move_pos = None
+        self.mouse_press_x = 0
+        self.cursor = QCursor()
+        self.window_menu = QMenu()
+        move = QAction('Move',self)
+        move.triggered.connect(self.move_selected)
+        self.window_menu.addAction(move)
+        self.window_menu.addSeparator()
+        select = QAction('Select', self)
+        select.triggered.connect(self.select_selected)
+        self.window_menu.addAction(select)
+        self.draggable = False
+        self.select = False
+        #self.setContextMenu(self.window_menu)
+
+    def move_selected(self):
+        self.draggable = True
+        self.select = True
+
+    def select_selected(self):
+        self.draggable = False
+        self.select = True
+
+    def eventFilter(self, object, event):
+        if(event.type() == QEvent.ChildAdded and object is self and event.child().isWidgetType() and self.child==None):
+            self.child = event.child()
+            self.child.installEventFilter(self)
+        elif (event.type() == QEvent.MouseButtonPress and
+                object is self.child):
+            if event.button() == Qt.LeftButton:
+                if(self.select == 0):
+                    self.window_menu.exec_(self.pos())
+                self.mouse_press_pos = event.globalPos()          
+                self.mouse_move_pos = event.globalPos() - self.pos()
+
+
+        elif (event.type() == QEvent.MouseMove and object is self.child and self.draggable):
+            if event.buttons() & Qt.LeftButton:
+                globalPos = event.globalPos()
+                moved = globalPos - self.mouse_press_pos
+                print(self.pos())
+                if(moved.manhattanLength() > self.min_dist):
+                    diff = globalPos - self.mouse_move_pos
+                    self.move(diff)
+                    self.mouse_move_pos = globalPos - self.pos()
+                
+        elif (event.type() == QEvent.MouseButtonRelease and object is self.child):
+            if self.mouse_press_pos is not None:
+                if event.button() == Qt.LeftButton:
+                    moved = event.globalPos() - self.mouse_press_pos
+                    if(moved.manhattanLength() > self.min_dist):
+                        event.ignore()
+                    self.mouse_press_pos = None
+                    self.select = False
+        
+        return super().eventFilter(object, event)
+
 
     def closeEvent(self,event):
         global note_visible_flag
@@ -182,6 +240,9 @@ class LoginWindow(QWidget):
         self.main_app.merge = Merge.merge
         self.setVisible(visible_flag)
 
+
+   
+
     def back_method(self):
         self.email_lbl.hide()
         self.email.hide()
@@ -227,10 +288,13 @@ class LoginWindow(QWidget):
             self.main_app.login_credentials.token = self.token
             self.main_app.storage.update_login_token(self.token)
             self.is_new = login_response["is_new"]
-            self.main_app.storage.update_login_token(self.token)
             self.main_app.storage.insert_saved_password(self.username_text, self.password_text)
+            print("is_new = ", self.is_new)
             if(self.is_new == 1):   #New Client
-                notes_dict = requests.get(str(self.main_app.notes_retrieve_url), headers={"Authorization" : "JWT "+self.token}).json()['notes']
+                notes_json = requests.get(str(self.main_app.notes_retrieve_url), headers={"Authorization" : "JWT "+self.token}).json()
+                print("JSON " + "="*30, notes_json)
+                notes_dict = notes_json['notes']
+                print("Dict " + "="*30, notes_dict)
                 for note in notes_dict:
                     note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": note["note_text"], "process_name": note["process_name"], "window_title": note["window_title"], "note_hash":note["note_hash"]}
                     note_hash = note["note_hash"]
