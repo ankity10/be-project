@@ -271,6 +271,8 @@ class LoginWindow(QWidget):
             server_fail_msg.setStandardButtons(QMessageBox.Ok)
             server_fail_msg.setWindowTitle("Message")
             server_fail_msg.exec_()
+            self.main_app.login.setVisible(True)
+            self.main_app.logout.setVisible(False)
             return
         self.authentication_flag = login_response["success"] 
         # print("authentication flag = "+str(self.authentication_flag))
@@ -292,12 +294,23 @@ class LoginWindow(QWidget):
             self.main_app.storage.insert_saved_password(self.username_text, self.password_text)
             print("is_new = ", self.is_new)
             if(self.is_new == 1):   #New Client
-                notes_json = requests.get(str(self.main_app.notes_retrieve_url), headers={"Authorization" : "JWT "+self.token}).json()
-                print("JSON " + "="*30, notes_json)
-                notes_dict = notes_json['notes']
-                print("Dict " + "="*30, notes_dict)
+                try:
+                    notes_dict = requests.get(str(self.main_app.notes_retrieve_url), 
+                                              headers={"Authorization" : "JWT "+self.token}).json()['notes']
+                except:
+                    server_fail_msg = QMessageBox()
+                    server_fail_msg.setIcon(QMessageBox.Information)
+                    server_fail_msg.setText("Server is offline")
+                    server_fail_msg.setStandardButtons(QMessageBox.Ok)
+                    server_fail_msg.setWindowTitle("Message")
+                    server_fail_msg.exec_()
+                    return
                 for note in notes_dict:
-                    note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": note["note_text"], "process_name": note["process_name"], "window_title": note["window_title"], "note_hash":note["note_hash"]}
+                    note_dict = {"create_time": datetime.datetime.now().time().isoformat(), 
+                                 "note_text": note["note_text"], 
+                                 "process_name": note["process_name"],
+                                 "window_title": note["window_title"], 
+                                 "note_hash":note["note_hash"]}
                     note_hash = note["note_hash"]
                     window_title = note["window_title"]
                     process_name = note["process_name"]
@@ -585,14 +598,7 @@ class TrayIcon(QSystemTrayIcon):
         #print("note_hash "+self.note_hash)
         note = self.storage.read_note(self.note_hash)
         if note:
-            # #self.default_text = note.note_attr_obj.note_info
-            # if(len (note.text) == 1):   # No merge conflict to resolve
-            #     for text in list(note.text.values()):
             self.default_text = note.note_text
-            # else:   # Merge conflict
-            #     self.note_window.setVisible(False)
-            #     conflict_msg_box = ConflictMsgBox(self, note, self.window_title, self.note_hash, self.process_name)
-            #     return False
             self.status = "old"
         else:
             self.default_text = ""
