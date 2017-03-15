@@ -271,6 +271,7 @@ class LoginWindow(QWidget):
             server_fail_msg.setStandardButtons(QMessageBox.Ok)
             server_fail_msg.setWindowTitle("Message")
             server_fail_msg.exec_()
+            return
         self.authentication_flag = login_response["success"] 
         # print("authentication flag = "+str(self.authentication_flag))
         if(self.authentication_flag == 0):
