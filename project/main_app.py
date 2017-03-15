@@ -603,6 +603,7 @@ class TrayIcon(QSystemTrayIcon):
         if(reason == QSystemTrayIcon.Trigger):
             if(not self.window_close):
                 self.show_note_menu(0)
+                self.note_window.setVisible(True)
             else:
                 self.note_window.setVisible(False)
                 self.close_window.setVisible(False)
