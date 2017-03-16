@@ -519,7 +519,10 @@ class TrayIcon(QSystemTrayIcon):
         global note_visible_flag
         if(self.show_note(session_num) == False):
             return
+        self.set_position()
+        
 
+    def set_position(self):
         if self.x_position == 0:
             position = self.geometry().topRight()
             self.x_position = int(position.x())
