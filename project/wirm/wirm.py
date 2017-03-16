@@ -15,6 +15,7 @@ import subprocess
 import os
 import time
 
+global APP_NAME
 APP_NAME = "LazyNotes"
 
 class WIRM:
@@ -58,7 +59,7 @@ class WIRM:
 			    #print(".")
 			    w = (active).get_full_property(atom, Xlib.X.AnyPropertyType).value
 			except:
-			    print("*")
+			   # print("*")
 			    continue
 			if(w.decode("utf8") != self.active_window_title):
 				print("----------------------------------------------------")

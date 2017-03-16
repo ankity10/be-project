@@ -7,6 +7,7 @@ from random import randint
 from storage2 import Note, Db
 
 
+
 def gen_length():
 	return randint(2,20)
 
