@@ -199,49 +199,48 @@ class LoginWindow(QWidget):
         self.flag = 1
         self.main_app = main_app
         self.visible_flag = visible_flag
-        #self.setMinimumSize(200, 400)
         self.setGeometry(400,250,400,200)
         self.setWindowTitle('Login/Sign Up')
-        self.username_lbl = QLabel("Username :", self)
-        self.username_lbl.move(5, 5) 
-        self.username = QLineEdit(self)
-        self.username.setPlaceholderText('Username')
-        self.username.setMinimumWidth(285)
-        self.username.move(110, 5)
-        self.password_lbl = QLabel("Password :", self)
-        self.password_lbl.move(5, 30) 
-        self.password = QLineEdit(self)
+        self.username_lbl = self.create_label(5,5,"Username")
+        self.username = self.create_LineEdit(110,5,"Username",285)
+
+        self.password_lbl = self.create_label(5,30,"Password :")
+        self.password = self.create_LineEdit(110, 30, "Password",285)
         self.password.setEchoMode(2)
-        self.password.setPlaceholderText('Password')
-        self.password.setMinimumWidth(285)
-        self.password.move(110, 30)
-        self.email_lbl = QLabel("Email:", self)
-        self.email_lbl.move(5, 55)
+
+        self.email_lbl = self.create_label(5,55,"Email:")
         self.email_lbl.hide()
-        self.email = QLineEdit(self)
-        self.email.setPlaceholderText('Email')
-        self.email.setMinimumWidth(285)
-        self.email.move(110, 55)
+        self.email = self.create_LineEdit(110, 55, "Email", 285)
         self.email.hide()
-        self.login_button = QPushButton("Log In",self)
-        self.login_button.move(120,80)
-        self.login_button.clicked.connect(self.login_method)
-        self.new_user_button = QPushButton("New User?", self)
-        self.new_user_button.move(200,80)
-        self.new_user_button.clicked.connect(self.signup_ui)
-        self.signup_button = QPushButton("Sign Up", self)
-        self.signup_button.move(200,110)
+
+        self.login_button = self.create_button("Log In", self.login_method, 120, 80)
+        self.new_user_button = self.create_button("New User?", self.signup_ui, 200, 80)
+        self.signup_button = self.create_button("Sign Up", self.signup_method, 200, 110)
         self.signup_button.hide()
-        self.signup_button.clicked.connect(self.signup_method)
-        self.back_button = QPushButton("<-Back", self)
-        self.back_button.move(120,110)
+        self.back_button = self.create_button("<- Back", self.back_method, 120, 110)
         self.back_button.hide()
-        self.back_button.clicked.connect(self.back_method)
+        
         self.main_app.merge = Merge.merge
         self.setVisible(visible_flag)
 
+    def create_LineEdit(self, pos_x,pos_y, e_text, e_width):
+        line_edit = QLineEdit(self)
+        line_edit.setPlaceholderText(e_text)
+        line_edit.setMinimumWidth(e_width)
+        line_edit.move(pos_x, pos_y)
+        return line_edit
 
-   
+    def create_label(self, pos_x, pos_y, l_text):
+        label = QLabel(l_text, self)
+        label.move(pos_x, pos_y)
+        return label
+
+    def create_button(self, b_name, func_name, pos_x, pos_y):
+        button = QPushButton(b_name, self)
+        button.move(pos_x,pos_y)
+        button.clicked.connect(func_name)
+        return button
+
 
     def back_method(self):
         self.email_lbl.hide()
