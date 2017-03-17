@@ -9,12 +9,16 @@ import requests
 import json
 
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtWebEngineWidgets import * 
 from socketclusterclient import Socketcluster
 from storage.storage2 import *
 
 global IP
 
-IP = "192.168.0.106"
+IP = "192.168.0.111"
 global PORT
 PORT = "8000"
 
@@ -116,14 +120,15 @@ class sync:
 	   logging.info("connected")
 
 	def ondisconnect(self,socket):
+		msg_box = QMessageBox()
 		logging.info("on disconnect got called")
 		self.sync_thread_flag = 0
 		self.send_offline_logs_flag = 0
 		self.main_app.logout.setVisible(False)
 		self.main_app.login.setVisible(True)
 		self.send_offline_logs_flag = 0
-		if(self.logout_flag == False):
-			self.main_app.message_box("Server is offline!!",lambda:print("hello"),True)
+		if(self.logout_flag == False):	# log_out flag checks if logout has been clicked by the user or server crashed
+			self.main_app.message_box("Server is offline!!",msg_box)
 
 	def onConnectError(self,socket, error):
 	    logging.info("On connect error got called")
@@ -159,6 +164,7 @@ class sync:
 		socket.onack("msg",self.onmessage)
 
 	def sync_event(self):
+		message_box = QMessageBox()
 		while(self.sync_thread_flag == 1):
 			if(self.main_app.internet_on_flag == 1):	#internet on
 				self.socket = socket = Socketcluster.socket("ws://"+IP+":"+PORT+"/socketcluster/")
@@ -171,7 +177,7 @@ class sync:
 														   + str(self.main_app.client_id),headers={"Authorization" : "JWT "
 														   +self.main_app.login_credentials.token})
 				except:
-					self.main_app.message_box("Server is offline!!")
+					self.main_app.message_box("Server is offline!!",message_box)
 					self.main_app.login.setVisible(True)
 					self.main_app.logout.setVisible(False)
 					return
