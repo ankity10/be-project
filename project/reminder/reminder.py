@@ -24,9 +24,13 @@ class Reminder(QWidget):
 		print("UI reminder")
 		# self.setStyleSheet("""
 		# 	QWidget {
-		# 	background-color: rgb(255, 255,255); border:1px solid rgb(255, 170, 255);
+		# 	"border: 2px solid green;"
+		# 	"border-radius: 20px;"
+		# 	"padding: 2px;"
+		# 	"background-color: rgb(85, 85, 255);"
 		# 	}
 		# 	""")
+		self.setStyleSheet("border : white;")
 		self.event_name_label = QLabel("Event name", self)
 		self.event_name_label.move(5,10)
 
@@ -93,6 +97,10 @@ class Reminder(QWidget):
 		self.add_button = QPushButton("ADD",self)
 		self.add_button.move(5,120)
 		self.add_button.clicked.connect(self.reminder_added)
+
+		self.cancel_button = QPushButton("CANCEL", self)
+		self.cancel_button.move(50, 120)
+		self.cancel_button.clicked.connect(self.cancel_method)
 		if(self.target_date_selected == QDate.currentDate()):
 			self.reminder.model().item(5).setEnabled(False)
 
@@ -115,11 +123,17 @@ class Reminder(QWidget):
 		self.reminder_text = text
 		print(self.reminder_text)
 
+	def cancel_method(self):
+		self.close()
+
 	def reminder_added(self):
 		self.reminder_selection_method()
 		self.store_reminder()
-		self.setVisible(False)
-		self.thread_start = 1
+		if(self.main_app.reminder_thread_start == 0):
+			self.main_app.reminder_thread_start =1
+			t = threading.Thread(target = self.main_app.set_reminder)
+			t.start()
+		self.close()
 		# t = threading.Thread(target=self.set_reminder)
 		# t.start()
 

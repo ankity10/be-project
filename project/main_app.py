@@ -4,6 +4,8 @@ import Xlib.display
 import Xlib.threaded
 import sys
 import requests
+import notify2
+# sudo apt install python3-notify2
 import os
 import time
 import logging
@@ -405,7 +407,8 @@ class TrayIcon(QSystemTrayIcon):
         self.login_url = "http://"+IP+":"+PORT+"/api/user/auth/login"
         self.signup_url = "http://"+IP+":"+PORT+"/api/user/auth/signup"
         self.internet_check_thread_flag = 1
-        self.reminder_thread_start = 1;
+        self.reminder_thread_start = 1
+        notify2.init("Notelet")
         self.internet_on_flag = -1
         self.win = ""
         self.window_close = True
@@ -483,16 +486,20 @@ class TrayIcon(QSystemTrayIcon):
                     time.sleep(5)
                     current_time = QTime.currentTime().toPyTime()
                 print("Minute")
-                if(current_time.minute == target_time.minute):
-                    msg = QMessageBox()
-                    msg.setText("Its time")
-                    msg.setStandardButtons(QMessageBox.Ok)
-                    # msg.buttonClicked.connect(self.close_thread)
-                    msg.exec_()
+                n = notify2.Notification("Reminder","It's time")
+                n.show()
+                # if(current_time.minute == target_time.minute):
+                #     msg = QMessageBox()
+                #     msg.setText("Its time")
+                #     msg.setStandardButtons(QMessageBox.Ok)
+                #     # msg.buttonClicked.connect(self.close_thread)
+                #     msg.exec_()
                 # if(self.repetition_text != 0):
                 #   self.repetition_selection_method()
                 #   self.set_reminder()
                 self.storage.delete_reminder(reminder.note_hash, reminder.target_date, reminder.target_time)
+            else:
+                self.reminder_thread_start = 0
         print("reminder thread stopped")
 
 
