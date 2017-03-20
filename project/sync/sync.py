@@ -13,12 +13,12 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import * 
-from socketclusterclient import Socketcluster
+from socketcluster import Socketcluster
 from storage.storage2 import *
 
 global IP
 
-IP = "192.168.0.111"
+IP = "192.168.0.109"
 global PORT
 PORT = "8000"
 
@@ -153,7 +153,7 @@ class sync:
 	def onAuthentication(self,socket, isauthenticated):
 		logging.info("Authenticated is " + str(isauthenticated))
 		time.sleep(1)
-		socket.setAuthtoken(self.main_app.login_credentials.token)
+		socket.emit("auth", self.main_app.login_credentials.token)
 		if(self.main_app.login_credentials.token == "0"):
 			print("in if")
 			self.send_offline_logs_flag = 0
