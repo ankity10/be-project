@@ -14,7 +14,7 @@ from storage.storage2 import *
 
 global IP
 
-IP = "192.168.0.106"
+IP = "192.168.1.6"
 global PORT
 PORT = "8000"
 

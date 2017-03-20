@@ -34,7 +34,7 @@ from functools import partial
 from merge import merge as Merge
 
 global IP
-IP = "192.168.0.106"
+IP = "192.168.1.6"
 global PORT
 PORT = "8000"
 
@@ -122,8 +122,6 @@ class NoteWindow(QWebEngineView):
         # flags = flags | Qt.WindowStaysOnTopHint 
         # flags = flag | ~Qt.WindowTitleHint
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
-        self.setWindowFlags(self.windowFlags() | Qt.CustomizeWindowHint)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowCloseButtonHint)
         self.abs_path = "file://" + folder_path + file_path
         self.setWindowTitle("LazyNotes")
         self.setWindowIcon(QIcon('graphics/notes.png'))
@@ -133,64 +131,64 @@ class NoteWindow(QWebEngineView):
         window_change_event_flag = 0
         self.installEventFilter(self)
         self.setMouseTracking(True)
-        self.min_dist = 5
-        self.mouse_press_pos = None
-        self.mouse_move_pos = None
-        self.mouse_press_x = 0
-        self.cursor = QCursor()
-        self.window_menu = QMenu()
-        move = QAction('Move',self)
-        move.triggered.connect(self.move_selected)
-        self.window_menu.addAction(move)
-        self.window_menu.addSeparator()
-        select = QAction('Select', self)
-        select.triggered.connect(self.select_selected)
-        self.window_menu.addAction(select)
-        self.draggable = False
-        self.select = False
+        # self.min_dist = 5
+        # self.mouse_press_pos = None
+        # self.mouse_move_pos = None
+        # self.mouse_press_x = 0
+        # self.cursor = QCursor()
+        # self.window_menu = QMenu()
+        # move = QAction('Move',self)
+        # move.triggered.connect(self.move_selected)
+        # self.window_menu.addAction(move)
+        # self.window_menu.addSeparator()
+        # select = QAction('Select', self)
+        # select.triggered.connect(self.select_selected)
+        # self.window_menu.addAction(select)
+        # self.draggable = False
+        # self.select = False
         #self.setContextMenu(self.window_menu)
 
-    def move_selected(self):
-        self.draggable = True
-        self.select = True
+    # def move_selected(self):
+    #     self.draggable = True
+    #     self.select = True
 
-    def select_selected(self):
-        self.draggable = False
-        self.select = True
+    # def select_selected(self):
+    #     self.draggable = False
+    #     self.select = True
 
-    def eventFilter(self, object, event):
-        if(event.type() == QEvent.ChildAdded and object is self and event.child().isWidgetType() and self.child==None):
-            self.child = event.child()
-            self.child.installEventFilter(self)
-        elif (event.type() == QEvent.MouseButtonPress and
-                object is self.child):
-            if event.button() == Qt.LeftButton:
-                if(self.select == 0):
-                    self.window_menu.exec_(self.pos())
-                self.mouse_press_pos = event.globalPos()          
-                self.mouse_move_pos = event.globalPos() - self.pos()
+    # def eventFilter(self, object, event):
+    #     if(event.type() == QEvent.ChildAdded and object is self and event.child().isWidgetType() and self.child==None):
+    #         self.child = event.child()
+    #         self.child.installEventFilter(self)
+    #     elif (event.type() == QEvent.MouseButtonPress and
+    #             object is self.child):
+    #         if event.button() == Qt.LeftButton:
+    #             if(self.select == 0):
+    #                 self.window_menu.exec_(self.pos())
+    #             self.mouse_press_pos = event.globalPos()          
+    #             self.mouse_move_pos = event.globalPos() - self.pos()
 
 
-        elif (event.type() == QEvent.MouseMove and object is self.child and self.draggable):
-            if event.buttons() & Qt.LeftButton:
-                globalPos = event.globalPos()
-                moved = globalPos - self.mouse_press_pos
-                print(self.pos())
-                if(moved.manhattanLength() > self.min_dist):
-                    diff = globalPos - self.mouse_move_pos
-                    self.move(diff)
-                    self.mouse_move_pos = globalPos - self.pos()
+    #     elif (event.type() == QEvent.MouseMove and object is self.child and self.draggable):
+    #         if event.buttons() & Qt.LeftButton:
+    #             globalPos = event.globalPos()
+    #             moved = globalPos - self.mouse_press_pos
+    #             print(self.pos())
+    #             if(moved.manhattanLength() > self.min_dist):
+    #                 diff = globalPos - self.mouse_move_pos
+    #                 self.move(diff)
+    #                 self.mouse_move_pos = globalPos - self.pos()
                 
-        elif (event.type() == QEvent.MouseButtonRelease and object is self.child):
-            if self.mouse_press_pos is not None:
-                if event.button() == Qt.LeftButton:
-                    moved = event.globalPos() - self.mouse_press_pos
-                    if(moved.manhattanLength() > self.min_dist):
-                        event.ignore()
-                    self.mouse_press_pos = None
-                    self.select = False
+    #     elif (event.type() == QEvent.MouseButtonRelease and object is self.child):
+    #         if self.mouse_press_pos is not None:
+    #             if event.button() == Qt.LeftButton:
+    #                 moved = event.globalPos() - self.mouse_press_pos
+    #                 if(moved.manhattanLength() > self.min_dist):
+    #                     event.ignore()
+    #                 self.mouse_press_pos = None
+    #                 self.select = False
         
-        return super().eventFilter(object, event)
+    #     return super().eventFilter(object, event)
 
 
     def closeEvent(self,event):
@@ -529,11 +527,11 @@ class TrayIcon(QSystemTrayIcon):
         self.logout.triggered.connect(self.logout_menu)
         self.tray_icon_menu.addAction(self.logout)
         self.tray_icon_menu.addSeparator()
-        self.close_window = QAction('Close',self)
-        self.close_window.triggered.connect(partial(self.close_window_method))
-        self.tray_icon_menu.addAction(self.close_window)
+        # self.close_window = QAction('Close',self)
+        # self.close_window.triggered.connect(partial(self.close_window_method))
+        # self.tray_icon_menu.addAction(self.close_window)
         self.tray_icon_menu.addSeparator()
-        self.close_window.setVisible(False)
+        # self.close_window.setVisible(False)
         exitaction = QAction('Exit',self)
         exitaction.triggered.connect(self.exit_app)
         self.tray_icon_menu.addAction(exitaction)
@@ -558,13 +556,13 @@ class TrayIcon(QSystemTrayIcon):
         self.sync.disconnect()
         self.sync.sync_thread_flag = 0
 
-    def close_window_method(self):
-        self.note_window.close()
-        self.close_window.setVisible(False)
+    # def close_window_method(self):
+    #     self.note_window.close()
+    #     self.close_window.setVisible(False)
 
     def show_note_menu(self,session_num = 1):   # To separate thread function from show_note function
         # self.note_window.page().runJavaScript("init()")
-        self.close_window.setVisible(True)
+        # self.close_window.setVisible(True)
         global note_visible_flag
         if(self.show_note(session_num) == False):
             return
@@ -663,7 +661,7 @@ class TrayIcon(QSystemTrayIcon):
                 self.note_window.setVisible(True)
             else:
                 self.note_window.setVisible(False)
-                self.close_window.setVisible(False)
+                # self.close_window.setVisible(False)
 
 
 if __name__ == '__main__':
