@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append('../')
 from merge import merge
 
@@ -41,4 +42,4 @@ parser.feed(s)
 
 s1 = "<div>pict</div><div>hi ni</div>"
 s2 = "<div>pict</div><div>hi ankit</div>"
-print(merge.merge(s1,s2))
+print(merge.merge(s1, s2))

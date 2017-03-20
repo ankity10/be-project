@@ -4,29 +4,31 @@ import datetime
 import hashlib
 import uuid
 
-
 DEBUG = True
 if DEBUG:
-	from colorama import init, Fore, Style
-	init(autoreset=True)
+    from colorama import init, Fore, Style
+
+    init(autoreset=True)
+
 
 def dprint(text):
-	if DEBUG:
-		print(Fore.RED + Style.BRIGHT 
-			  + text)
+    if DEBUG:
+        print(Fore.RED + Style.BRIGHT
+              + text)
+
 
 class Local_Log:
+    def __init__(self, **kwargs):
+        self.note_hash = kwargs['note_hash']
+        self.note_text = kwargs['note_text']
+        self.from_client_id = kwargs['from_client_id']
+        self.window_title = kwargs['window_title']
+        self.process_name = kwargs['process_name']
 
-	def __init__(self, **kwargs):
-		self.note_hash = kwargs['note_hash']
-		self.note_text = kwargs['note_text']
-		self.from_client_id = kwargs['from_client_id']
-		self.window_title = kwargs['window_title']
-		self.process_name = kwargs['process_name']
+    def __iter__(self):
+        for key in self.__dict__:
+            yield (key, self.__dict__[key])
 
-	def __iter__(self):
-		for key in self.__dict__:
-			yield(key, self.__dict__[key])
 
 class Reminder_Info:
 	def __init__(self, **kwargs):
@@ -46,66 +48,68 @@ class Reminder_Info:
 
 
 class Online_Log:
+    def __init__(self, **kwargs):
+        self.from_client_id = kwargs['from_client_id']
+        self.to_client_id = kwargs['to_client_id']
+        self.note_hash = kwargs['note_hash']
+        self.note_text = kwargs['note_text']
 
-	def __init__(self, **kwargs):
-		self.from_client_id = kwargs['from_client_id']
-		self.to_client_id = kwargs['to_client_id']
-		self.note_hash = kwargs['note_hash']
-		self.note_text = kwargs['note_text']
+    def __iter__(self):
+        for key in self.__dict__:
+            yield (key, self.__dict__[key])
 
-	def __iter__(self):
-		for key in self.__dict__:
-			yield(key, self.__dict__[key])
 
 class Saved_Password:
-	def __init__(self, **kwargs):
-		self.username = kwargs['username']
-		self.password = kwargs['password']
+    def __init__(self, **kwargs):
+        self.username = kwargs['username']
+        self.password = kwargs['password']
 
-	def __iter__(self):
-		for key in self.__dict__:
-			yield(key, self.__dict__[key])
+    def __iter__(self):
+        for key in self.__dict__:
+            yield (key, self.__dict__[key])
+
 
 class Login_Credentials:
-	def __init__(self, **kwargs):
-		self.client_id = kwargs['client_id']
-		self.token = kwargs['token']
+    def __init__(self, **kwargs):
+        self.client_id = kwargs['client_id']
+        self.token = kwargs['token']
 
-	def __iter__(self):
-		for key in self.__dict__:
-			yield(key, self.__dict__[key])
+    def __iter__(self):
+        for key in self.__dict__:
+            yield (key, self.__dict__[key])
+
 
 class Note:
+    def __init__(self, **kwargs):
+        self.create_time = kwargs['create_time']
+        self.note_text = kwargs['note_text']
+        self.process_name = kwargs['process_name']
+        self.window_title = kwargs['window_title']
+        self.note_hash = self.calc_hash(process_name=self.process_name, window_title=self.window_title)
 
-	def __init__(self, **kwargs):
-		self.create_time = kwargs['create_time']
-		self.note_text = kwargs['note_text']
-		self.process_name = kwargs['process_name']
-		self.window_title = kwargs['window_title']
-		self.note_hash = self.calc_hash(process_name=self.process_name, window_title=self.window_title)
+    def __iter__(self):
+        for key in self.__dict__:
+            yield (key, self.__dict__[key])
 
-	def __iter__(self):
-		for key in self.__dict__:
-			yield(key, self.__dict__[key])
+    def calc_hash(self, **kwargs):
+        sha256 = hashlib.sha256()
+        sha256.update((kwargs['process_name'] + kwargs['window_title']).encode('utf-8'))
+        note_hash = sha256.hexdigest()
+        return note_hash
 
-	def calc_hash(self, **kwargs):
-		sha256 = hashlib.sha256()
-		sha256.update((kwargs['process_name'] + kwargs['window_title']).encode('utf-8'))
-		note_hash = sha256.hexdigest()
-		return note_hash
+    # For testing
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__) and dict(self) == dict(other))
 
-	# For testing
-	def __eq__(self, other):
-		return (isinstance(other, self.__class__) and dict(self) == dict(other))
+    def __setitem__(self, key, val):
+        setattr(self, key, val)
 
-	def __setitem__(self, key, val):
-		setattr(self, key, val)
-
-	def __getitem__(self, key):
-		return getattr(self, key)
+    def __getitem__(self, key):
+        return getattr(self, key)
 
 
 class Db:
+
 
 	def __init__(self):
 		self.db_client = pymongo.MongoClient(host='localhost',
@@ -221,6 +225,3 @@ class Db:
 
 	def delete_reminder(self, note_hash, target_date, target_time):
 		self.reminder_collection.find_one_and_delete({'note_hash' : note_hash, 'target_date' : target_date, 'target_time' : target_time})
-
-
-
