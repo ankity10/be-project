@@ -4,30 +4,13 @@ import websocket
 import logging
 import importlib
 
-Emitter = importlib.import_module(".Emitter", package="socketclusterclient")
-Parser = importlib.import_module(".Parser", package="socketclusterclient")
+from socketcluster import Emitter
+from socketcluster import Parser 
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
-class socket(Emitter.Emitter):
 
-    def __init__(self, url):
-        self.AUTHENTICATED = "authenticated"
-        self.UNAUTHENTICATED = "unauthenticated"
-        self.id = ""
-        self.cnt = 0
-        self.authToken = None
-        self.signedAuthToken = None
-        self.authState = self.UNAUTHENTICATED
-        self.url = url
-        self.acks = {}
-        self.channels = []
-        self.enablereconnection = True
-        self.delay = 3
-        self.ws = self.onConnected = self.onDisconnected = self.onConnectError = self.onSetAuthentication = self.OnAuthentication = None
-        Emitter.Emitter.__init__(self)
-
-
+class socket(Emitter.emitter):
     def emitack(self, event, object, ack):
         emitobject = json.loads('{}')
         emitobject["event"] = event
@@ -186,7 +169,6 @@ class socket(Emitter.Emitter):
                 if self.haseventack(event):
                     self.executeack(event, dataobject, self.Ack(cid))
                 else:
-                    # print("vsdfdsf")
                     self.execute(event, dataobject)
             else:
                 logging.info("Ack receive got called")
@@ -239,27 +221,20 @@ class socket(Emitter.Emitter):
         # self.ws.send(data)
 
     def setAuthtoken(self, token):
-        self.__change_authenticated_state(token)
+        self.authToken = str(token)
         # print "Token is"+self.authToken
 
-    def __change_authenticated_state(self, token):
-        self.signedAuthToken = token
-        self.authToken = self.__extract_auth_token_data(token)
-
-        if self.authState is not self.AUTHENTICATED:
-            oldState = self.authState
-            self.authState = self.AUTHENTICATED
-            stateChangeData = json.loads("{}")
-            stateChangeData['oldState'] = oldState
-            stateChangeData['newState'] = self.authState
-            stateChangeData['signedAuthToken'] = self.signedAuthToken
-            stateChangeData['authToken'] = self.authToken
-            self.emit('auth', self.signedAuthToken)
-            # self.emit('authStateChange', stateChangeData)
-        # self.emit('authTokenChange', self.signedAuthToken)
-
-    def __extract_auth_token_data(self, token):
-        return token
+    def __init__(self, url):
+        self.id = ""
+        self.cnt = 0
+        self.authToken = None
+        self.url = url
+        self.acks = {}
+        self.channels = []
+        self.enablereconnection = True
+        self.delay = 3
+        self.ws = self.onConnected = self.onDisconnected = self.onConnectError = self.onSetAuthentication = self.OnAuthentication = None
+        Emitter.emitter.__init__(self)
 
     def connect(self, sslopt=None, http_proxy_host=None, http_proxy_port=None):
         # websocket.enableTrace(True)
@@ -270,7 +245,7 @@ class socket(Emitter.Emitter):
         self.ws.on_open = self.on_open
         self.ws.run_forever(sslopt=sslopt, http_proxy_host=http_proxy_host, http_proxy_port=http_proxy_port)
 
-    def setBasicListener(self, onConnected, onDisconnected=None, onConnectError=None):
+    def setBasicListener(self, onConnected, onDisconnected, onConnectError):
         self.onConnected = onConnected
         self.onDisconnected = onDisconnected
         self.onConnectError = onConnectError
@@ -278,7 +253,7 @@ class socket(Emitter.Emitter):
     def reconnect(self):
         # print "Hello"
         Timer(self.delay, self.connect).start()
-        print("delay")
+        # print "delay"
 
     def setdelay(self, delay):
         self.delay = delay

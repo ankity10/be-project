@@ -9,12 +9,16 @@ import requests
 import json
 
 from PyQt5.QtWidgets import *
-from socketclusterclient import Socketcluster
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtWebEngineWidgets import * 
+from socketcluster import Socketcluster
 from storage.storage2 import *
 
 global IP
 
-IP = "192.168.0.106"
+IP = "192.168.0.109"
 global PORT
 PORT = "8000"
 
@@ -23,6 +27,7 @@ class sync:
 	def __init__(self, main_app):
 		print("sync started")
 		self.send_offline_logs_flag = 0
+		self.logout_flag = False	#if client has explicitly logged out
 		self.log_count = 0
 		self.main_app = main_app
 		self.sync_thread_flag = 1
@@ -32,6 +37,7 @@ class sync:
 
 
 	def disconnect(self):
+		self.logout_flag = True
 		self.socket.disconnect()
 
 	def send_offline_logs(self):
@@ -99,14 +105,6 @@ class sync:
 					self.main_app.storage.update_note(new_note)
 		ackmessage(None, True)
 		self.main_app.show_note()
-		
-		#  	else:	#Conflict has not been resolved
-		#  		old_note = self.main_app.storage.read_note(str(online_log['note_hash']))
-				# old_text = old_note["text"]
-				# old_text[online_log['from_client_id']] = online_log['note_text']
-				# old_note["text"] = old_text
-				# note = Note(**old_note)
-				# self.storage.main_app.update_note(note)
 		if(self.log_count > 0):
 			self.log_count -= 1
 		if(self.log_count == 0):	#All logs which were present while offline have been retrieved
@@ -122,16 +120,15 @@ class sync:
 	   logging.info("connected")
 
 	def ondisconnect(self,socket):
+		msg_box = QMessageBox()
 		logging.info("on disconnect got called")
+		self.sync_thread_flag = 0
+		self.send_offline_logs_flag = 0
 		self.main_app.logout.setVisible(False)
 		self.main_app.login.setVisible(True)
 		self.send_offline_logs_flag = 0
-		# server_fail_msg = QMessageBox()
-		# server_fail_msg.setIcon(QMessageBox.Information)
-		# server_fail_msg.setText("Server is offline")
-		# server_fail_msg.setStandardButtons(QMessageBox.Ok)
-		# server_fail_msg.setWindowTitle("Message")
-		# server_fail_msg.exec_()
+		if(self.logout_flag == False):	# log_out flag checks if logout has been clicked by the user or server crashed
+			self.main_app.message_box("Server is offline!!",msg_box)
 
 	def onConnectError(self,socket, error):
 	    logging.info("On connect error got called")
@@ -156,7 +153,7 @@ class sync:
 	def onAuthentication(self,socket, isauthenticated):
 		logging.info("Authenticated is " + str(isauthenticated))
 		time.sleep(1)
-		socket.setAuthtoken(self.main_app.login_credentials.token)
+		socket.emit("auth", self.main_app.login_credentials.token)
 		if(self.main_app.login_credentials.token == "0"):
 			print("in if")
 			self.send_offline_logs_flag = 0
@@ -166,10 +163,8 @@ class sync:
 		socket.on("auth-success", self.on_auth_success)
 		socket.onack("msg",self.onmessage)
 
-
-	#################################################################################
-
 	def sync_event(self):
+		message_box = QMessageBox()
 		while(self.sync_thread_flag == 1):
 			if(self.main_app.internet_on_flag == 1):	#internet on
 				self.socket = socket = Socketcluster.socket("ws://"+IP+":"+PORT+"/socketcluster/")
@@ -182,12 +177,10 @@ class sync:
 														   + str(self.main_app.client_id),headers={"Authorization" : "JWT "
 														   +self.main_app.login_credentials.token})
 				except:
-					server_fail_msg = QMessageBox()
-					server_fail_msg.setIcon(QMessageBox.Information)
-					server_fail_msg.setText("Server is offline")
-					server_fail_msg.setStandardButtons(QMessageBox.Ok)
-					server_fail_msg.setWindowTitle("Message")
-					server_fail_msg.exec_()
+					self.main_app.message_box("Server is offline!!",message_box)
+					self.main_app.login.setVisible(True)
+					self.main_app.logout.setVisible(False)
+					return
 				if(self.log_count_response.text == "Unauthorized"):	#Invalid token in requests
 					print("Unauthorized!!!")
 					continue
