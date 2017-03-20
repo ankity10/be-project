@@ -5,7 +5,7 @@ import logging
 import importlib
 
 from socketcluster import Emitter
-from socketcluster import Parser 
+from socketcluster import Parser
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
