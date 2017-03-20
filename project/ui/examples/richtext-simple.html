@@ -53,16 +53,18 @@
       var timeout_id;
       var status = $('div.status');
 
-      code_mirror.on('keypress', function(){
+      code_mirror.on('change', function(){
 
         status.text("changes pending");
         if (timeout_id) {
           clearTimeout(timeout_id);
         }
         timeout_id = setTimeout(function() {
-          console.error("note_text$" + firepad.getHtml());
+            if (firepad.getHtml()) {
+              console.error("note_text$" + firepad.getHtml());
           status.text("changes saved");
-        }, 720);
+            }
+        }, 1000);
 
       })
     })();

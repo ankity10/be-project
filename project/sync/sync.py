@@ -103,8 +103,10 @@ class sync:
                     local_log.note_text = new_text
                     self.main_app.storage.update_log(local_log)
                     self.main_app.storage.update_note(new_note)
+
         ackmessage(None, True)
         self.main_app.show_note()
+
         if (self.log_count > 0):
             self.log_count -= 1
         if (self.log_count == 0):  # All logs which were present while offline have been retrieved

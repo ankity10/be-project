@@ -138,59 +138,59 @@ class NoteWindow(QWebEngineView):
         self.mouse_move_pos = None
         self.mouse_press_x = 0
         self.cursor = QCursor()
-        self.window_menu = QMenu()
-        move = QAction('Move', self)
-        move.triggered.connect(self.move_selected)
-        self.window_menu.addAction(move)
-        self.window_menu.addSeparator()
-        select = QAction('Select', self)
-        select.triggered.connect(self.select_selected)
-        self.window_menu.addAction(select)
-        self.draggable = False
-        self.select = False
+        # self.window_menu = QMenu()
+        # move = QAction('Move', self)
+        # move.triggered.connect(self.move_selected)
+        # self.window_menu.addAction(move)
+        # self.window_menu.addSeparator()
+        # select = QAction('Select', self)
+        # select.triggered.connect(self.select_selected)
+        # self.window_menu.addAction(select)
+        # self.draggable = False
+        # self.select = False
         # self.setContextMenu(self.window_menu)
 
-    def move_selected(self):
-        self.draggable = True
-        self.select = True
-
-    def select_selected(self):
-        self.draggable = False
-        self.select = True
-
-    def eventFilter(self, object, event):
-        if (event.type() == QEvent.ChildAdded and object is self and event.child().isWidgetType() and self.child == None):
-            self.child = event.child()
-            self.child.installEventFilter(self)
-        elif (event.type() == QEvent.MouseButtonPress and
-                      object is self.child):
-            if event.button() == Qt.LeftButton:
-                if (self.select == 0):
-                    self.window_menu.exec_(self.pos())
-                self.mouse_press_pos = event.globalPos()
-                self.mouse_move_pos = event.globalPos() - self.pos()
-
-
-        elif (event.type() == QEvent.MouseMove and object is self.child and self.draggable):
-            if event.buttons() & Qt.LeftButton:
-                globalPos = event.globalPos()
-                moved = globalPos - self.mouse_press_pos
-                print(self.pos())
-                if (moved.manhattanLength() > self.min_dist):
-                    diff = globalPos - self.mouse_move_pos
-                    self.move(diff)
-                    self.mouse_move_pos = globalPos - self.pos()
-
-        elif (event.type() == QEvent.MouseButtonRelease and object is self.child):
-            if self.mouse_press_pos is not None:
-                if event.button() == Qt.LeftButton:
-                    moved = event.globalPos() - self.mouse_press_pos
-                    if (moved.manhattanLength() > self.min_dist):
-                        event.ignore()
-                    self.mouse_press_pos = None
-                    self.select = False
-
-        return super().eventFilter(object, event)
+    # def move_selected(self):
+    #     self.draggable = True
+    #     self.select = True
+    #
+    # def select_selected(self):
+    #     self.draggable = False
+    #     self.select = True
+    #
+    # def eventFilter(self, object, event):
+    #     if (event.type() == QEvent.ChildAdded and object is self and event.child().isWidgetType() and self.child == None):
+    #         self.child = event.child()
+    #         self.child.installEventFilter(self)
+    #     elif (event.type() == QEvent.MouseButtonPress and
+    #                   object is self.child):
+    #         if event.button() == Qt.LeftButton:
+    #             if (self.select == 0):
+    #                 self.window_menu.exec_(self.pos())
+    #             self.mouse_press_pos = event.globalPos()
+    #             self.mouse_move_pos = event.globalPos() - self.pos()
+    #
+    #
+    #     elif (event.type() == QEvent.MouseMove and object is self.child and self.draggable):
+    #         if event.buttons() & Qt.LeftButton:
+    #             globalPos = event.globalPos()
+    #             moved = globalPos - self.mouse_press_pos
+    #             print(self.pos())
+    #             if (moved.manhattanLength() > self.min_dist):
+    #                 diff = globalPos - self.mouse_move_pos
+    #                 self.move(diff)
+    #                 self.mouse_move_pos = globalPos - self.pos()
+    #
+    #     elif (event.type() == QEvent.MouseButtonRelease and object is self.child):
+    #         if self.mouse_press_pos is not None:
+    #             if event.button() == Qt.LeftButton:
+    #                 moved = event.globalPos() - self.mouse_press_pos
+    #                 if (moved.manhattanLength() > self.min_dist):
+    #                     event.ignore()
+    #                 self.mouse_press_pos = None
+    #                 self.select = False
+    #
+    #     return super().eventFilter(object, event)
 
     def closeEvent(self, event):
         global note_visible_flag
@@ -355,7 +355,7 @@ class LoginWindow(QWidget):
         response = requests.post(self.main_app.signup_url, 
                                  json = {'username': self.new_username, 
                                          'password' : self.new_password, 
-                                         'client' : client_id})
+                                         'client_id' : client_id})
 
         data = response.json()
         print(data)
@@ -631,7 +631,7 @@ class TrayIcon(QSystemTrayIcon):
             self.process_name = self.wirm.prev_active_window_name
 
         print("Process name = ", self.process_name)
-        if self.process_name == "sublime_text":
+        if self.process_name in ["sublime_text", "subl"]:
             print("Entered sublime_text condition")
             prev_clip = pyperclip.paste()
             pyperclip.copy("")
