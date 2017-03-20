@@ -15,39 +15,42 @@ import json
 import subprocess
 import time
 import pyperclip
+import datetime
+import time
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from PyQt5.QtWebEngineWidgets import * 
+from PyQt5.QtWebEngineWidgets import *
 from wirm.wirm import WIRM
 from storage.storage2 import Db
 from storage.storage2 import Note
 from storage.storage2 import Local_Log
 from storage.storage2 import Login_Credentials
 from storage.storage2 import Saved_Password
+from storage.storage2 import Reminder_Info
 
 from sync.sync import sync
+from reminder.reminder import *
 from functools import partial
 
 from merge import merge as Merge
 
 global IP
-IP = "192.168.0.106"
+
+IP = "192.168.0.109"
+
 global PORT
 PORT = "8000"
 
-logging.getLogger('requests').setLevel(logging.CRITICAL) #Display logs of critical type only
+logging.getLogger('requests').setLevel(logging.CRITICAL)  # Display logs of critical type only
 note_visible_flag = 0
 window_change_event_flag = 0
 APP_NAME = "LazyNotes"
 
 
-
-
 class WebPage(QWebEnginePage):
-
-    def __init__(self,main_app, status, note_hash, process_name, window_title):
+    def __init__(self, main_app, status, note_hash, process_name, window_title):
         super().__init__()
         self.main_app = main_app
         self.status = status
@@ -63,15 +66,13 @@ class WebPage(QWebEnginePage):
         self.process_name = process_name
         self.window_title = window_title
 
-    
-
-    def javaScriptConsoleMessage(self, level, msg, linenumber, source_id):        
+    def javaScriptConsoleMessage(self, level, msg, linenumber, source_id):
         delimeter = "$"
         delimeter_index = 9
         try:
             index = msg.index(delimeter)
             if index == delimeter_index:
-                self.save_note(msg[index+1:])
+                self.save_note(msg[index + 1:])
         except Exception as e:
             print("JavaScript error==>",msg, " at linenumber=", linenumber, " source id = ", source_id) 
     
@@ -97,37 +98,32 @@ class WebPage(QWebEnginePage):
                               "from_client_id" : self.main_app.client_id}
             # else:
             # local_log_dict = {"note_hash" :self.note_hash,"text" :msg}
+
             local_log = Local_Log(**local_log_dict)
-            if(self.storage.read_log(self.note_hash) == None):
+            if (self.storage.read_log(self.note_hash) == None):
                 self.storage.insert_log(local_log)
             else:
                 self.storage.update_log(local_log)
-            #############################################    
             if self.status == "new":
                 self.storage.insert_note(note)
                 self.status = "old"
                 print("new note inserted")
             elif self.status == "old":
-                # if(self.main_app.internet_on_flag != 1 or self.main_app.login_credentials.token == 0):
-                #     old_note = self.storage.read_note(self.note_hash)
-                #     note_dict["text"] = old_note.text
-                #     note_dict["text"][str(self.main_app.client_id)] = msg
-                # note = Note(**note_dict)
                 self.storage.update_note(note)
         except OSError:
-            pass # replace this with error handeling
+            pass  # replace this with error handeling
             # system related error
 
 
 class NoteWindow(QWebEngineView):
-
     def __init__(self):
         global window_change_event_flag
         super().__init__()
         file_path = '/ui/examples/richtext-simple.html'
         folder_path = os.path.abspath('./')
-        flags = Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint
-        self.setWindowFlags(flags)
+        # flags = flags | Qt.WindowStaysOnTopHint 
+        # flags = flag | ~Qt.WindowTitleHint
+        self.setWindowFlags(Qt.WindowStaysOnTopHint)
         self.abs_path = "file://" + folder_path + file_path
         self.setWindowTitle("LazyNotes")
         self.setWindowIcon(QIcon('graphics/notes.png'))
@@ -143,7 +139,7 @@ class NoteWindow(QWebEngineView):
         self.mouse_press_x = 0
         self.cursor = QCursor()
         self.window_menu = QMenu()
-        move = QAction('Move',self)
+        move = QAction('Move', self)
         move.triggered.connect(self.move_selected)
         self.window_menu.addAction(move)
         self.window_menu.addSeparator()
@@ -152,7 +148,7 @@ class NoteWindow(QWebEngineView):
         self.window_menu.addAction(select)
         self.draggable = False
         self.select = False
-        #self.setContextMenu(self.window_menu)
+        # self.setContextMenu(self.window_menu)
 
     def move_selected(self):
         self.draggable = True
@@ -163,15 +159,15 @@ class NoteWindow(QWebEngineView):
         self.select = True
 
     def eventFilter(self, object, event):
-        if(event.type() == QEvent.ChildAdded and object is self and event.child().isWidgetType() and self.child==None):
+        if (event.type() == QEvent.ChildAdded and object is self and event.child().isWidgetType() and self.child == None):
             self.child = event.child()
             self.child.installEventFilter(self)
         elif (event.type() == QEvent.MouseButtonPress and
-                object is self.child):
+                      object is self.child):
             if event.button() == Qt.LeftButton:
-                if(self.select == 0):
+                if (self.select == 0):
                     self.window_menu.exec_(self.pos())
-                self.mouse_press_pos = event.globalPos()          
+                self.mouse_press_pos = event.globalPos()
                 self.mouse_move_pos = event.globalPos() - self.pos()
 
 
@@ -180,36 +176,36 @@ class NoteWindow(QWebEngineView):
                 globalPos = event.globalPos()
                 moved = globalPos - self.mouse_press_pos
                 print(self.pos())
-                if(moved.manhattanLength() > self.min_dist):
+                if (moved.manhattanLength() > self.min_dist):
                     diff = globalPos - self.mouse_move_pos
                     self.move(diff)
                     self.mouse_move_pos = globalPos - self.pos()
-                
+
         elif (event.type() == QEvent.MouseButtonRelease and object is self.child):
             if self.mouse_press_pos is not None:
                 if event.button() == Qt.LeftButton:
                     moved = event.globalPos() - self.mouse_press_pos
-                    if(moved.manhattanLength() > self.min_dist):
+                    if (moved.manhattanLength() > self.min_dist):
                         event.ignore()
                     self.mouse_press_pos = None
                     self.select = False
-        
+
         return super().eventFilter(object, event)
 
-
-    def closeEvent(self,event):
+    def closeEvent(self, event):
         global note_visible_flag
-        self.setVisible(False) 
+        self.setVisible(False)
         note_visible_flag = 0
-        event.ignore()      
+        event.ignore()
+
 
 class LoginWindow(QWidget):
-    
-    def __init__(self,main_app,visible_flag = True):
+    def __init__(self, main_app, visible_flag=True):
         super().__init__()
         self.flag = 1
         self.main_app = main_app
         self.visible_flag = visible_flag
+
         self.setGeometry(400,250,400,200)
         self.setWindowTitle('Login/Sign Up')
         self.username_lbl = self.create_label(5,5,"Username")
@@ -217,6 +213,7 @@ class LoginWindow(QWidget):
 
         self.password_lbl = self.create_label(5,30,"Password :")
         self.password = self.create_LineEdit(110, 30, "Password",285)
+
         self.password.setEchoMode(2)
 
         self.email_lbl = self.create_label(5,55,"Email:")
@@ -224,15 +221,24 @@ class LoginWindow(QWidget):
         self.email = self.create_LineEdit(110, 55, "Email", 285)
         self.email.hide()
 
+
         self.login_button = self.create_button("Log In", self.login_method, 120, 80)
         self.new_user_button = self.create_button("New User?", self.signup_ui, 200, 80)
         self.signup_button = self.create_button("Sign Up", self.signup_method, 200, 110)
         self.signup_button.hide()
         self.back_button = self.create_button("<- Back", self.back_method, 120, 110)
+
         self.back_button.hide()
+
+        self.reminder_button = self.create_button("reminder", self.reminder_method, 120, 150)
         
         self.main_app.merge = Merge.merge
         self.setVisible(visible_flag)
+
+
+    def reminder_method(self):
+        print("Start")
+        self.main_app.reminder = Reminder(self.main_app)
 
     def create_LineEdit(self, pos_x,pos_y, e_text, e_width):
         line_edit = QLineEdit(self)
@@ -261,84 +267,65 @@ class LoginWindow(QWidget):
         self.login_button.show()
         self.back_button.hide()
 
-
     def login_method(self):
-        # print(self.username.text())
-        # print(username)
-        # if(username == ""):
-        #     print("USER"+str(self.username.text()))
-        # else:
         self.username_text = self.username.text()
-        self.password_text = self.password.text()  
-        print("username :"+self.username_text)
-        print("password :"+self.password_text)
+        self.password_text = self.password.text()
+        print("username :" + self.username_text)
+        print("password :" + self.password_text)
         try:
             login_response=requests.post(self.main_app.login_url,
                                          data = {'username' : self.username_text,
                                                  'password' : self.password_text,
                                                  'client_id' : self.main_app.client_id}).json()
         except:
-            server_fail_msg = QMessageBox()
-            server_fail_msg.setIcon(QMessageBox.Information)
-            server_fail_msg.setText("Server is offline")
-            server_fail_msg.setStandardButtons(QMessageBox.Ok)
-            server_fail_msg.setWindowTitle("Message")
-            server_fail_msg.exec_()
+            self.main_app.message_box("Server is Offline!!", self.main_app.msg_box)
             self.main_app.login.setVisible(True)
             self.main_app.logout.setVisible(False)
             return
-        self.authentication_flag = login_response["success"] 
-        # print("authentication flag = "+str(self.authentication_flag))
-        if(self.authentication_flag == 0):
+        self.authentication_flag = login_response["success"]
+        if (self.authentication_flag == 0):
             print("in if")
-            self.main_app.auth_fail_msg.setIcon(QMessageBox.Information)
-            self.main_app.auth_fail_msg.setText("Wrong User Name or Password!!")
-            self.main_app.auth_fail_msg.setStandardButtons(QMessageBox.Ok)
-            self.main_app.auth_fail_msg.show()
-            self.main_app.auth_fail_msg.buttonClicked.connect(self.auth_fail_msg_btn)
+            self.main_app.message_box("Wrong Username or Password!!", self.main_app.msg_box, self.auth_fail_msg_btn)
+            self.clear_textedit()
             self.main_app.login.setVisible(True)
             self.main_app.logout.setVisible(False)
         else:
             self.token = login_response["token"]
-            print("Token " +str(self.token))
+            print("Token " + str(self.token))
             self.main_app.login_credentials.token = self.token
             self.main_app.storage.update_login_token(self.token)
             self.is_new = login_response["is_new"]
             self.main_app.storage.insert_saved_password(self.username_text, self.password_text)
             print("is_new = ", self.is_new)
-            if(self.is_new == 1):   #New Client
+            if (self.is_new == 1):  # New Client
                 try:
-                    notes_dict = requests.get(str(self.main_app.notes_retrieve_url), 
-                                              headers={"Authorization" : "JWT "+self.token}).json()['notes']
+                    notes_dict = requests.get(str(self.main_app.notes_retrieve_url),
+                                              headers={"Authorization": "JWT " + self.token}).json()['notes']
                 except:
-                    server_fail_msg = QMessageBox()
-                    server_fail_msg.setIcon(QMessageBox.Information)
-                    server_fail_msg.setText("Server is offline")
-                    server_fail_msg.setStandardButtons(QMessageBox.Ok)
-                    server_fail_msg.setWindowTitle("Message")
-                    server_fail_msg.exec_()
+                    self.main_app.message_box("Server is Offline!!", self.main_app.msg_box)
+                    print("Hello")
                     return
                 for note in notes_dict:
-                    note_dict = {"create_time": datetime.datetime.now().time().isoformat(), 
-                                 "note_text": note["note_text"], 
+                    note_dict = {"create_time": datetime.datetime.now().time().isoformat(),
+                                 "note_text": note["note_text"],
                                  "process_name": note["process_name"],
-                                 "window_title": note["window_title"], 
-                                 "note_hash":note["note_hash"]}
+                                 "window_title": note["window_title"],
+                                 "note_hash": note["note_hash"]}
                     note_hash = note["note_hash"]
                     window_title = note["window_title"]
                     process_name = note["process_name"]
                     note_text = note["note_text"]
                     old_note = self.main_app.storage.read_note(note_hash)
-                    if(old_note == None):    # No note is present for that hash in local db
+                    if (old_note == None):  # No note is present for that hash in local db
                         note = Note(**note_dict)
                         self.main_app.storage.insert_note(note)
-                    else:   # Note is present for that hash in local db
-                        merged_text = self.main_app.merge(note_text,old_note.note_text)
+                    else:  # Note is present for that hash in local db
+                        merged_text = self.main_app.merge(note_text, old_note.note_text)
                         old_note.note_text = merged_text
                         self.main_app.storage.update_note(old_note)
                         self.main_app.storage
                         old_log = self.main_app.storage.read_log(note_hash)
-                        if(old_log != None):
+                        if (old_log != None):
                             old_log.note_text = merged_text
                             self.main_app.update_log(old_log)
             print("login successful")
@@ -369,32 +356,20 @@ class LoginWindow(QWidget):
                                  json = {'username': self.new_username, 
                                          'password' : self.new_password, 
                                          'client' : client_id})
+
         data = response.json()
         print(data)
-        if('success' in data):
+        if ('success' in data):
             new_token = data['token']
             self.main_app.login_credentials.token = new_token
-            self.main_app.storage.update_login_token(new_token) 
-            self.main_app.storage.insert_saved_password(self.new_username, self.new_password) 
-            signup_success_msg = QMessageBox()
-            signup_success_msg.setIcon(QMessageBox.Information)
-            signup_success_msg.setText("Signed up successfully")
-            signup_success_msg.setStandardButtons(QMessageBox.Ok)
-            signup_success_msg.setWindowTitle("Message")
-            signup_success_msg.buttonClicked.connect(self.clear_textedit)
-            signup_success_msg.exec_()
-            self.init_login()
+            self.main_app.storage.update_login_token(new_token)
+            self.main_app.storage.insert_saved_password(self.new_username, self.new_password)
+            self.main_app.message_box("Signed Up successfully!!", self.main_app.msg_box, self.clear_textedit)
+            self.main_app.init_login()
             self.close()
         else:
             err_msg = data['errors']['username']['message']
-            signup_fail_msg = QMessageBox()
-            signup_fail_msg.setIcon(QMessageBox.Information)
-            signup_fail_msg.setText(err_msg)
-            signup_fail_msg.setStandardButtons(QMessageBox.Ok)
-            signup_fail_msg.setWindowTitle("Message")
-            signup_fail_msg.buttonClicked.connect(self.clear_textedit)
-            signup_fail_msg.exec_()
-            
+            self.main_app.message_box(err_msg, self.main_app.msg_box, self.clear_textedit)
 
     def clear_textedit(self):
         self.username.clear()
@@ -403,14 +378,14 @@ class LoginWindow(QWidget):
 
 
 class TrayIcon(QSystemTrayIcon):
-
     def __init__(self):
-        self.auth_fail_msg = QMessageBox()
-        self.log_count_retrieval_url = "http://"+IP+":"+PORT+"/api/queue/count?queue="
-        self.notes_retrieve_url = "http://"+IP+":"+PORT+"/api/notes"
-        self.login_url = "http://"+IP+":"+PORT+"/api/user/auth/login"
-        self.signup_url = "http://"+IP+":"+PORT+"/api/user/auth/signup"
+        self.log_count_retrieval_url = "http://" + IP + ":" + PORT + "/api/rabbitmq/queue/message/count?queue="
+        self.notes_retrieve_url = "http://" + IP + ":" + PORT + "/api/notes"
+        self.login_url = "http://" + IP + ":" + PORT + "/api/auth/login"
+        self.signup_url = "http://" + IP + ":" + PORT + "/api/auth/signup"
+        self.msg_box = QMessageBox()
         self.internet_check_thread_flag = 1
+        self.reminder_thread_start = 1;
         self.internet_on_flag = -1
         self.win = ""
         self.window_close = True
@@ -419,8 +394,10 @@ class TrayIcon(QSystemTrayIcon):
         self.storage = Db()
         self.login_credentials = self.storage.read_login_credentials()
         self.client_id = self.login_credentials.client_id
-        print("Client id :"+str(self.client_id))
-        t = threading.Thread(target = self.internet_check_thread)
+        print("Client id :" + str(self.client_id))
+        t = threading.Thread(target=self.internet_check_thread)
+        t.start()
+        t = threading.Thread(target = self.set_reminder)
         t.start()
         self.setIcon(QIcon('graphics/notes.png'))
         self.activated.connect(self.tray_icon_activated)
@@ -428,46 +405,85 @@ class TrayIcon(QSystemTrayIcon):
         self.show()
         self.x_position = 0
         self.y_position = 0
-        self.thread_scheduler = 0
         self.note_hash = ""
         self.window_title = ""
         self.process_name = ""
         self.default_text = ""
         self.status = ""
         self.note_window = NoteWindow()
-        #self.note_window.window_change_event_flag = 0
-        self.init_login()   # Login attempt from stored username & password
-        self.page = WebPage(self,self.status, self.note_hash, self.process_name, self.window_title)
+        self.init_login()  # Login attempt from stored username & password
+        self.page = WebPage(self, self.status, self.note_hash, self.process_name, self.window_title)
         self.note_window.setPage(self.page)
-        # self.note_window.page().runJavaScript(str())
         self.note_window.load(QUrl(self.note_window.abs_path))
         print("--------------------------------------------------------------------")
         self.wirm = WIRM(self)
         self.note_window.setVisible(False)
-        #self.window_change_thread()
+
+    def message_box(self, message, message_box, func=lambda:print("Closing message box!")):
+        print("in message box")
+        message_box.setIcon(QMessageBox.Information)
+        message_box.setText(str(message))
+        message_box.setStandardButtons(QMessageBox.Ok)
+        message_box.setWindowTitle("Message")
+        message_box.buttonClicked.connect(func)
+        message_box.exec_()
 
 
     def init_login(self):
         print("in init login")
-        while(self.internet_on_flag == -1):
+        while (self.internet_on_flag == -1):
             continue
-        if(self.internet_on_flag == 0):
+        if (self.internet_on_flag == 0):
             self.logout.setVisible(False)
         else:
             saved_password = self.storage.read_saved_password()
-            if(saved_password == None):
+            if (saved_password == None):
                 self.logout.setVisible(False)
             else:
                 print("Logging in From saved password")
-                login_window = LoginWindow(self,False)
+                login_window = LoginWindow(self, False)
                 login_window.username.setText(saved_password.username)
                 login_window.password.setText(saved_password.password)
                 login_window.login_method()
 
+    def set_reminder(self):
+        while(self.reminder_thread_start == 1):
+            # print("In thread")
+            reminder = self.storage.read_reminder()
+            if(reminder):
+                print("reminder")
+                print(reminder.target_date)
+                target_date = datetime.datetime.strptime(reminder.target_date, '%m-%d-%Y').date()
+                target_time = datetime.datetime.strptime(reminder.target_time, '%H-%M').time()
+                while(QDate.currentDate().toPyDate() < target_date):
+                    time.sleep(5)
+                print("Date")
+                current_time = QTime.currentTime().toPyTime()
+                while(current_time.hour < target_time.hour):
+                    time.sleep(5)
+                    current_time = QTime.currentTime().toPyTime()
+                print("Hour")
+                current_time = QTime.currentTime().toPyTime()
+                while(current_time.minute < target_time.minute):
+                    time.sleep(5)
+                    current_time = QTime.currentTime().toPyTime()
+                print("Minute")
+                if(current_time.minute == target_time.minute):
+                    msg = QMessageBox()
+                    msg.setText("Its time")
+                    msg.setStandardButtons(QMessageBox.Ok)
+                    # msg.buttonClicked.connect(self.close_thread)
+                    msg.exec_()
+                # if(self.repetition_text != 0):
+                #   self.repetition_selection_method()
+                #   self.set_reminder()
+                self.storage.delete_reminder(reminder.note_hash, reminder.target_date, reminder.target_time)
+        print("reminder thread stopped")
+
 
     def internet_check_thread(self):
-        while(self.internet_check_thread_flag == 1):
-            if(self.internet_on() == True):
+        while (self.internet_check_thread_flag == 1):
+            if (self.internet_on() == True):
                 self.internet_on_flag = 1
             else:
                 self.internet_on_flag = 0
@@ -476,93 +492,93 @@ class TrayIcon(QSystemTrayIcon):
 
     def internet_on(self):
         try:
-            response=requests.get('http://google.com')
+            response = requests.get('http://google.com')
             return True
         except:
             pass
-        return False
+            return False
+
 
     def create_menu(self):
         self.tray_icon_menu = QMenu()
-        shownote = QAction('Note',self)
-        shownote.triggered.connect(partial(self.show_note_menu,0))
+        shownote = QAction('Note', self)
+        shownote.triggered.connect(partial(self.show_note_menu, 0))
         self.tray_icon_menu.addAction(shownote)
         self.tray_icon_menu.addSeparator()
-        self.login = QAction('Login/Sign Up',self)
+        self.login = QAction('Login/Sign Up', self)
         self.login.triggered.connect(self.login_menu)
         self.tray_icon_menu.addAction(self.login)
         self.tray_icon_menu.addSeparator()
-        self.logout = QAction('Log Out',self)
+        self.logout = QAction('Log Out', self)
         self.logout.triggered.connect(self.logout_menu)
         self.tray_icon_menu.addAction(self.logout)
         self.tray_icon_menu.addSeparator()
-        self.close_window = QAction('Close',self)
-        self.close_window.triggered.connect(partial(self.close_window_method))
-        self.tray_icon_menu.addAction(self.close_window)
+
+        # self.close_window = QAction('Close',self)
+        # self.close_window.triggered.connect(partial(self.close_window_method))
+        # self.tray_icon_menu.addAction(self.close_window)
         self.tray_icon_menu.addSeparator()
-        self.close_window.setVisible(False)
+        # self.close_window.setVisible(False)
         exitaction = QAction('Exit',self)
+
         exitaction.triggered.connect(self.exit_app)
         self.tray_icon_menu.addAction(exitaction)
         self.setContextMenu(self.tray_icon_menu)
 
+
     def login_menu(self):
-        if(self.internet_on_flag == 0):
-            internet_off_msg = QMessageBox()
-            internet_off_msg.setIcon(QMessageBox.Information)
-            internet_off_msg.setText("You are Offline!!")
-            internet_off_msg.setStandardButtons(QMessageBox.Ok)
-            internet_off_msg.setWindowTitle("Message")
-            internet_off_msg.exec_()
+        if (self.internet_on_flag == 0):
+            self.message_box("You are offline!!", self.msg_box)
         else:
             self.login_window = LoginWindow(self)
+
 
     def logout_menu(self):
         self.storage.delete_login_token()
         self.storage.delete_saved_password()
         self.logout.setVisible(False)
         self.login.setVisible(True)
-        self.sync.disconnect()
         self.sync.sync_thread_flag = 0
+        self.sync.disconnect()
+        self.message_box("Logged out successfully!", self.msg_box)
 
-    def close_window_method(self):
-        self.note_window.close()
-        self.close_window.setVisible(False)
 
-    def show_note_menu(self,session_num = 1):   # To separate thread function from show_note function
+    # def close_window_method(self):
+    #     self.note_window.close()
+    #     self.close_window.setVisible(False)
+
+
+    def show_note_menu(self, session_num=1):  # To separate thread function from show_note function
         # self.note_window.page().runJavaScript("init()")
-        self.close_window.setVisible(True)
+        # self.close_window.setVisible(True)
         global note_visible_flag
-        if(self.show_note(session_num) == False):
+        if (self.show_note(session_num) == False):
             return
+        self.set_position()
 
+
+    def set_position(self):
         if self.x_position == 0:
             position = self.geometry().topRight()
             self.x_position = int(position.x())
             self.y_position = int(position.y())
-            if self.x_position <= 0 :
+            if self.x_position <= 0:
                 self.x_position = QCursor().pos().x()
                 self.y_position = QCursor().pos().y()
-            self.note_window.setGeometry(self.x_position,self.y_position,250,280)
+            self.note_window.setGeometry(self.x_position, self.y_position, 250, 280)
         self.note_window.setVisible(True)
         note_visible_flag = 1
 
 
-    def show_note(self,session_num = 1):    #sesion_num = 0 when note option is clicked(for xfce), else 1
+    def show_note(self, session_num=1):  # sesion_num = 0 when note option is clicked(for xfce), else 1
         global note_visible_flag
-        if(self.get_note(session_num) == False):
+        if (self.get_note(session_num) == False):
             return False
         self.page.updatePage(self.status, self.note_hash, self.process_name, self.window_title)
         self.format_note()
-        js_cmd = str("firepad.setHtml('"+self.default_text+"')")
-        # print(js_cmd)
+        js_cmd = str("firepad.setHtml('" + self.default_text + "')")
         self.note_window.page().runJavaScript(js_cmd)
-        # self.note_window.page().runJavaScript(str("firepad.setHtml('"+"sda"+"')"))
-        # self.note_window.page().runJavaScript(str("alert()")
 
- 
-        #self.page.updatePage(self.status, self.note_hash, self.process_name, self.window_title)
-        
 
     def format_note(self):
         style_tag = "</style>"
@@ -571,10 +587,8 @@ class TrayIcon(QSystemTrayIcon):
             self.default_text = self.default_text.split("</style>")[1]
             self.default_text = self.default_text.replace('"', '\\"')
             self.default_text = self.default_text.strip()
-
-            # print("default text is ", self.default_text)
-            # print(type(self.default_text))
-
+        # print("default text is ", self.default_text)
+        # print(type(self.default_text))
         else:
             # print("not resent")
             pass
@@ -585,6 +599,7 @@ class TrayIcon(QSystemTrayIcon):
         window_change_event_flag = 0
         self.wirm.active_window_thread_flag = 0
         self.internet_check_thread_flag = 0
+        self.reminder_thread_start = 0
 
         try:
             self.sync.disconnect()
@@ -594,22 +609,27 @@ class TrayIcon(QSystemTrayIcon):
             pass
         sys.exit(0)
 
+
     def calc_hash(self, **kwargs):
         sha256 = hashlib.sha256()
         sha256.update((kwargs['process_name'] + kwargs['window_title']).encode('utf-8'))
         note_hash = sha256.hexdigest()
         return note_hash
 
-    def get_note(self, session_num = 1):
+
+    def get_note(self, session_num=1):
         global APP_NAME
-        while(self.wirm.active_window_thread_flag == 0):
+        while (self.wirm.active_window_thread_flag == 0):
             continue
         self.window_title = str(self.wirm.get_active_window_title(session_num))
-        if(self.window_title == APP_NAME):
-            print(APP_NAME)
-            return False
-        #print(self.window_title)
         self.process_name = self.wirm.get_active_window_name(session_num)
+        if (self.window_title == APP_NAME and session_num == 0):
+            return
+        elif (self.window_title == APP_NAME and session_num == 1):
+            print(APP_NAME)
+            self.window_title = self.wirm.prev_active_window_title
+            self.process_name = self.wirm.prev_active_window_name
+
         print("Process name = ", self.process_name)
         if self.process_name == "sublime_text":
             print("Entered sublime_text condition")
@@ -631,6 +651,11 @@ class TrayIcon(QSystemTrayIcon):
         
         self.note_hash = self.calc_hash(process_name = self.process_name,window_title = self.window_title)
         #print("note_hash "+self.note_hash)
+        # print(self.window_title)
+        print("##############window title :", self.window_title)
+        print("##############process name :", self.process_name)
+        self.note_hash = self.calc_hash(process_name=self.process_name, window_title=self.window_title)
+        # print("note_hash "+self.note_hash)
         note = self.storage.read_note(self.note_hash)
         if note:
             self.default_text = note.note_text
@@ -640,20 +665,20 @@ class TrayIcon(QSystemTrayIcon):
             self.status = "new"
         return True
 
+
     def tray_icon_activated(self, reason):
         self.window_close = not self.window_close
-        if(reason == QSystemTrayIcon.Trigger):
-            if(not self.window_close):
+        if (reason == QSystemTrayIcon.Trigger):
+            if (not self.window_close):
                 self.show_note_menu(0)
                 self.note_window.setVisible(True)
             else:
                 self.note_window.setVisible(False)
-                self.close_window.setVisible(False)
+                # self.close_window.setVisible(False)
 
 
 if __name__ == '__main__':
-    app=QApplication(sys.argv) 
+    app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
-    trayicon=TrayIcon()
+    trayicon = TrayIcon()
     app.exec_()
-
