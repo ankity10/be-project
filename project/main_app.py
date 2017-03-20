@@ -12,6 +12,8 @@ import hashlib
 import urllib.request
 import requests
 import json
+import datetime
+import time
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -23,8 +25,10 @@ from storage.storage2 import Note
 from storage.storage2 import Local_Log
 from storage.storage2 import Login_Credentials
 from storage.storage2 import Saved_Password
+from storage.storage2 import Reminder_Info
 
 from sync.sync import sync
+from reminder.reminder import *
 from functools import partial
 
 from merge import merge as Merge
@@ -115,8 +119,11 @@ class NoteWindow(QWebEngineView):
         super().__init__()
         file_path = '/ui/examples/richtext-simple.html'
         folder_path = os.path.abspath('./')
-        flags = Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint
-        self.setWindowFlags(flags)
+        # flags = flags | Qt.WindowStaysOnTopHint 
+        # flags = flag | ~Qt.WindowTitleHint
+        self.setWindowFlags(Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(self.windowFlags() | Qt.CustomizeWindowHint)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowCloseButtonHint)
         self.abs_path = "file://" + folder_path + file_path
         self.setWindowTitle("LazyNotes")
         self.setWindowIcon(QIcon('graphics/notes.png'))
@@ -219,9 +226,15 @@ class LoginWindow(QWidget):
         self.signup_button.hide()
         self.back_button = self.create_button("<- Back", self.back_method, 120, 110)
         self.back_button.hide()
+
+        self.reminder_button = self.create_button("reminder", self.reminder_method, 120, 150)
         
         self.main_app.merge = Merge.merge
         self.setVisible(visible_flag)
+
+    def reminder_method(self):
+        print("Start")
+        self.main_app.reminder = Reminder(self.main_app)
 
     def create_LineEdit(self, pos_x,pos_y, e_text, e_width):
         line_edit = QLineEdit(self)
@@ -394,6 +407,7 @@ class TrayIcon(QSystemTrayIcon):
         self.login_url = "http://"+IP+":"+PORT+"/api/user/auth/login"
         self.signup_url = "http://"+IP+":"+PORT+"/api/user/auth/signup"
         self.internet_check_thread_flag = 1
+        self.reminder_thread_start = 1;
         self.internet_on_flag = -1
         self.win = ""
         self.window_close = True
@@ -404,6 +418,8 @@ class TrayIcon(QSystemTrayIcon):
         self.client_id = self.login_credentials.client_id
         print("Client id :"+str(self.client_id))
         t = threading.Thread(target = self.internet_check_thread)
+        t.start()
+        t = threading.Thread(target = self.set_reminder)
         t.start()
         self.setIcon(QIcon('graphics/notes.png'))
         self.activated.connect(self.tray_icon_activated)
@@ -446,6 +462,40 @@ class TrayIcon(QSystemTrayIcon):
                 login_window.username.setText(saved_password.username)
                 login_window.password.setText(saved_password.password)
                 login_window.login_method()
+
+    def set_reminder(self):
+        while(self.reminder_thread_start == 1):
+            # print("In thread")
+            reminder = self.storage.read_reminder()
+            if(reminder):
+                print("reminder")
+                print(reminder.target_date)
+                target_date = datetime.datetime.strptime(reminder.target_date, '%m-%d-%Y').date()
+                target_time = datetime.datetime.strptime(reminder.target_time, '%H-%M').time()
+                while(QDate.currentDate().toPyDate() < target_date):
+                    time.sleep(5)
+                print("Date")
+                current_time = QTime.currentTime().toPyTime()
+                while(current_time.hour < target_time.hour):
+                    time.sleep(5)
+                    current_time = QTime.currentTime().toPyTime()
+                print("Hour")
+                current_time = QTime.currentTime().toPyTime()
+                while(current_time.minute < target_time.minute):
+                    time.sleep(5)
+                    current_time = QTime.currentTime().toPyTime()
+                print("Minute")
+                if(current_time.minute == target_time.minute):
+                    msg = QMessageBox()
+                    msg.setText("Its time")
+                    msg.setStandardButtons(QMessageBox.Ok)
+                    # msg.buttonClicked.connect(self.close_thread)
+                    msg.exec_()
+                # if(self.repetition_text != 0):
+                #   self.repetition_selection_method()
+                #   self.set_reminder()
+                self.storage.delete_reminder(reminder.note_hash, reminder.target_date, reminder.target_time)
+        print("reminder thread stopped")
 
 
     def internet_check_thread(self):
@@ -568,6 +618,7 @@ class TrayIcon(QSystemTrayIcon):
         window_change_event_flag = 0
         self.wirm.active_window_thread_flag = 0
         self.internet_check_thread_flag = 0
+        self.reminder_thread_start = 0
 
         try:
             self.sync.disconnect()

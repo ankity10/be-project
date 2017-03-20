@@ -28,6 +28,23 @@ class Local_Log:
 		for key in self.__dict__:
 			yield(key, self.__dict__[key])
 
+class Reminder_Info:
+	def __init__(self, **kwargs):
+		self.note_hash = kwargs['note_hash']
+		self.window_title = kwargs['window_title']
+		self.process_name = kwargs['process_name']
+		self.event_name = kwargs['event_name']
+		self.repetition = kwargs['repetition']
+		# self.email = kwargs['email']
+		self.reminder_time = kwargs['reminder_time']
+		self.target_date = kwargs['target_date']
+		self.target_time = kwargs['target_time']
+
+	def __iter__(self):
+		for key in self.__dict__:
+			yield(key, self.__dict__[key])
+
+
 class Online_Log:
 
 	def __init__(self, **kwargs):
@@ -125,6 +142,8 @@ class Db:
 
 		self.saved_password_collection = self.db.saved_password_collection
 
+		self.reminder_collection = self.db.reminder_collection
+
 	def delete_saved_password(self):
 		self.saved_password_collection.delete_many({})
 
@@ -189,5 +208,19 @@ class Db:
 
 	def delete_note(self, note_hash):
 		self.log_collection.find_one_and_delete({'note_hash' : note_hash})
+
+	def insert_reminder(self, reminder_info):
+		return self.reminder_collection.insert_one(dict(reminder_info))
+
+	def read_reminder(self):
+		try:
+			reminder_dict = self.reminder_collection.find().sort([('target_date',1), ('target_time' , 1)]).limit(1).next()
+		except StopIteration:
+			return None
+		return Reminder_Info(**reminder_dict)
+
+	def delete_reminder(self, note_hash, target_date, target_time):
+		self.reminder_collection.find_one_and_delete({'note_hash' : note_hash, 'target_date' : target_date, 'target_time' : target_time})
+
 
 
