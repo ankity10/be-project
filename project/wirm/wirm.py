@@ -154,7 +154,7 @@ class WIRM:
 			self.active_window_id = self.get_active_window_id()
 			active_window_id = self.active_window_id
 		self.thread_toggle = not self.thread_toggle
-		# print("ACTIVE EINDOW ID = "+str(active_window_id))
+		# print("ACTIVE WINDOW ID = "+str(active_window_id))
 		self.active = self.display.create_resource_object('window', active_window_id) 
 		#print("-----------------"+str(self.active))
 		atom = self.display.intern_atom('_NET_WM_NAME',True)
@@ -183,7 +183,7 @@ class WIRM:
 			self.active_window_id = self.prev_active_window_id
 		else:
 			self.active_window_id = self.get_active_window_id()
-		print("ACTIVE EINDOW ID = "+str(self.active_window_id))
+		print("ACTIVE WINDOW ID = "+str(self.active_window_id))
 		self.active = self.display.create_resource_object('window', self.active_window_id)
 		window_pid = self.get_active_window_pid()
 		self.active_window_name = self.get_process_name(window_pid)

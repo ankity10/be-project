@@ -12,6 +12,9 @@ import hashlib
 import urllib.request
 import requests
 import json
+import subprocess
+import time
+import pyperclip
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -70,7 +73,7 @@ class WebPage(QWebEnginePage):
             if index == delimeter_index:
                 self.save_note(msg[index+1:])
         except Exception as e:
-            print("JavaScript error==>",msg, " at linenumber=", linenumber, " source id=", source_id) 
+            print("JavaScript error==>",msg, " at linenumber=", linenumber, " source id = ", source_id) 
     
 
     def save_note(self, msg):
@@ -78,12 +81,20 @@ class WebPage(QWebEnginePage):
             # print(" before escaping",msg)
             # msg = msg.encode("string-escape")
             # print("after escaping", msg)
-            note_dict = {"create_time": datetime.datetime.now().time().isoformat(), "note_text": msg, "process_name": self.process_name, "window_title": self.window_title, "note_hash":self.note_hash}
+            note_dict = {"create_time": datetime.datetime.now().time().isoformat(), 
+                         "note_text": msg, 
+                         "process_name": self.process_name, 
+                         "window_title": self.window_title, 
+                         "note_hash":self.note_hash}
             note = Note(**note_dict)
             local_log_dict = {}
             #############################################
             # if(self.main_app.internet_on_flag != 1 or self.main_app.login_credentials.token == 0):
-            local_log_dict = {"note_hash" :self.note_hash,"note_text" :msg,"process_name": self.process_name, "window_title": self.window_title,"from_client_id" : self.main_app.client_id}
+            local_log_dict = {"note_hash" :self.note_hash,
+                              "note_text" :msg,
+                              "process_name": self.process_name, 
+                              "window_title": self.window_title,
+                              "from_client_id" : self.main_app.client_id}
             # else:
             # local_log_dict = {"note_hash" :self.note_hash,"text" :msg}
             local_log = Local_Log(**local_log_dict)
@@ -262,7 +273,10 @@ class LoginWindow(QWidget):
         print("username :"+self.username_text)
         print("password :"+self.password_text)
         try:
-            login_response=requests.post(self.main_app.login_url,data = {'username' : self.username_text,'password' : self.password_text,'client_id' : self.main_app.client_id}).json()
+            login_response=requests.post(self.main_app.login_url,
+                                         data = {'username' : self.username_text,
+                                                 'password' : self.password_text,
+                                                 'client_id' : self.main_app.client_id}).json()
         except:
             server_fail_msg = QMessageBox()
             server_fail_msg.setIcon(QMessageBox.Information)
@@ -351,7 +365,10 @@ class LoginWindow(QWidget):
         # self.new_email = self.email.text()
         client_details = self.main_app.storage.read_login_credentials()
         client_id = client_details.client_id
-        response = requests.post(self.main_app.signup_url, json = {'username': self.new_username, 'password' : self.new_password, 'client' : client_id})
+        response = requests.post(self.main_app.signup_url, 
+                                 json = {'username': self.new_username, 
+                                         'password' : self.new_password, 
+                                         'client' : client_id})
         data = response.json()
         print(data)
         if('success' in data):
@@ -593,6 +610,25 @@ class TrayIcon(QSystemTrayIcon):
             return False
         #print(self.window_title)
         self.process_name = self.wirm.get_active_window_name(session_num)
+        print("Process name = ", self.process_name)
+        if self.process_name == "sublime_text":
+            print("Entered sublime_text condition")
+            prev_clip = pyperclip.paste()
+            pyperclip.copy("")
+            time.sleep(0.5)
+            subprocess.call(["xdotool", "windowfocus", str(self.wirm.active_window_id)])
+            subprocess.call(["xdotool", "key", "ctrl+shift+l"])  #Call the sublime plugin for filepaths
+            # time.sleep(0.5)
+            filepath = pyperclip.paste()          
+
+            if(filepath == ""):
+                print("Plugin doesn't exist")
+            else:                
+                print("Filepath from sublime: ", filepath)
+                self.window_title = filepath       
+
+            pyperclip.copy(prev_clip)
+        
         self.note_hash = self.calc_hash(process_name = self.process_name,window_title = self.window_title)
         #print("note_hash "+self.note_hash)
         note = self.storage.read_note(self.note_hash)
