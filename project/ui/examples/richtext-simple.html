@@ -3,132 +3,198 @@
 <html>
 
 <head>
-  <meta charset="utf-8" />
+    <meta charset="utf-8"/>
 
-  <!-- CodeMirror -->
-  <script src="assets/codemirror.js"></script>
-  <link rel="stylesheet" href="assets/codemirror.css" />
+    <!-- CodeMirror -->
+    <script src="assets/codemirror.js"></script>
+    <link rel="stylesheet" href="assets/codemirror.css"/>
 
-  <!-- Firepad -->
-  <link rel="stylesheet" href="assets/firepad.css" />
-  <script src="../dist/firepad.js"></script>
-  <script src="assets/jquery-3.1.1.min.js"></script>
+    <!-- Firepad -->
+    <link rel="stylesheet" href="assets/firepad.css"/>
+    <script src="../dist/firepad.js"></script>
+    <script src="assets/jquery-3.1.1.min.js"></script>
 
- 
-  <style>
-    html { height: 100%; }
-    body { margin: 0; height: 100%; position: relative; }
-      /* Height / width / positioning can be customized for your use case.
-         For demo purposes, we make firepad fill the entire browser. */
-    #firepad-container {
-      width: 100%;
-      height: 100%;
-    }
-  </style>
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        html {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            height: 100%;
+            position: relative;
+        }
+
+        /* Height / width / positioning can be customized for your use case.
+           For demo purposes, we make firepad fill the entire browser. */
+        #firepad-container {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
 
 </head>
 
 
 <body onload="">
 <!-- <div class="status"></div> -->
-  <div id="firepad-container"></div>
+<div id="firepad-container"></div>
 
-  <script>
-  var escape_str = function addslashes( str ) {
-    return (str + '').replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
-  }
-  
-  var firepad;
-  var code_mirror;
+<script>
+    var escape_str = function addslashes(str) {
+        return (str + '').replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
+    }
+
+    var firepad;
+    var code_mirror;
     (init = function init() {
-      //// Create CodeMirror (with lineWrapping on).
-      code_mirror = CodeMirror(document.getElementById('firepad-container'), { lineWrapping: true });
+        //// Create CodeMirror (with lineWrapping on).
+        code_mirror = CodeMirror(document.getElementById('firepad-container'), {lineWrapping: true});
 
-      //// Create Firepad (with rich text toolbar and shortcuts enabled).
-      firepad = Firepad.fromCodeMirror(code_mirror,
-                                      { richTextToolbar: true, richTextShortcuts: true });
+        //// Create Firepad (with rich text toolbar and shortcuts enabled).
+        firepad = Firepad.fromCodeMirror(code_mirror,
+            {richTextToolbar: true, richTextShortcuts: true});
 
 
-      //// Autosave notes
-      var timeout_id;
-      var status = $('div.status');
+        var timeout_id;
+        var status = $('div.status');
 
-      code_mirror.on('keypress', function(){
-
-        status.text("changes pending");
-        if (timeout_id) {
-          clearTimeout(timeout_id);
-        }
-        timeout_id = setTimeout(function() {
-            if (firepad.getHtml()) {
-              console.error("note_text$" + firepad.getHtml());
-          status.text("changes saved");
+        // This will set a timeout for note save
+        var trigger_save_note = function (timeout) {
+            status.text("changes pending");
+            if (timeout_id) {
+                clearTimeout(timeout_id);
             }
-        }, 1000);
+            timeout_id = setTimeout(function () {
+                if (firepad.getHtml()) {
+                    console.error("note_text$" + firepad.getHtml());
+                    status.text("changes saved");
+                }
+            }, timeout);
+        }
 
-      })
+        code_mirror.on('keypress', function (e) {
+            trigger_save_note(1000);
+        });
+
+        // Adding note save triggers for backspace and delete keypress
+        $('#firepad-container').on('keydown', function (e) {
+            var key = e.keyCode || e.charCode;
+            if (key == 8 || key == 46) {
+                trigger_save_note(600);
+            }
+        });
+
+        // Adding note save triggers for shortcut key ctrl + B, ctrl + I, ctrl + U
+        $(".CodeMirror").on('keydown', function (e) {
+            if ((e.metaKey || e.ctrlKey) &&  (String.fromCharCode(e.which).toLowerCase() === 'b')) {
+//                trigger_save_note(300);
+                $(".firepad-tb-bold").parent().trigger('click');
+                return false;
+            }
+
+            else if ((e.metaKey || e.ctrlKey) && (String.fromCharCode(e.which).toLowerCase() === 'i') ) {
+                $(".firepad-tb-italic").parent().trigger('click');
+                                return false;
+
+            }
+            else if ((e.metaKey || e.ctrlKey) &&  (String.fromCharCode(e.which).toLowerCase() === 'u') ) {
+                $(".firepad-tb-underline").parent().trigger('click');
+                return false;
+
+            }
+        });
+
+
+        // Executing our keypress event after all the eventlisners execute thier code
+        $.fn.lastHandler = function (events, handler) {
+            var element = $(this);
+            events = events.split(' ');
+            for (var evt in events) {
+                var event = $(element).data("events")[events[evt]];
+                var hsucess = null;
+                $.each(event, function (i, h) {
+                    if (h.handler == handler) {
+                        hsucess = h;
+                    }
+                });
+                var index = event.indexOf(hsucess);
+                if (index > -1) {
+                    event.splice(index, 1);
+                    event.push(hsucess);
+                }
+            }
+        };
+
+        $(".firepad-btn").attr("data-active", "0");
+
+        // Adding note save triggers for rich text format buttons (top toolbar on note window)
+        onClickHandler = function (event) {
+
+            var node = $(event.target);
+            var btn;
+            if (node[0].nodeName == 'SPAN') {
+                btn = node.parent();
+            } else {
+                btn = node;
+            }
+            var data_active = btn.attr("data-active");
+
+            if (data_active == 0) {
+                btn.attr("data-active", "1");
+                btn.css("background-color", "#d07ee5");
+                btn.css("color", "#fcfcfc");
+            }
+            else {
+                btn.attr("data-active", "0");
+                btn.css("background-color", "#fcfcfc");
+                btn.css("color", "#9c9c9c");
+            }
+            //            trigger_save_note(300);
+        };
+
+        $(".firepad-btn").click(onClickHandler);
+
+        $(".firepad-btn").lastHandler(onClickHandler);
+
     })();
 
 
-    $.fn.lastHandler = function(events,handler) {
-      var element = $(this);
-      events = events.split(' ');
-      for (var evt in events) {
-          var event = $(element).data("events")[events[evt]];
-          var hsucess = null;
-          $.each(event, function (i, h) {
-              if (h.handler == handler) {
-                  hsucess = h;
-              }
-          });
-          var index = event.indexOf(hsucess);
-          if (index > -1) {
-              event.splice(index, 1);
-              event.push(hsucess);
-          }
-      }
-  };
-
-    onClickHandler = function() {
-      console.error("note_text$" + firepad.getHtml());
-    };
-    
-    $(".firepad-btn").click(onClickHandler);
-
-    $(".firepad-btn").lastHandler(onClickHandler);
-
+    // color theme changing code
     function GradientManager() {
-      var self = {};
-      var body = $("body");
+        var self = {};
+        var body = $("body");
 
-      self.gradients = [
-        {"gradient": "linear-gradient(to top, #dfe9f3 0%, white 100%)", 
-        "hover_color": "#ccc"
+        self.gradients = [
+            {
+                "gradient": "linear-gradient(to top, #dfe9f3 0%, white 100%)",
+                "hover_color": "#ccc"
+            }
+        ]
+
+        self.mappings = ['blue'];
+
+        self.showMappings = function () {
+            console.log(self.mappings);
         }
-      ]
 
-      self.mappings = ['blue'];
+        self.changeBackground = function (gradient) {
+            $("body").css("background-image", '"' + gradient + '"');
+        }
 
-      self.showMappings = function() {
-        console.log(self.mappings);
-      }
+        self.changeGradient = function (index) {
+            var gradient = self.gradients[index]['gradient'];
+            console.warn(gradient);
+            self.changeBackground(gradient);
 
-      self.changeBackground = function(gradient) {
-        $("body").css("background-image", '"'+gradient+'"');
-      }
+        }
 
-      self.changeGradient = function(index) {
-        var gradient = self.gradients[index]['gradient'];
-        console.warn(gradient);
-        self.changeBackground(gradient);
-        
-      }
-
-      return self;
-
+        return self;
     }
 
 
-  </script>
+</script>
 </body>
 </html>
