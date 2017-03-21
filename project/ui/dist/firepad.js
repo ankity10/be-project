@@ -1332,7 +1332,7 @@ firepad.RichTextToolbar = (function(global) {
 
   utils.makeEventEmitter(RichTextToolbar, ['bold', 'italic', 'underline', 'strike', 'font', 'font-size', 'color',
     'left', 'center', 'right', 'unordered-list', 'ordered-list', 'todo-list', 'indent-increase', 'indent-decrease',
-                                           'undo', 'redo', 'insert-image']);
+                                           'undo', 'redo', 'insert-image', 'settings']);
 
   RichTextToolbar.prototype.element = function() { return this.element_; };
 
@@ -1370,6 +1370,7 @@ firepad.RichTextToolbar = (function(global) {
       utils.elt('div', [self.makeButton_('strike', 'strikethrough')], { 'class': 'firepad-btn-group'}),
       utils.elt('div',[self.makeButton_('ordered-list', 'numbered-list')], { 'class': 'firepad-btn-group'}),
       utils.elt('div',[self.makeButton_('todo-list', 'list')], { 'class': 'firepad-btn-group'})
+
     ];
 
     // if (self.imageInsertionUI) {
