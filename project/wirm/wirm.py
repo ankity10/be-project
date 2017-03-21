@@ -34,7 +34,9 @@ class WIRM:
 		self.active_window_id = 0
 		self.prev_active_window_id = 1
 		self.active_window_thread_flag = 0 
+		self.prev_active_window_title = ""
 		self.active_window_title = ""
+		self.prev_active_window_name = "" 
 		self.active_window_name = ""
 		self.window_pid = "1"
 		self.thread_scheduler = 0
@@ -65,9 +67,13 @@ class WIRM:
 				print("----------------------------------------------------")
 				self.win = w.decode("utf8")
 				print ('!!!Window changed!!!!')
+				self.prev_active_window_title = self.active_window_title
 				self.active_window_title = w.decode("utf8")
+				print("************Previous window title :",self.prev_active_window_title)
+				print("************Current window title :",self.active_window_title)
 				self.prev_active_window_id = self.active_window_id
 				self.active_window_id = temp_active_window_id
+				self.get_active_window_name()
 				self.main_app.show_note()
 			time.sleep(0.1)
 			#print(".")
@@ -98,6 +104,7 @@ class WIRM:
 			if(w.decode("utf8") != self.active_window_title):
 				self.thread_scheduler = not self.thread_scheduler	#to ensure this thread executes before main_app thread
 				print ('Window changed!')
+				self.prev_active_window_title = self.active_window_title
 				self.active_window_title = w.decode("utf8")
 				self.active_window_id = temp_active_window_id
 				print("*******"+str(self.active_window_id)+"*********")
@@ -168,7 +175,10 @@ class WIRM:
 			print ("************************Bad Window")
 			return (self.active_window_title)
 		try:
+			# self.prev_active_window_title = self.active_window_title
 			self.active_window_title = w.decode("utf8")
+			print("Previous window title :",self.prev_active_window_title)
+			print("Current window title :",self.active_window_title)
 		except:
 			return (self.active_window_title)	
 		return (self.active_window_title)
@@ -186,8 +196,12 @@ class WIRM:
 		print("ACTIVE EINDOW ID = "+str(self.active_window_id))
 		self.active = self.display.create_resource_object('window', self.active_window_id)
 		window_pid = self.get_active_window_pid()
-		self.active_window_name = self.get_process_name(window_pid)
-		self.thread_toggle = not self.thread_toggle
+		if(self.get_process_name(window_pid) != self.active_window_name):
+			self.prev_active_window_name = self.active_window_name
+			self.active_window_name = self.get_process_name(window_pid)
+			self.thread_toggle = not self.thread_toggle
+		print("Previous process name :",self.prev_active_window_name)
+		print("Current process name :",self.active_window_name)
 		return (self.active_window_name)
 
 def main():

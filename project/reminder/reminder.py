@@ -143,8 +143,13 @@ class Reminder(QWidget):
 		target_time = target_time1.strftime('%H-%M')
 		target_date1 = self.target_date_selected.toPyDate()
 		target_date = target_date1.strftime('%m-%d-%Y')
-		reminder_dict_info = {"note_hash" : self.main_app.note_hash, "window_title" : self.main_app.window_title,
-						"process_name": self.main_app.process_name, "event_name" : self.event_name, "repetition": self.repetition_text,
+		window_title = self.main_app.wirm.prev_active_window_title
+		process_name = self.main_app.wirm.prev_active_window_name
+		print(window_title)
+		print(process_name)
+		note_hash = self.main_app.calc_hash(process_name = process_name, window_title = window_title)
+		reminder_dict_info = {"note_hash" : note_hash, "window_title" : window_title,
+						"process_name": process_name, "event_name" : self.event_name, "repetition": self.repetition_text,
 						"reminder_time" : self.reminder_text, "target_date" : target_date,
 						"target_time" : target_time}
 		reminder_dict = Reminder_Info(**reminder_dict_info)
