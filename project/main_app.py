@@ -14,11 +14,12 @@ import hashlib
 import urllib.request
 import requests
 import json
-import subprocess
+# import subprocess
 import time
-import pyperclip
+# import pyperclip
 import datetime
 import time
+from title_processing import TitleProcessing
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -637,9 +638,10 @@ class TrayIcon(QSystemTrayIcon):
             self.window_title = self.wirm.prev_active_window_title
             self.process_name = self.wirm.prev_active_window_name
 
-        print("Process name = ", self.process_name)
+        '''
         if self.process_name in ["sublime_text", "subl"]:
             print("Entered sublime_text condition")
+            
             prev_clip = pyperclip.paste()
             pyperclip.copy("")
             time.sleep(0.5)
@@ -655,12 +657,15 @@ class TrayIcon(QSystemTrayIcon):
                 self.window_title = filepath       
 
             pyperclip.copy(prev_clip)
+        '''
+        title_processing_obj = TitleProcessing(self.process_name, self.window_title)
+        self.window_title = title_processing_obj.get_path()
         
-        self.note_hash = self.calc_hash(process_name = self.process_name,window_title = self.window_title)
+        self.note_hash = self.calc_hash(process_name = self.process_name, window_title = self.window_title)
         #print("note_hash "+self.note_hash)
         # print(self.window_title)
-        print("##############window title :", self.window_title)
-        print("##############process name :", self.process_name)
+        print("Window title :", self.window_title)
+        print("Process name :", self.process_name)
         self.note_hash = self.calc_hash(process_name=self.process_name, window_title=self.window_title)
         # print("note_hash "+self.note_hash)
         note = self.storage.read_note(self.note_hash)
