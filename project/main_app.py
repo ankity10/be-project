@@ -4,7 +4,7 @@ import Xlib.display
 import Xlib.threaded
 import sys
 import requests
-import notify2
+# import notify2
 # sudo apt install python3-notify2
 import os
 import time
@@ -31,6 +31,8 @@ from storage.storage2 import Local_Log
 from storage.storage2 import Login_Credentials
 from storage.storage2 import Saved_Password
 from storage.storage2 import Reminder_Info
+from dateutil.relativedelta import relativedelta
+# sudo apt-get install python3-dateutil
 
 from sync.sync import sync
 from reminder.reminder import *
@@ -40,7 +42,7 @@ from merge import merge as Merge
 
 global IP
 
-IP = "192.168.0.109"
+IP = "192.168.0.111"
 
 global PORT
 PORT = "8000"
@@ -48,7 +50,7 @@ PORT = "8000"
 logging.getLogger('requests').setLevel(logging.CRITICAL)  # Display logs of critical type only
 note_visible_flag = 0
 window_change_event_flag = 0
-APP_NAME = "LazyNotes"
+APP_NAME = "Notelet"
 
 
 class WebPage(QWebEnginePage):
@@ -127,7 +129,7 @@ class NoteWindow(QWebEngineView):
         # flags = flag | ~Qt.WindowTitleHint
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
         self.abs_path = "file://" + folder_path + file_path
-        self.setWindowTitle("LazyNotes")
+        self.setWindowTitle("Notelet")
         self.setWindowIcon(QIcon('graphics/notes.png'))
         self.load(QUrl(self.abs_path))
         self.setVisible(False)
@@ -388,7 +390,7 @@ class TrayIcon(QSystemTrayIcon):
         self.msg_box = QMessageBox()
         self.internet_check_thread_flag = 1
         self.reminder_thread_start = 1
-        notify2.init("Notelet")
+        # notify2.init("Notelet")
         self.internet_on_flag = -1
         self.win = ""
         self.window_close = True
@@ -451,41 +453,62 @@ class TrayIcon(QSystemTrayIcon):
 
     def set_reminder(self):
         while(self.reminder_thread_start == 1):
-            # print("In thread")
+            print("----------------In thread-----------")
             reminder = self.storage.read_reminder()
+            self.recent_reminder = reminder
             if(reminder):
-                print("reminder")
+                print("---------------reminder------------------")
                 print(reminder.target_date)
                 target_date = datetime.datetime.strptime(reminder.target_date, '%m-%d-%Y').date()
                 target_time = datetime.datetime.strptime(reminder.target_time, '%H-%M').time()
                 while(QDate.currentDate().toPyDate() < target_date):
                     time.sleep(5)
-                print("Date")
+                    print("---------------current_date-------------")
+                    print(QDate.currentDate().toPyDate())
+                print("---------------Date-----------")
                 current_time = QTime.currentTime().toPyTime()
-                while(current_time.hour < target_time.hour):
-                    time.sleep(5)
+                while(current_time.hour < target_time.hour ):
+                    if((target_time.hour - current_time.hour) > 1):
+                        time.sleep(50)
+                    else:
+                        time.sleep(5)
                     current_time = QTime.currentTime().toPyTime()
-                print("Hour")
+                print("--------------Hour-----------")
                 current_time = QTime.currentTime().toPyTime()
                 while(current_time.minute < target_time.minute):
-                    time.sleep(5)
+                    time.sleep(3)
                     current_time = QTime.currentTime().toPyTime()
-                print("Minute")
-                n = notify2.Notification("Reminder","It's time")
-                n.show()
+                print("-----------Minute----------")
+                if(current_time.minute == target_time.minute):
+                    # n = notify2.Notification("Reminder","It's time")
+                    # n.show()
                 # if(current_time.minute == target_time.minute):
-                #     msg = QMessageBox()
-                #     msg.setText("Its time")
-                #     msg.setStandardButtons(QMessageBox.Ok)
-                #     # msg.buttonClicked.connect(self.close_thread)
-                #     msg.exec_()
+                    msg = QMessageBox()
+                    msg.setText("Its time")
+                    msg.setStandardButtons(QMessageBox.Ok)
+                    # msg.buttonClicked.connect(self.close_thread)
+                    msg.exec_()
                 # if(self.repetition_text != 0):
                 #   self.repetition_selection_method()
                 #   self.set_reminder()
-                self.storage.delete_reminder(reminder.note_hash, reminder.target_date, reminder.target_time)
+                    if(reminder.repetition != 0):
+                        if(reminder.repetition == 1):
+                            target_date = target_date + datetime.timedelta(days=1)
+                        elif(reminder.repetition == 2):
+                            target_date = target_date +datetime.timedelta(days=7)
+                        elif(reminder.repetition == 3):
+                            target_date = target_date + relativedelta(months = 1)
+                        print("----------updated date is----------")
+                        print(target_date)
+                        target_date_string = target_date.strftime('%m-%d-%Y')
+                        reminder.target_date = target_date_string
+                        self.storage.update_reminder(reminder.note_hash, reminder.event_name, reminder)
+                    else:
+                        self.storage.delete_reminder(reminder.note_hash, reminder.target_date, reminder.target_time)
+                    # reminder = self.storage.read_reminder()
             else:
                 self.reminder_thread_start = 0
-        print("reminder thread stopped")
+        print("-----------------reminder thread stopped----------------")
 
 
     def internet_check_thread(self):
