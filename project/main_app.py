@@ -330,7 +330,7 @@ class LoginWindow(QWidget):
                         old_log = self.main_app.storage.read_log(note_hash)
                         if (old_log != None):
                             old_log.note_text = merged_text
-                            self.main_app.update_log(old_log)
+                            self.main_app.storage.update_log(old_log)
             print("login successful")
             self.main_app.sync = sync(self.main_app)
             self.main_app.login.setVisible(False)
@@ -546,6 +546,7 @@ class TrayIcon(QSystemTrayIcon):
         self.storage.delete_saved_password()
         self.logout.setVisible(False)
         self.login.setVisible(True)
+        self.sync.send_offline_logs_flag = 1
         self.sync.sync_thread_flag = 0
         self.sync.disconnect()
         self.message_box("Logged out successfully!", self.msg_box)
