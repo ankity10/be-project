@@ -545,8 +545,6 @@ class TrayIcon(QSystemTrayIcon):
             self.window_title = self.wirm.prev_active_window_title
             self.process_name = self.wirm.prev_active_window_name
         #print(self.window_title)
-        print("##############window title :",self.window_title)
-        print("##############process name :",self.process_name)
         self.note_hash = self.calc_hash(process_name = self.process_name,window_title = self.window_title)
         #print("note_hash "+self.note_hash)
         note = self.storage.read_note(self.note_hash)

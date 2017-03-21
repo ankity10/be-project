@@ -69,8 +69,6 @@ class WIRM:
 				print ('!!!Window changed!!!!')
 				self.prev_active_window_title = self.active_window_title
 				self.active_window_title = w.decode("utf8")
-				print("************Previous window title :",self.prev_active_window_title)
-				print("************Current window title :",self.active_window_title)
 				self.prev_active_window_id = self.active_window_id
 				self.active_window_id = temp_active_window_id
 				self.main_app.show_note()
@@ -176,8 +174,6 @@ class WIRM:
 		try:
 			# self.prev_active_window_title = self.active_window_title
 			self.active_window_title = w.decode("utf8")
-			print("Previous window title :",self.prev_active_window_title)
-			print("Current window title :",self.active_window_title)
 		except:
 			return (self.active_window_title)	
 		return (self.active_window_title)
@@ -199,8 +195,6 @@ class WIRM:
 			self.prev_active_window_name = self.active_window_name
 			self.active_window_name = self.get_process_name(window_pid)
 			self.thread_toggle = not self.thread_toggle
-		print("Previous process name :",self.prev_active_window_name)
-		print("Current process name :",self.active_window_name)
 		return (self.active_window_name)
 
 def main():
