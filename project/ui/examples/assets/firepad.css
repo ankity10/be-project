@@ -405,3 +405,7 @@ a.firepad-btn:hover {
     border-color: #d07ee5;
     text-decoration: none;
 }
+
+.firepad-tb-settings:before {
+  content: "\e994";
+}
