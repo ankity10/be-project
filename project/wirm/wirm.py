@@ -18,6 +18,7 @@ import time
 global APP_NAME
 APP_NAME = "LazyNotes"
 
+
 class WIRM:
 	def active_window_thread(self):
 		self.active_window_thread_flag = 1
@@ -210,6 +211,7 @@ def main():
 		title = w.get_active_window_title()
 		print (title)
 		time.sleep(1)
-	
+
+
 if __name__ == '__main__':
 	main()

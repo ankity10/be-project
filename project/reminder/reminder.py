@@ -4,7 +4,6 @@ from PyQt5.QtWidgets import *
 import sys
 import time
 import threading
-import notify2
 from storage.storage2 import *
 import datetime
 
