@@ -4,4 +4,3 @@ pyqt5
 python-xlib
 pyperclip
 requests
-hashlib
