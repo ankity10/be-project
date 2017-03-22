@@ -57,6 +57,98 @@
         firepad = Firepad.fromCodeMirror(code_mirror,
             {richTextToolbar: true, richTextShortcuts: true});
 
+        var get_current_line_attrs = function () {
+            return firepad.richTextCodeMirror_.getCurrentAttributes_();
+        }
+
+
+        toggle_buttons_colors = function (btn_type, new_status) {
+            var btn;
+//            console.log(node, action);
+            var class_name = "firepad-tb-" + btn_type;
+            var selector = "." + class_name;
+            node = $(selector);
+
+            if (node[0].nodeName == 'SPAN') {
+                btn = node.parent();
+            } else {
+                btn = node;
+            }
+
+            if (new_status == 'active') {
+                btn.attr("data-active", "1");
+                btn.css("background-color", "#d07ee5");
+                btn.css("color", "#fcfcfc");
+            }
+            else if (new_status == 'inactive') {
+                btn.attr("data-active", "0");
+                btn.css("background-color", "#fcfcfc");
+                btn.css("color", "#9c9c9c");
+            }
+            else {
+
+                var data_active = btn.attr("data-active");
+
+                if (data_active == 0) {
+                    btn.attr("data-active", "1");
+                    btn.css("background-color", "#d07ee5");
+                    btn.css("color", "#fcfcfc");
+                }
+                else {
+                    btn.attr("data-active", "0");
+                    btn.css("background-color", "#fcfcfc");
+                    btn.css("color", "#9c9c9c");
+                }
+            }
+        }
+
+        var cursor_activity_callback = function () {
+//            console.log("cursor changed");
+            if (code_mirror.lineCount() >= 0 && (firepad.getText().length > 2)) {
+//                console.log("in if");
+//                console.log("firepad.getText() is : " + firepad.getText());
+//                console.log(get_current_line_attrs());
+                var attr_obj = get_current_line_attrs();
+//                console.log(attr_obj);
+                if (attr_obj.b !== undefined) {
+                    toggle_buttons_colors('bold', "active");
+                }
+                else {
+                    toggle_buttons_colors("bold", "inactive");
+                }
+
+                if (attr_obj.i !== undefined) {
+                    toggle_buttons_colors("italic", "active");
+                }
+                else {
+                    toggle_buttons_colors("italic", "inactive");
+                }
+
+                if (attr_obj.u !== undefined) {
+                    toggle_buttons_colors("underline", "active")
+                }
+                else {
+                    toggle_buttons_colors("underline", "inactive");
+                }
+
+                if (attr_obj.s !== undefined) {
+                    toggle_buttons_colors("strikethrough", "active")
+                }
+                else {
+                    toggle_buttons_colors("strikethrough", "inactive");
+                }
+
+
+
+            }
+
+        }
+
+        code_mirror.on("cursorActivity", function () {
+            // settimeout for cursor event to propogate and after that we want
+            setTimeout(cursor_activity_callback, 50);
+        });
+
 
         var timeout_id;
         var status = $('div.status');
@@ -82,29 +174,59 @@
         // Adding note save triggers for backspace and delete keypress
         $('#firepad-container').on('keydown', function (e) {
             var key = e.keyCode || e.charCode;
-            if (key == 8 || key == 46) {
+            if (key == 8 || key == 46 || key == 13) {
                 trigger_save_note(600);
             }
+
         });
+
+         $(".CodeMirror").on('keydown', function (e) {
+
+//            console.log(e.ctrlKey, e.shiftKey, e.metaKey);
+//            console.log(e);
+
+
+             if (e.ctrlKey && e.shiftKey && e.keyCode === 187) {
+                 var target = $(".firepad-richtext .CodeMirror ");
+                         var current_font_size = target.css("font-size").split("px")[0];
+                         target.css("font-size", String(parseInt(current_font_size)+1)+"px");
+                         console.log("Neew font size is ", target.css("font-size"));
+             }
+             else if (e.ctrlKey && e.keyCode === 189) {
+                 var target = $(".firepad-richtext .CodeMirror ");
+                var current_font_size = target.css("font-size").split("px")[0];
+                target.css("font-size", String(parseInt(current_font_size)-1)+"px");
+                 console.log("Neew font size is ", target.css("font-size"));
+
+             }
+        });
+
+
+
 
         // Adding note save triggers for shortcut key ctrl + B, ctrl + I, ctrl + U
         $(".CodeMirror").on('keydown', function (e) {
-            if ((e.metaKey || e.ctrlKey) &&  (String.fromCharCode(e.which).toLowerCase() === 'b')) {
+
+//            console.log(e.ctrlKey, e.shiftKey, e.metaKey);
+//            console.log(e);
+
+            if ((e.metaKey || e.ctrlKey) && (String.fromCharCode(e.which).toLowerCase() === 'b')) {
 //                trigger_save_note(300);
                 $(".firepad-tb-bold").parent().trigger('click');
                 return false;
             }
 
-            else if ((e.metaKey || e.ctrlKey) && (String.fromCharCode(e.which).toLowerCase() === 'i') ) {
+            else if ((e.metaKey || e.ctrlKey) && (String.fromCharCode(e.which).toLowerCase() === 'i')) {
                 $(".firepad-tb-italic").parent().trigger('click');
-                                return false;
+                return false;
 
             }
-            else if ((e.metaKey || e.ctrlKey) &&  (String.fromCharCode(e.which).toLowerCase() === 'u') ) {
+            else if ((e.metaKey || e.ctrlKey) && (String.fromCharCode(e.which).toLowerCase() === 'u')) {
                 $(".firepad-tb-underline").parent().trigger('click');
                 return false;
 
             }
+
         });
 
 
@@ -130,29 +252,29 @@
 
         $(".firepad-btn").attr("data-active", "0");
 
-        // Adding note save triggers for rich text format buttons (top toolbar on note window)
-        onClickHandler = function (event) {
 
-            var node = $(event.target);
-            var btn;
-            if (node[0].nodeName == 'SPAN') {
-                btn = node.parent();
+        // Adding note save triggers for rich text format buttons (top toolbar on note window)
+        var onClickHandler = function (event) {
+
+            node = $(event.target);
+
+            if (node[0].nodeName == 'A') {
+                btn = node.children();
             } else {
                 btn = node;
             }
-            var data_active = btn.attr("data-active");
+            var btn_type_list = ['bold', 'italic', 'underline', 'srikethrough'];
+            // skiping 11 chars from class name ex: 'firepad-tb-bold' -> 'bold'
+            var btn_type = btn[0].className.slice(11);
 
-            if (data_active == 0) {
-                btn.attr("data-active", "1");
-                btn.css("background-color", "#d07ee5");
-                btn.css("color", "#fcfcfc");
+            if (btn_type_list.indexOf(btn_type) !== -1) {
+                            toggle_buttons_colors(btn_type);
+
             }
-            else {
-                btn.attr("data-active", "0");
-                btn.css("background-color", "#fcfcfc");
-                btn.css("color", "#9c9c9c");
-            }
-                        trigger_save_note(300);
+
+
+
+            trigger_save_note(300);
         };
 
         $(".firepad-btn").click(onClickHandler);

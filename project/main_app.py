@@ -643,7 +643,7 @@ class TrayIcon(QSystemTrayIcon):
             if self.x_position <= 0:
                 self.x_position = QCursor().pos().x()
                 self.y_position = QCursor().pos().y()
-            self.note_window.setGeometry(self.x_position, self.y_position, 250, 280)
+            self.note_window.setGeometry(self.x_position, self.y_position, 280, 310)
         self.note_window.setVisible(True)
         note_visible_flag = 1
 
