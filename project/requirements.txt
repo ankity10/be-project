@@ -1,3 +1,4 @@
+python-dateutil
 sip
 pyqt5
 python-xlib

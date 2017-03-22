@@ -472,8 +472,8 @@ class TrayIcon(QSystemTrayIcon):
             else:
                 print("Logging in From saved password")
                 login_window = LoginWindow(self, False)
-                login_window.username.setText(saved_password.username)
-                login_window.password.setText(saved_password.password)
+                login_window.login_ui.username.setText(saved_password.username)
+                login_window.login_ui.password.setText(saved_password.password)
                 login_window.login_method()
 
     def set_reminder(self):
