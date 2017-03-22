@@ -225,3 +225,7 @@ class Db:
 
 	def delete_reminder(self, note_hash, target_date, target_time):
 		self.reminder_collection.find_one_and_delete({'note_hash' : note_hash, 'target_date' : target_date, 'target_time' : target_time})
+
+
+	def update_reminder(self, note_hash , event_name, reminder_log):
+		self.reminder_collection.find_one_and_replace({'note_hash' : note_hash, 'event_name' : event_name}, dict(reminder_log))
