@@ -143,6 +143,8 @@ class WIRM:
 		if os.path.exists(pid_path):
 		    with open(os.path.join(pid_path, 'comm')) as f:
 		        process_name = f.read().rstrip('\n') #Read and Remove \n
+		        if process_name in ["chrome", "firefox", "chromium-browse"]:
+		        	process_name = "BROWSER"
 		        return (process_name)
 		else:
 			print("No such PID in Running processes!!")
