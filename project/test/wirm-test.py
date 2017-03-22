@@ -33,7 +33,7 @@ class wirm:
     def get_active_window_id(self):
         atom = self.display.intern_atom('_NET_ACTIVE_WINDOW', True)
         if (self.is_ewmh_supported(atom, self.root) == False):
-            print ("EWMH is not supported by your window manager!!")
+            print("EWMH is not supported by your window manager!!")
             return None  # return
         self.active_window_id = int(self.root.get_full_property(atom, Xlib.X.AnyPropertyType).value[0])
         return (self.active_window_id)
@@ -56,7 +56,7 @@ class wirm:
         self.active = self.display.create_resource_object('window', self.active_window_id)
         atom = self.display.intern_atom('_NET_WM_NAME', True)
         if (self.is_ewmh_supported(atom, self.root) == False):
-            print ("EWMH is not supported by your window manager!!")
+            print("EWMH is not supported by your window manager!!")
             return None  # return
         w = (self.active).get_full_property(atom, Xlib.X.AnyPropertyType).value
         self.active_window_title = w.decode("utf8")
@@ -73,5 +73,5 @@ class wirm:
 w = wirm()
 while True:
     s = w.get_active_window_title()
-    print (s)
+    print(s)
     time.sleep(1)

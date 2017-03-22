@@ -1,4 +1,3 @@
-
 import threading
 import time
 import datetime
@@ -12,10 +11,10 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import *
 from socketcluster import Socketcluster
-from storage.storage2 import *
+from storage.storage import *
 
 global IP
-IP = "192.168.0.111"
+IP = "192.168.0.109"
 global PORT
 PORT = "8000"
 

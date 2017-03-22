@@ -1,49 +1,31 @@
 #!/usr/bin/env python3
-import threading
-import Xlib.display
-import Xlib.threaded
-import sys
-import requests
-# import notify2
-# sudo apt install python3-notify2
-import os
-import time
-import logging
 import datetime
 import hashlib
-import urllib.request
-import requests
-import json
-# import subprocess
-# import pyperclip
-import datetime
+import logging
+import os
+import sys
+import threading
 import time
-from title_processing import TitleProcessing
-
+import requests
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import *
-from wirm.wirm import WIRM
-from storage.storage2 import Db
-from storage.storage2 import Note
-from storage.storage2 import Local_Log
-from storage.storage2 import Login_Credentials
-from storage.storage2 import Saved_Password
-from storage.storage2 import Reminder_Info
+from PyQt5.QtWidgets import *
 from dateutil.relativedelta import relativedelta
-from Login_Window import Ui_Login_Window
-# sudo apt-get install python3-dateutil
-
-from sync.sync import sync
-from reminder.reminder import *
-from functools import partial
 
 from merge import merge as Merge
+from reminder.reminder import *
+from sync.sync import sync
+from storage.storage import Db
+from storage.storage import Local_Log
+from storage.storage import Note
+from ui.login_signup.Login_Window import Ui_Login_Window
+from utils.title_processing import TitleProcessing
+from wirm.wirm import WIRM
 
 global IP
 
-IP = "192.168.0.111"
+IP = "192.168.0.109"
 
 global PORT
 PORT = "8000"
@@ -79,28 +61,27 @@ class WebPage(QWebEnginePage):
             if index == delimeter_index:
                 self.save_note(msg[index + 1:])
         except Exception as e:
-            print("JavaScript error==>",msg, " at linenumber=", linenumber, " source id = ", source_id) 
-    
+            print("JavaScript error==>", msg, " at linenumber=", linenumber, " source id = ", source_id)
 
     def save_note(self, msg):
         try:
             # print(" before escaping",msg)
             # msg = msg.encode("string-escape")
             # print("after escaping", msg)
-            note_dict = {"create_time": datetime.datetime.now().time().isoformat(), 
-                         "note_text": msg, 
-                         "process_name": self.process_name, 
-                         "window_title": self.window_title, 
-                         "note_hash":self.note_hash}
+            note_dict = {"create_time": datetime.datetime.now().time().isoformat(),
+                         "note_text": msg,
+                         "process_name": self.process_name,
+                         "window_title": self.window_title,
+                         "note_hash": self.note_hash}
             note = Note(**note_dict)
             local_log_dict = {}
             #############################################
             # if(self.main_app.internet_on_flag != 1 or self.main_app.login_credentials.token == 0):
-            local_log_dict = {"note_hash" :self.note_hash,
-                              "note_text" :msg,
-                              "process_name": self.process_name, 
+            local_log_dict = {"note_hash": self.note_hash,
+                              "note_text": msg,
+                              "process_name": self.process_name,
                               "window_title": self.window_title,
-                              "from_client_id" : self.main_app.client_id}
+                              "from_client_id": self.main_app.client_id}
             # else:
             # local_log_dict = {"note_hash" :self.note_hash,"text" :msg}
 
@@ -124,7 +105,7 @@ class NoteWindow(QWebEngineView):
     def __init__(self):
         global window_change_event_flag
         super().__init__()
-        file_path = '/ui/examples/richtext-simple.html'
+        file_path = '/ui/notes/examples/richtext-simple.html'
         folder_path = os.path.abspath('./')
         # flags = flags | Qt.WindowStaysOnTopHint 
         # flags = flag | ~Qt.WindowTitleHint
@@ -146,59 +127,6 @@ class NoteWindow(QWebEngineView):
         self.mouse_move_pos = None
         self.mouse_press_x = 0
         self.cursor = QCursor()
-        # self.window_menu = QMenu()
-        # move = QAction('Move', self)
-        # move.triggered.connect(self.move_selected)
-        # self.window_menu.addAction(move)
-        # self.window_menu.addSeparator()
-        # select = QAction('Select', self)
-        # select.triggered.connect(self.select_selected)
-        # self.window_menu.addAction(select)
-        # self.draggable = False
-        # self.select = False
-        # self.setContextMenu(self.window_menu)
-
-    # def move_selected(self):
-    #     self.draggable = True
-    #     self.select = True
-    #
-    # def select_selected(self):
-    #     self.draggable = False
-    #     self.select = True
-    #
-    # def eventFilter(self, object, event):
-    #     if (event.type() == QEvent.ChildAdded and object is self and event.child().isWidgetType() and self.child == None):
-    #         self.child = event.child()
-    #         self.child.installEventFilter(self)
-    #     elif (event.type() == QEvent.MouseButtonPress and
-    #                   object is self.child):
-    #         if event.button() == Qt.LeftButton:
-    #             if (self.select == 0):
-    #                 self.window_menu.exec_(self.pos())
-    #             self.mouse_press_pos = event.globalPos()
-    #             self.mouse_move_pos = event.globalPos() - self.pos()
-    #
-    #
-    #     elif (event.type() == QEvent.MouseMove and object is self.child and self.draggable):
-    #         if event.buttons() & Qt.LeftButton:
-    #             globalPos = event.globalPos()
-    #             moved = globalPos - self.mouse_press_pos
-    #             print(self.pos())
-    #             if (moved.manhattanLength() > self.min_dist):
-    #                 diff = globalPos - self.mouse_move_pos
-    #                 self.move(diff)
-    #                 self.mouse_move_pos = globalPos - self.pos()
-    #
-    #     elif (event.type() == QEvent.MouseButtonRelease and object is self.child):
-    #         if self.mouse_press_pos is not None:
-    #             if event.button() == Qt.LeftButton:
-    #                 moved = event.globalPos() - self.mouse_press_pos
-    #                 if (moved.manhattanLength() > self.min_dist):
-    #                     event.ignore()
-    #                 self.mouse_press_pos = None
-    #                 self.select = False
-    #
-    #     return super().eventFilter(object, event)
 
     def closeEvent(self, event):
         global note_visible_flag
@@ -225,42 +153,16 @@ class LoginWindow(QWidget):
         self.login_ui.signup_label.hide()
         self.login_ui.back_link.hide()
         self.setFixedSize(358, 265)
-        self.move(400,250)
-        # self.setGeometry(400,250,400,200)
-        # self.setWindowTitle('Login/Sign Up')
-        # self.username_lbl = self.create_label(5,5,"Username")
-        # self.username = self.create_LineEdit(110,5,"Username",285)
+        self.move(400, 250)
 
-        # self.password_lbl = self.create_label(5,30,"Password :")
-        # self.password = self.create_LineEdit(110, 30, "Password",285)
-
-        # self.password.setEchoMode(2)
-
-        # self.email_lbl = self.create_label(5,55,"Email:")
-        # self.email_lbl.hide()
-        # self.email = self.create_LineEdit(110, 55, "Email", 285)
-        # self.email.hide()
-
-
-        # self.login_button = self.create_button("Log In", self.login_method, 120, 80)
-        # self.new_user_button = self.create_button("New User?", self.signup_ui, 200, 80)
-        # self.signup_button = self.create_button("Sign Up", self.signup_method, 200, 110)
-        # self.signup_button.hide()
-        # self.back_button = self.create_button("<- Back", self.back_method, 120, 110)
-
-        # self.back_button.hide()
-
-        # self.reminder_button = self.create_button("reminder", self.reminder_method, 120, 150)
-        
         self.main_app.merge = Merge.merge
         self.setVisible(visible_flag)
-
 
     # def reminder_method(self):
     #     print("Start")
     #     self.main_app.reminder = Reminder(self.main_app)
 
-    def create_LineEdit(self, pos_x,pos_y, e_text, e_width):
+    def create_LineEdit(self, pos_x, pos_y, e_text, e_width):
         line_edit = QLineEdit(self)
         line_edit.setPlaceholderText(e_text)
         line_edit.setMinimumWidth(e_width)
@@ -274,10 +176,9 @@ class LoginWindow(QWidget):
 
     def create_button(self, b_name, func_name, pos_x, pos_y):
         button = QPushButton(b_name, self)
-        button.move(pos_x,pos_y)
+        button.move(pos_x, pos_y)
         button.clicked.connect(func_name)
         return button
-
 
     def back_method(self):
         # self.email_lbl.hide()
@@ -296,10 +197,10 @@ class LoginWindow(QWidget):
         print("username :" + self.username_text)
         print("password :" + self.password_text)
         try:
-            login_response=requests.post(self.main_app.login_url,
-                                         data = {'username' : self.username_text,
-                                                 'password' : self.password_text,
-                                                 'client_id' : self.main_app.client_id}).json()
+            login_response = requests.post(self.main_app.login_url,
+                                           data={'username': self.username_text,
+                                                 'password': self.password_text,
+                                                 'client_id': self.main_app.client_id}).json()
         except:
             self.main_app.message_box("Server is Offline!!")
             self.main_app.login.setVisible(True)
@@ -378,10 +279,10 @@ class LoginWindow(QWidget):
         # self.new_email = self.email.text()
         client_details = self.main_app.storage.read_login_credentials()
         client_id = client_details.client_id
-        response = requests.post(self.main_app.signup_url, 
-                                 json = {'username': self.new_username, 
-                                         'password' : self.new_password, 
-                                         'client_id' : client_id})
+        response = requests.post(self.main_app.signup_url,
+                                 json={'username': self.new_username,
+                                       'password': self.new_password,
+                                       'client_id': client_id})
 
         data = response.json()
         print(data)
@@ -439,7 +340,7 @@ class TrayIcon(QSystemTrayIcon):
         self.create_menu()
         self.init_login()  # Login attempt from stored username & password
         self.reminder_thread_start = 1
-        t = threading.Thread(target = self.set_reminder)
+        t = threading.Thread(target=self.set_reminder)
         t.start()
         self.page = WebPage(self, self.status, self.note_hash, self.process_name, self.window_title)
         self.note_window.setPage(self.page)
@@ -448,7 +349,7 @@ class TrayIcon(QSystemTrayIcon):
         self.wirm = WIRM(self)
         self.note_window.setVisible(False)
 
-    def message_box(self, message, func=lambda:print("Closing message box!")):
+    def message_box(self, message, func=lambda: print("Closing message box!")):
         print("in message box")
         msg_box = QMessageBox()
         msg_box.setIcon(QMessageBox.Information)
@@ -457,7 +358,6 @@ class TrayIcon(QSystemTrayIcon):
         msg_box.setWindowTitle("Message")
         msg_box.buttonClicked.connect(func)
         msg_box.exec_()
-
 
     def init_login(self):
         print("in init login")
@@ -477,59 +377,59 @@ class TrayIcon(QSystemTrayIcon):
                 login_window.login_method()
 
     def set_reminder(self):
-        while(self.reminder_thread_start == 1):
+        while (self.reminder_thread_start == 1):
             print("----------------In thread-----------")
             reminder = self.storage.read_reminder()
             self.recent_reminder = reminder
             print(self.recent_reminder)
-            if(reminder):
+            if (reminder):
                 print("---------------reminder------------------")
                 print(reminder.target_date)
                 target_date = datetime.datetime.strptime(reminder.target_date, '%m-%d-%Y').date()
                 target_time = datetime.datetime.strptime(reminder.target_time, '%H-%M').time()
-                while(QDate.currentDate().toPyDate() < target_date and self.reminder_thread_start == 1):
-                    if(self.new_rem_entry == 1):
+                while (QDate.currentDate().toPyDate() < target_date and self.reminder_thread_start == 1):
+                    if (self.new_rem_entry == 1):
                         self.reminder_thread_start = 0
                     time.sleep(5)
                     print("---------------current_date-------------")
                     print(QDate.currentDate().toPyDate())
                 print("---------------Date-----------")
                 current_time = QTime.currentTime().toPyTime()
-                while(current_time.hour < target_time.hour and self.reminder_thread_start == 1 ):
-                    if(self.new_rem_entry == 1):
+                while (current_time.hour < target_time.hour and self.reminder_thread_start == 1):
+                    if (self.new_rem_entry == 1):
                         self.reminder_thread_start = 0
-                    if((target_time.hour - current_time.hour) > 1):
+                    if ((target_time.hour - current_time.hour) > 1):
                         time.sleep(50)
                     else:
                         time.sleep(5)
                     current_time = QTime.currentTime().toPyTime()
                 print("--------------Hour-----------")
                 current_time = QTime.currentTime().toPyTime()
-                while(current_time.minute < target_time.minute and self.reminder_thread_start == 1):
-                    if(self.new_rem_entry == 1):
+                while (current_time.minute < target_time.minute and self.reminder_thread_start == 1):
+                    if (self.new_rem_entry == 1):
                         self.reminder_thread_start = 0
                     time.sleep(3)
                     current_time = QTime.currentTime().toPyTime()
                 print("-----------Minute----------")
-                if(current_time.minute == target_time.minute and self.reminder_thread_start == 1):
+                if (current_time.minute == target_time.minute and self.reminder_thread_start == 1):
                     # n = notify2.Notification("Reminder","It's time")
                     # n.show()
-                # if(current_time.minute == target_time.minute):
+                    # if(current_time.minute == target_time.minute):
                     msg = QMessageBox()
                     msg.setText("Its time")
                     msg.setStandardButtons(QMessageBox.Ok)
                     # msg.buttonClicked.connect(self.close_thread)
                     msg.exec_()
-                # if(self.repetition_text != 0):
-                #   self.repetition_selection_method()
-                #   self.set_reminder()
-                    if(reminder.repetition != 0):
-                        if(reminder.repetition == 1):
+                    # if(self.repetition_text != 0):
+                    #   self.repetition_selection_method()
+                    #   self.set_reminder()
+                    if (reminder.repetition != 0):
+                        if (reminder.repetition == 1):
                             target_date = target_date + datetime.timedelta(days=1)
-                        elif(reminder.repetition == 2):
-                            target_date = target_date +datetime.timedelta(days=7)
-                        elif(reminder.repetition == 3):
-                            target_date = target_date + relativedelta(months = 1)
+                        elif (reminder.repetition == 2):
+                            target_date = target_date + datetime.timedelta(days=7)
+                        elif (reminder.repetition == 3):
+                            target_date = target_date + relativedelta(months=1)
                         print("----------updated date is----------")
                         print(target_date)
                         target_date_string = target_date.strftime('%m-%d-%Y')
@@ -537,7 +437,7 @@ class TrayIcon(QSystemTrayIcon):
                         self.storage.update_reminder(reminder.note_hash, reminder.event_name, reminder)
                     else:
                         self.storage.delete_reminder(reminder.note_hash, reminder.target_date, reminder.target_time)
-                if(self.new_rem_entry == 1):
+                if (self.new_rem_entry == 1):
                     self.new_rem_entry = 0
                     self.reminder_thread_start = 1
                     # reminder = self.storage.read_reminder()
@@ -545,7 +445,6 @@ class TrayIcon(QSystemTrayIcon):
                 self.recent_reminder = None
                 self.reminder_thread_start = 0
         print("-----------------reminder thread stopped----------------")
-
 
     def internet_check_thread(self):
         while (self.internet_check_thread_flag == 1):
@@ -555,7 +454,6 @@ class TrayIcon(QSystemTrayIcon):
                 self.internet_on_flag = 0
             time.sleep(1)
 
-
     def internet_on(self):
         try:
             response = requests.get('http://google.com')
@@ -564,10 +462,9 @@ class TrayIcon(QSystemTrayIcon):
             pass
             return False
 
-
     def create_menu(self):
         self.tray_icon_menu = QMenu()
-        self.shownote = QAction(' Show Note', self, checkable = True)
+        self.shownote = QAction(' Show Note', self, checkable=True)
         self.shownote.triggered.connect(self.isChecked)
         self.tray_icon_menu.addAction(self.shownote)
         self.tray_icon_menu.addSeparator()
@@ -580,25 +477,24 @@ class TrayIcon(QSystemTrayIcon):
         self.tray_icon_menu.addAction(self.logout)
         self.tray_icon_menu.addSeparator()
 
-        self.reminder_option = QAction('Reminder',self)
+        self.reminder_option = QAction('Reminder', self)
         self.reminder_option.triggered.connect(self.start_reminder_ui)
         self.tray_icon_menu.addAction(self.reminder_option)
         self.tray_icon_menu.addSeparator()
         # self.close_window.setVisible(False)
-        exitaction = QAction('Exit',self)
+        exitaction = QAction('Exit', self)
 
         exitaction.triggered.connect(self.exit_app)
         self.tray_icon_menu.addAction(exitaction)
         self.setContextMenu(self.tray_icon_menu)
 
     def isChecked(self):
-        if(self.shownote.isChecked()):
+        if (self.shownote.isChecked()):
             # self.shownote.setCheckable(True)
             self.show_note_menu(0)
         else:
             # self.shownote.setCheckable(False)
             self.note_window.setVisible(False)
-
 
     def start_reminder_ui(self):
         self.reminder = Reminder(self)
@@ -609,7 +505,6 @@ class TrayIcon(QSystemTrayIcon):
         else:
             self.login_window = LoginWindow(self)
 
-
     def logout_menu(self):
         self.storage.delete_login_token()
         self.storage.delete_saved_password()
@@ -619,7 +514,6 @@ class TrayIcon(QSystemTrayIcon):
         self.sync.sync_thread_flag = 0
         self.sync.disconnect()
         self.message_box("Logged out successfully!")
-
 
     # def close_window_method(self):
     #     self.note_window.close()
@@ -634,7 +528,6 @@ class TrayIcon(QSystemTrayIcon):
             return
         self.set_position()
 
-
     def set_position(self):
         if self.x_position == 0:
             position = self.geometry().topRight()
@@ -647,7 +540,6 @@ class TrayIcon(QSystemTrayIcon):
         self.note_window.setVisible(True)
         note_visible_flag = 1
 
-
     def show_note(self, session_num=1):  # sesion_num = 0 when note option is clicked(for xfce), else 1
         global note_visible_flag
         if (self.get_note(session_num) == False):
@@ -656,7 +548,6 @@ class TrayIcon(QSystemTrayIcon):
         self.format_note()
         js_cmd = str("firepad.setHtml('" + self.default_text + "')")
         self.note_window.page().runJavaScript(js_cmd)
-
 
     def format_note(self):
         style_tag = "</style>"
@@ -670,7 +561,6 @@ class TrayIcon(QSystemTrayIcon):
         else:
             # print("not resent")
             pass
-
 
     def exit_app(self):
         global window_change_event_flag
@@ -687,13 +577,11 @@ class TrayIcon(QSystemTrayIcon):
             pass
         sys.exit(0)
 
-
     def calc_hash(self, **kwargs):
         sha256 = hashlib.sha256()
         sha256.update((kwargs['process_name'] + kwargs['window_title']).encode('utf-8'))
         note_hash = sha256.hexdigest()
         return note_hash
-
 
     def get_note(self, session_num=1):
         global APP_NAME
@@ -730,9 +618,9 @@ class TrayIcon(QSystemTrayIcon):
         '''
         title_processing_obj = TitleProcessing(self.process_name, self.window_title)
         self.window_title = title_processing_obj.get_path()
-        
-        self.note_hash = self.calc_hash(process_name = self.process_name, window_title = self.window_title)
-        #print("note_hash "+self.note_hash)
+
+        self.note_hash = self.calc_hash(process_name=self.process_name, window_title=self.window_title)
+        # print("note_hash "+self.note_hash)
         # print(self.window_title)
         print("Window title :", self.window_title)
         print("Process name :", self.process_name)
@@ -746,7 +634,6 @@ class TrayIcon(QSystemTrayIcon):
             self.default_text = ""
             self.status = "new"
         return True
-
 
     def tray_icon_activated(self, reason):
         self.window_close = not self.window_close
