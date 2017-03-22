@@ -180,7 +180,7 @@
 
         });
 
-         $(".CodeMirror").on('keypress', function (e) {
+         $(".CodeMirror").on('keydown', function (e) {
 
 //            console.log(e.ctrlKey, e.shiftKey, e.metaKey);
 //            console.log(e);
@@ -190,13 +190,13 @@
                  var target = $(".firepad-richtext .CodeMirror ");
                          var current_font_size = target.css("font-size").split("px")[0];
                          target.css("font-size", String(parseInt(current_font_size)+1)+"px");
-//                         console.log("Neew font size is ", target.css("font-size"));
+                         console.log("Neew font size is ", target.css("font-size"));
              }
              else if (e.ctrlKey && e.keyCode === 189) {
                  var target = $(".firepad-richtext .CodeMirror ");
                 var current_font_size = target.css("font-size").split("px")[0];
                 target.css("font-size", String(parseInt(current_font_size)-1)+"px");
-//                 console.log("Neew font size is ", target.css("font-size"));
+                 console.log("Neew font size is ", target.css("font-size"));
 
              }
         });
