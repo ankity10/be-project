@@ -32,6 +32,7 @@ from storage.storage2 import Login_Credentials
 from storage.storage2 import Saved_Password
 from storage.storage2 import Reminder_Info
 from dateutil.relativedelta import relativedelta
+from Login_Window import Ui_Login_Window
 # sudo apt-get install python3-dateutil
 
 from sync.sync import sync
@@ -42,7 +43,7 @@ from merge import merge as Merge
 
 global IP
 
-IP = "192.168.1.5"
+IP = "192.168.0.111"
 
 global PORT
 PORT = "8000"
@@ -128,6 +129,9 @@ class NoteWindow(QWebEngineView):
         # flags = flags | Qt.WindowStaysOnTopHint 
         # flags = flag | ~Qt.WindowTitleHint
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(self.windowFlags() | Qt.CustomizeWindowHint)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowMinimizeButtonHint)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
         self.abs_path = "file://" + folder_path + file_path
         self.setWindowTitle("Notelet")
         self.setWindowIcon(QIcon('graphics/notes.png'))
@@ -209,30 +213,41 @@ class LoginWindow(QWidget):
         self.flag = 1
         self.main_app = main_app
         self.visible_flag = visible_flag
+        self.login_ui = Ui_Login_Window()
+        self.login_ui.setupUi(self)
+        self.setWindowTitle("LOGIN IN")
+        self.login_ui.back_link.hide()
+        self.login_ui.signup_button.hide()
+        self.login_ui.login_button.clicked.connect(self.login_method)
+        self.login_ui.back_link.clicked.connect(self.back_method)
+        self.login_ui.signup_button.clicked.connect(self.signup_method)
+        self.login_ui.new_user_link.clicked.connect(self.signup_ui)
+        self.login_ui.signup_label.hide()
+        self.login_ui.back_link.hide()
+        self.move(400,250)
+        # self.setGeometry(400,250,400,200)
+        # self.setWindowTitle('Login/Sign Up')
+        # self.username_lbl = self.create_label(5,5,"Username")
+        # self.username = self.create_LineEdit(110,5,"Username",285)
 
-        self.setGeometry(400,250,400,200)
-        self.setWindowTitle('Login/Sign Up')
-        self.username_lbl = self.create_label(5,5,"Username")
-        self.username = self.create_LineEdit(110,5,"Username",285)
+        # self.password_lbl = self.create_label(5,30,"Password :")
+        # self.password = self.create_LineEdit(110, 30, "Password",285)
 
-        self.password_lbl = self.create_label(5,30,"Password :")
-        self.password = self.create_LineEdit(110, 30, "Password",285)
+        # self.password.setEchoMode(2)
 
-        self.password.setEchoMode(2)
-
-        self.email_lbl = self.create_label(5,55,"Email:")
-        self.email_lbl.hide()
-        self.email = self.create_LineEdit(110, 55, "Email", 285)
-        self.email.hide()
+        # self.email_lbl = self.create_label(5,55,"Email:")
+        # self.email_lbl.hide()
+        # self.email = self.create_LineEdit(110, 55, "Email", 285)
+        # self.email.hide()
 
 
-        self.login_button = self.create_button("Log In", self.login_method, 120, 80)
-        self.new_user_button = self.create_button("New User?", self.signup_ui, 200, 80)
-        self.signup_button = self.create_button("Sign Up", self.signup_method, 200, 110)
-        self.signup_button.hide()
-        self.back_button = self.create_button("<- Back", self.back_method, 120, 110)
+        # self.login_button = self.create_button("Log In", self.login_method, 120, 80)
+        # self.new_user_button = self.create_button("New User?", self.signup_ui, 200, 80)
+        # self.signup_button = self.create_button("Sign Up", self.signup_method, 200, 110)
+        # self.signup_button.hide()
+        # self.back_button = self.create_button("<- Back", self.back_method, 120, 110)
 
-        self.back_button.hide()
+        # self.back_button.hide()
 
         # self.reminder_button = self.create_button("reminder", self.reminder_method, 120, 150)
         
@@ -264,16 +279,19 @@ class LoginWindow(QWidget):
 
 
     def back_method(self):
-        self.email_lbl.hide()
-        self.email.hide()
-        self.signup_button.hide()
-        self.new_user_button.show()
-        self.login_button.show()
-        self.back_button.hide()
+        # self.email_lbl.hide()
+        # self.email.hide()
+        self.login_ui.login_label.show()
+        self.login_ui.signup_label.hide()
+        self.login_ui.signup_button.hide()
+        self.login_ui.new_user_link.show()
+        self.login_ui.login_button.show()
+        self.login_ui.back_link.hide()
+        self.setWindowTitle("LOGIN IN")
 
     def login_method(self):
-        self.username_text = self.username.text()
-        self.password_text = self.password.text()
+        self.username_text = self.login_ui.username.text()
+        self.password_text = self.login_ui.password.text()
         print("username :" + self.username_text)
         print("password :" + self.password_text)
         try:
@@ -343,16 +361,19 @@ class LoginWindow(QWidget):
         self.show()
 
     def signup_ui(self):
-        self.back_button.show()
-        self.email_lbl.show()
-        self.email.show()
-        self.signup_button.show()
-        self.new_user_button.hide()
-        self.login_button.hide()
+        self.login_ui.back_link.show()
+        self.setWindowTitle("SIGN UP")
+        # self.email_lbl.show()
+        # self.email.show()
+        self.login_ui.signup_button.show()
+        self.login_ui.login_button.hide()
+        self.login_ui.new_user_link.hide()
+        self.login_ui.signup_label.show()
+        self.login_ui.login_label.hide()
 
     def signup_method(self):
-        self.new_username = self.username.text()
-        self.new_password = self.password.text()
+        self.new_username = self.login_ui.username.text()
+        self.new_password = self.login_ui.password.text()
         # self.new_email = self.email.text()
         client_details = self.main_app.storage.read_login_credentials()
         client_id = client_details.client_id
@@ -376,9 +397,9 @@ class LoginWindow(QWidget):
             self.main_app.message_box(err_msg, self.main_app.msg_box, self.clear_textedit)
 
     def clear_textedit(self):
-        self.username.clear()
-        self.email.clear()
-        self.password.clear()
+        self.login_ui.username.clear()
+        # self.email.clear()
+        self.login_ui.password.clear()
 
 
 class TrayIcon(QSystemTrayIcon):
@@ -405,7 +426,6 @@ class TrayIcon(QSystemTrayIcon):
         t.start()
         self.setIcon(QIcon('graphics/notes.png'))
         self.activated.connect(self.tray_icon_activated)
-        self.create_menu()
         self.show()
         self.x_position = 0
         self.y_position = 0
@@ -415,6 +435,7 @@ class TrayIcon(QSystemTrayIcon):
         self.default_text = ""
         self.status = ""
         self.note_window = NoteWindow()
+        self.create_menu()
         self.init_login()  # Login attempt from stored username & password
         self.reminder_thread_start = 1
         t = threading.Thread(target = self.set_reminder)
@@ -544,9 +565,9 @@ class TrayIcon(QSystemTrayIcon):
 
     def create_menu(self):
         self.tray_icon_menu = QMenu()
-        shownote = QAction('Note', self)
-        shownote.triggered.connect(partial(self.show_note_menu, 0))
-        self.tray_icon_menu.addAction(shownote)
+        self.shownote = QAction(' Show Note', self, checkable = True)
+        self.shownote.triggered.connect(self.isChecked)
+        self.tray_icon_menu.addAction(self.shownote)
         self.tray_icon_menu.addSeparator()
         self.login = QAction('Login/Sign Up', self)
         self.login.triggered.connect(self.login_menu)
@@ -567,6 +588,15 @@ class TrayIcon(QSystemTrayIcon):
         exitaction.triggered.connect(self.exit_app)
         self.tray_icon_menu.addAction(exitaction)
         self.setContextMenu(self.tray_icon_menu)
+
+    def isChecked(self):
+        if(self.shownote.isChecked()):
+            # self.shownote.setCheckable(True)
+            self.show_note_menu(0)
+        else:
+            # self.shownote.setCheckable(False)
+            self.note_window.setVisible(False)
+
 
     def start_reminder_ui(self):
         self.reminder = Reminder(self)
@@ -717,8 +747,10 @@ class TrayIcon(QSystemTrayIcon):
             if (not self.window_close):
                 self.show_note_menu(0)
                 self.note_window.setVisible(True)
+                self.shownote.setChecked(True)
             else:
                 self.note_window.setVisible(False)
+                self.shownote.setChecked(False)
                 # self.close_window.setVisible(False)
 
 
