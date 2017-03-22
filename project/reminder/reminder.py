@@ -15,25 +15,28 @@ class Reminder(QWidget):
 		self.reminder_text = 0
 		self.main_app = main_app
 		self.thread_start = 0
+		self.setAutoFillBackground(True)
 		# QMainWindow.__init__(self)
 		self.setWindowTitle("Reminder")
+		self.setWindowFlags(Qt.FramelessWindowHint)
 		self.setupUI()
 
 	def setupUI(self):
 		print("UI reminder")
+		# p = self.palette()
+		# p.setColor(self.backgroundRole(), Qt.white)
+		# self.setPalette(p)
 		# self.setStyleSheet("""
-		# 	QWidget {
-		# 	"border: 2px solid green;"
-		# 	"border-radius: 20px;"
-		# 	"padding: 2px;"
-		# 	"background-color: rgb(85, 85, 255);"
+		# 	.QWidget {
+		# 	"background-color: rgb(175, 238, 238);"
 		# 	}
 		# 	""")
-		self.setStyleSheet("border : white;")
+		# self.setStyleSheet("background-color : rgb(224, 255, 255);")
 		self.event_name_label = QLabel("Event name", self)
 		self.event_name_label.move(5,10)
 
 		self.event_name_edit = QLineEdit(self)
+		self.event_name_edit.setStyleSheet("background-color : rgb(240, 255, 255")
 		self.event_name_edit.setPlaceholderText("Event name")
 		self.event_name_edit.setMinimumWidth(10)
 		self.event_name_edit.move(100,5)
@@ -43,6 +46,7 @@ class Reminder(QWidget):
 		self.target_date_label.move(5, 35)
 
 		self.target_date = QDateEdit(self)
+		self.target_date.setStyleSheet("background-color : rgb(240, 255, 255")
 		self.target_date.setDate(QDate.currentDate())
 		self.target_date_selected = QDate.currentDate()
 		self.target_date.setMinimumDate(QDate.currentDate())
@@ -54,16 +58,19 @@ class Reminder(QWidget):
 		self.target_date.cal.setVerticalHeaderFormat(QCalendarWidget.NoVerticalHeader)
 		self.target_date.cal.setGridVisible(True)
 		self.target_date.dateChanged.connect(self.date_selected)
-		self.target_date.move(40, 30)
+		self.target_date.move(50, 30)
 		
 		self.target_time_label = QLabel("Time", self)
-		self.target_time_label.move(170,35)
+		self.target_time_label.move(200,35)
 		
 		self.target_time = QTimeEdit(self)
+		self.target_time.setStyleSheet("background-color : rgb(240, 255, 255")
 		self.target_time.setTime(QTime.currentTime())
-		self.target_time.setMinimumTime(QTime.currentTime())
+		# if(self.target_date_selected == QDate.currentDate())
+		# 	self.target_time.setMinimumTime(QTime.currentTime())
+		self.target_time_selected = QTime.currentTime()
 		self.target_time.timeChanged.connect(self.time_selected)
-		self.target_time.move(200,30)
+		self.target_time.move(230,30)
 		# self.target_time.setMinimumTime(QTime.currentTime())
 		# self.target_time.setTimeRange(QTime(1,0,0,0),QTime(12,59,0,0))
 
@@ -71,6 +78,7 @@ class Reminder(QWidget):
 		self.repetition_label.move(5,60)
 
 		self.repetition = QComboBox(self)
+		self.repetition.setStyleSheet("background-color : rgb(240, 255, 255")
 		self.repetition.addItem("One-Time event")
 		self.repetition.addItem("Daily")
 		self.repetition.addItem("Weekly")
@@ -83,6 +91,8 @@ class Reminder(QWidget):
 		self.reminder_label.move(5,80)
 
 		self.reminder = QComboBox(self)
+		self.reminder.setMinimumWidth(30)
+		self.reminder.setStyleSheet("background-color : rgb(240, 255, 255")
 		self.reminder.addItem("On time")
 		self.reminder.addItem("5 mins early")
 		self.reminder.addItem("10 mins early")
@@ -94,20 +104,25 @@ class Reminder(QWidget):
 		self.reminder.activated.connect(self.reminder_selected)
 
 		self.add_button = QPushButton("ADD",self)
-		self.add_button.move(5,120)
+		self.add_button.move(30,120)
 		self.add_button.clicked.connect(self.reminder_added)
+		self.add_button.setStyleSheet("background-color : rgb(240, 255, 255")
 
 		self.cancel_button = QPushButton("CANCEL", self)
-		self.cancel_button.move(50, 120)
+		self.cancel_button.move(120, 120)
 		self.cancel_button.clicked.connect(self.cancel_method)
+		self.cancel_button.setStyleSheet("background-color : egb(240, 255, 255")
 		if(self.target_date_selected == QDate.currentDate()):
 			self.reminder.model().item(5).setEnabled(False)
 
-		self.setGeometry(400,250,400,200)
+		self.setGeometry(400,250,350,200)
 		self.show()
 
 	def date_selected(self, date):
 		self.target_date_selected = date
+		# if(self.target_date_selected == QDate.currentDate()):
+		# 	self.target_time.setMinimumTime(QTime.currentTime())
+
 		if(self.target_date_selected > QDate.currentDate()):
 			self.reminder.model().item(5).setEnabled(True)
 
@@ -127,9 +142,11 @@ class Reminder(QWidget):
 
 	def reminder_added(self):
 		self.reminder_selection_method()
+		self.main_app.reminder_thread_start = 0
 		self.store_reminder()
-		if(self.main_app.reminder_thread_start == 0):
+		if(self.main_app.recent_reminder == None):
 			self.main_app.reminder_thread_start =1
+			# self.main_app.reminder_thread_start = 1
 			t = threading.Thread(target = self.main_app.set_reminder)
 			t.start()
 		self.close()
@@ -138,10 +155,17 @@ class Reminder(QWidget):
 
 	def store_reminder(self):
 		reminder_dict_info = {}
-		target_time1 = self.target_time_selected.toPyTime()
-		target_time = target_time1.strftime('%H-%M')
-		target_date1 = self.target_date_selected.toPyDate()
-		target_date = target_date1.strftime('%m-%d-%Y')
+		target_py_time = self.target_time_selected.toPyTime()
+		target_time = target_py_time.strftime('%H-%M')
+		target_py_date = self.target_date_selected.toPyDate()
+		target_date = target_py_date.strftime('%m-%d-%Y')
+		if(self.main_app.recent_reminder != None):
+			print("----------------In less------------")
+			running_rem_date = datetime.datetime.strptime(self.main_app.recent_reminder.target_date, '%m-%d-%Y').date()
+			running_rem_time = datetime.datetime.strptime(self.main_app.recent_reminder.target_time, '%H-%M').time()
+			if(target_py_date <= running_rem_date and target_py_time < running_rem_time):
+				print("------------------Yes less ------------------")
+				self.main_app.new_rem_entry = 1
 		window_title = self.main_app.wirm.prev_active_window_title
 		process_name = self.main_app.wirm.prev_active_window_name
 		print(window_title)
@@ -153,6 +177,8 @@ class Reminder(QWidget):
 						"target_time" : target_time}
 		reminder_dict = Reminder_Info(**reminder_dict_info)
 		self.main_app.storage.insert_reminder(reminder_dict)
+
+
 
 	# def store_reminder_again():
 

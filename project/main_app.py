@@ -4,7 +4,7 @@ import Xlib.display
 import Xlib.threaded
 import sys
 import requests
-import notify2
+# import notify2
 # sudo apt install python3-notify2
 import os
 import time
@@ -32,6 +32,9 @@ from storage.storage2 import Local_Log
 from storage.storage2 import Login_Credentials
 from storage.storage2 import Saved_Password
 from storage.storage2 import Reminder_Info
+from dateutil.relativedelta import relativedelta
+from Login_Window import Ui_Login_Window
+# sudo apt-get install python3-dateutil
 
 from sync.sync import sync
 from reminder.reminder import *
@@ -49,7 +52,7 @@ PORT = "8000"
 logging.getLogger('requests').setLevel(logging.CRITICAL)  # Display logs of critical type only
 note_visible_flag = 0
 window_change_event_flag = 0
-APP_NAME = "LazyNotes"
+APP_NAME = "Notelet"
 
 
 class WebPage(QWebEnginePage):
@@ -127,8 +130,11 @@ class NoteWindow(QWebEngineView):
         # flags = flags | Qt.WindowStaysOnTopHint 
         # flags = flag | ~Qt.WindowTitleHint
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(self.windowFlags() | Qt.CustomizeWindowHint)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowMinimizeButtonHint)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
         self.abs_path = "file://" + folder_path + file_path
-        self.setWindowTitle("LazyNotes")
+        self.setWindowTitle("Notelet")
         self.setWindowIcon(QIcon('graphics/notes.png'))
         self.load(QUrl(self.abs_path))
         self.setVisible(False)
@@ -208,40 +214,51 @@ class LoginWindow(QWidget):
         self.flag = 1
         self.main_app = main_app
         self.visible_flag = visible_flag
+        self.login_ui = Ui_Login_Window()
+        self.login_ui.setupUi(self)
+        self.setWindowTitle("LOGIN IN")
+        self.login_ui.back_link.hide()
+        self.login_ui.signup_button.hide()
+        self.login_ui.login_button.clicked.connect(self.login_method)
+        self.login_ui.back_link.clicked.connect(self.back_method)
+        self.login_ui.signup_button.clicked.connect(self.signup_method)
+        self.login_ui.new_user_link.clicked.connect(self.signup_ui)
+        self.login_ui.signup_label.hide()
+        self.login_ui.back_link.hide()
+        self.move(400,250)
+        # self.setGeometry(400,250,400,200)
+        # self.setWindowTitle('Login/Sign Up')
+        # self.username_lbl = self.create_label(5,5,"Username")
+        # self.username = self.create_LineEdit(110,5,"Username",285)
 
-        self.setGeometry(400,250,400,200)
-        self.setWindowTitle('Login/Sign Up')
-        self.username_lbl = self.create_label(5,5,"Username")
-        self.username = self.create_LineEdit(110,5,"Username",285)
+        # self.password_lbl = self.create_label(5,30,"Password :")
+        # self.password = self.create_LineEdit(110, 30, "Password",285)
 
-        self.password_lbl = self.create_label(5,30,"Password :")
-        self.password = self.create_LineEdit(110, 30, "Password",285)
+        # self.password.setEchoMode(2)
 
-        self.password.setEchoMode(2)
-
-        self.email_lbl = self.create_label(5,55,"Email:")
-        self.email_lbl.hide()
-        self.email = self.create_LineEdit(110, 55, "Email", 285)
-        self.email.hide()
+        # self.email_lbl = self.create_label(5,55,"Email:")
+        # self.email_lbl.hide()
+        # self.email = self.create_LineEdit(110, 55, "Email", 285)
+        # self.email.hide()
 
 
-        self.login_button = self.create_button("Log In", self.login_method, 120, 80)
-        self.new_user_button = self.create_button("New User?", self.signup_ui, 200, 80)
-        self.signup_button = self.create_button("Sign Up", self.signup_method, 200, 110)
-        self.signup_button.hide()
-        self.back_button = self.create_button("<- Back", self.back_method, 120, 110)
+        # self.login_button = self.create_button("Log In", self.login_method, 120, 80)
+        # self.new_user_button = self.create_button("New User?", self.signup_ui, 200, 80)
+        # self.signup_button = self.create_button("Sign Up", self.signup_method, 200, 110)
+        # self.signup_button.hide()
+        # self.back_button = self.create_button("<- Back", self.back_method, 120, 110)
 
-        self.back_button.hide()
+        # self.back_button.hide()
 
-        self.reminder_button = self.create_button("reminder", self.reminder_method, 120, 150)
+        # self.reminder_button = self.create_button("reminder", self.reminder_method, 120, 150)
         
         self.main_app.merge = Merge.merge
         self.setVisible(visible_flag)
 
 
-    def reminder_method(self):
-        print("Start")
-        self.main_app.reminder = Reminder(self.main_app)
+    # def reminder_method(self):
+    #     print("Start")
+    #     self.main_app.reminder = Reminder(self.main_app)
 
     def create_LineEdit(self, pos_x,pos_y, e_text, e_width):
         line_edit = QLineEdit(self)
@@ -263,16 +280,19 @@ class LoginWindow(QWidget):
 
 
     def back_method(self):
-        self.email_lbl.hide()
-        self.email.hide()
-        self.signup_button.hide()
-        self.new_user_button.show()
-        self.login_button.show()
-        self.back_button.hide()
+        # self.email_lbl.hide()
+        # self.email.hide()
+        self.login_ui.login_label.show()
+        self.login_ui.signup_label.hide()
+        self.login_ui.signup_button.hide()
+        self.login_ui.new_user_link.show()
+        self.login_ui.login_button.show()
+        self.login_ui.back_link.hide()
+        self.setWindowTitle("LOGIN IN")
 
     def login_method(self):
-        self.username_text = self.username.text()
-        self.password_text = self.password.text()
+        self.username_text = self.login_ui.username.text()
+        self.password_text = self.login_ui.password.text()
         print("username :" + self.username_text)
         print("password :" + self.password_text)
         try:
@@ -342,16 +362,19 @@ class LoginWindow(QWidget):
         self.show()
 
     def signup_ui(self):
-        self.back_button.show()
-        self.email_lbl.show()
-        self.email.show()
-        self.signup_button.show()
-        self.new_user_button.hide()
-        self.login_button.hide()
+        self.login_ui.back_link.show()
+        self.setWindowTitle("SIGN UP")
+        # self.email_lbl.show()
+        # self.email.show()
+        self.login_ui.signup_button.show()
+        self.login_ui.login_button.hide()
+        self.login_ui.new_user_link.hide()
+        self.login_ui.signup_label.show()
+        self.login_ui.login_label.hide()
 
     def signup_method(self):
-        self.new_username = self.username.text()
-        self.new_password = self.password.text()
+        self.new_username = self.login_ui.username.text()
+        self.new_password = self.login_ui.password.text()
         # self.new_email = self.email.text()
         client_details = self.main_app.storage.read_login_credentials()
         client_id = client_details.client_id
@@ -375,9 +398,9 @@ class LoginWindow(QWidget):
             self.main_app.message_box(err_msg, self.clear_textedit)
 
     def clear_textedit(self):
-        self.username.clear()
-        self.email.clear()
-        self.password.clear()
+        self.login_ui.username.clear()
+        # self.email.clear()
+        self.login_ui.password.clear()
 
 
 class TrayIcon(QSystemTrayIcon):
@@ -388,9 +411,10 @@ class TrayIcon(QSystemTrayIcon):
         self.signup_url = "http://" + IP + ":" + PORT + "/api/auth/signup"
         self.msg_box = QMessageBox()
         self.internet_check_thread_flag = 1
-        self.reminder_thread_start = 1
-        notify2.init("Notelet")
+        self.new_rem_entry = 0
+        # notify2.init("Notelet")
         self.internet_on_flag = -1
+        self.recent_reminder = None
         self.win = ""
         self.window_close = True
         super().__init__()
@@ -401,11 +425,8 @@ class TrayIcon(QSystemTrayIcon):
         print("Client id :" + str(self.client_id))
         t = threading.Thread(target=self.internet_check_thread)
         t.start()
-        t = threading.Thread(target = self.set_reminder)
-        t.start()
         self.setIcon(QIcon('graphics/notes.png'))
         self.activated.connect(self.tray_icon_activated)
-        self.create_menu()
         self.show()
         self.x_position = 0
         self.y_position = 0
@@ -415,7 +436,11 @@ class TrayIcon(QSystemTrayIcon):
         self.default_text = ""
         self.status = ""
         self.note_window = NoteWindow()
+        self.create_menu()
         self.init_login()  # Login attempt from stored username & password
+        self.reminder_thread_start = 1
+        t = threading.Thread(target = self.set_reminder)
+        t.start()
         self.page = WebPage(self, self.status, self.note_hash, self.process_name, self.window_title)
         self.note_window.setPage(self.page)
         self.note_window.load(QUrl(self.note_window.abs_path))
@@ -453,41 +478,73 @@ class TrayIcon(QSystemTrayIcon):
 
     def set_reminder(self):
         while(self.reminder_thread_start == 1):
-            # print("In thread")
+            print("----------------In thread-----------")
             reminder = self.storage.read_reminder()
+            self.recent_reminder = reminder
+            print(self.recent_reminder)
             if(reminder):
-                print("reminder")
+                print("---------------reminder------------------")
                 print(reminder.target_date)
                 target_date = datetime.datetime.strptime(reminder.target_date, '%m-%d-%Y').date()
                 target_time = datetime.datetime.strptime(reminder.target_time, '%H-%M').time()
-                while(QDate.currentDate().toPyDate() < target_date):
+                while(QDate.currentDate().toPyDate() < target_date and self.reminder_thread_start == 1):
+                    if(self.new_rem_entry == 1):
+                        self.reminder_thread_start = 0
                     time.sleep(5)
-                print("Date")
+                    print("---------------current_date-------------")
+                    print(QDate.currentDate().toPyDate())
+                print("---------------Date-----------")
                 current_time = QTime.currentTime().toPyTime()
-                while(current_time.hour < target_time.hour):
-                    time.sleep(5)
+                while(current_time.hour < target_time.hour and self.reminder_thread_start == 1 ):
+                    if(self.new_rem_entry == 1):
+                        self.reminder_thread_start = 0
+                    if((target_time.hour - current_time.hour) > 1):
+                        time.sleep(50)
+                    else:
+                        time.sleep(5)
                     current_time = QTime.currentTime().toPyTime()
-                print("Hour")
+                print("--------------Hour-----------")
                 current_time = QTime.currentTime().toPyTime()
-                while(current_time.minute < target_time.minute):
-                    time.sleep(5)
+                while(current_time.minute < target_time.minute and self.reminder_thread_start == 1):
+                    if(self.new_rem_entry == 1):
+                        self.reminder_thread_start = 0
+                    time.sleep(3)
                     current_time = QTime.currentTime().toPyTime()
-                print("Minute")
-                n = notify2.Notification("Reminder","It's time")
-                n.show()
+                print("-----------Minute----------")
+                if(current_time.minute == target_time.minute and self.reminder_thread_start == 1):
+                    # n = notify2.Notification("Reminder","It's time")
+                    # n.show()
                 # if(current_time.minute == target_time.minute):
-                #     msg = QMessageBox()
-                #     msg.setText("Its time")
-                #     msg.setStandardButtons(QMessageBox.Ok)
-                #     # msg.buttonClicked.connect(self.close_thread)
-                #     msg.exec_()
+                    msg = QMessageBox()
+                    msg.setText("Its time")
+                    msg.setStandardButtons(QMessageBox.Ok)
+                    # msg.buttonClicked.connect(self.close_thread)
+                    msg.exec_()
                 # if(self.repetition_text != 0):
                 #   self.repetition_selection_method()
                 #   self.set_reminder()
-                self.storage.delete_reminder(reminder.note_hash, reminder.target_date, reminder.target_time)
+                    if(reminder.repetition != 0):
+                        if(reminder.repetition == 1):
+                            target_date = target_date + datetime.timedelta(days=1)
+                        elif(reminder.repetition == 2):
+                            target_date = target_date +datetime.timedelta(days=7)
+                        elif(reminder.repetition == 3):
+                            target_date = target_date + relativedelta(months = 1)
+                        print("----------updated date is----------")
+                        print(target_date)
+                        target_date_string = target_date.strftime('%m-%d-%Y')
+                        reminder.target_date = target_date_string
+                        self.storage.update_reminder(reminder.note_hash, reminder.event_name, reminder)
+                    else:
+                        self.storage.delete_reminder(reminder.note_hash, reminder.target_date, reminder.target_time)
+                if(self.new_rem_entry == 1):
+                    self.new_rem_entry = 0
+                    self.reminder_thread_start = 1
+                    # reminder = self.storage.read_reminder()
             else:
+                self.recent_reminder = None
                 self.reminder_thread_start = 0
-        print("reminder thread stopped")
+        print("-----------------reminder thread stopped----------------")
 
 
     def internet_check_thread(self):
@@ -510,9 +567,9 @@ class TrayIcon(QSystemTrayIcon):
 
     def create_menu(self):
         self.tray_icon_menu = QMenu()
-        shownote = QAction('Note', self)
-        shownote.triggered.connect(partial(self.show_note_menu, 0))
-        self.tray_icon_menu.addAction(shownote)
+        self.shownote = QAction(' Show Note', self, checkable = True)
+        self.shownote.triggered.connect(self.isChecked)
+        self.tray_icon_menu.addAction(self.shownote)
         self.tray_icon_menu.addSeparator()
         self.login = QAction('Login/Sign Up', self)
         self.login.triggered.connect(self.login_menu)
@@ -523,9 +580,9 @@ class TrayIcon(QSystemTrayIcon):
         self.tray_icon_menu.addAction(self.logout)
         self.tray_icon_menu.addSeparator()
 
-        # self.close_window = QAction('Close',self)
-        # self.close_window.triggered.connect(partial(self.close_window_method))
-        # self.tray_icon_menu.addAction(self.close_window)
+        self.reminder_option = QAction('Reminder',self)
+        self.reminder_option.triggered.connect(self.start_reminder_ui)
+        self.tray_icon_menu.addAction(self.reminder_option)
         self.tray_icon_menu.addSeparator()
         # self.close_window.setVisible(False)
         exitaction = QAction('Exit',self)
@@ -534,6 +591,17 @@ class TrayIcon(QSystemTrayIcon):
         self.tray_icon_menu.addAction(exitaction)
         self.setContextMenu(self.tray_icon_menu)
 
+    def isChecked(self):
+        if(self.shownote.isChecked()):
+            # self.shownote.setCheckable(True)
+            self.show_note_menu(0)
+        else:
+            # self.shownote.setCheckable(False)
+            self.note_window.setVisible(False)
+
+
+    def start_reminder_ui(self):
+        self.reminder = Reminder(self)
 
     def login_menu(self):
         if (self.internet_on_flag == 0):
@@ -686,8 +754,10 @@ class TrayIcon(QSystemTrayIcon):
             if (not self.window_close):
                 self.show_note_menu(0)
                 self.note_window.setVisible(True)
+                self.shownote.setChecked(True)
             else:
                 self.note_window.setVisible(False)
+                self.shownote.setChecked(False)
                 # self.close_window.setVisible(False)
 
 
