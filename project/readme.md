@@ -25,3 +25,14 @@
 	```
 - Installing External Dependancies
 	> Above listed dependancies can be installed using system package manager.
+
+# Launch Procedure
+
+- Run Mongodb Server:
+	```sh
+		$ sudo mongod
+	```
+- Run main_app.py
+	```sh
+		$ python3 main_app.py
+	```
