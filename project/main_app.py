@@ -42,7 +42,7 @@ from merge import merge as Merge
 
 global IP
 
-IP = "192.168.0.111"
+IP = "192.168.1.5"
 
 global PORT
 PORT = "8000"
@@ -234,15 +234,15 @@ class LoginWindow(QWidget):
 
         self.back_button.hide()
 
-        self.reminder_button = self.create_button("reminder", self.reminder_method, 120, 150)
+        # self.reminder_button = self.create_button("reminder", self.reminder_method, 120, 150)
         
         self.main_app.merge = Merge.merge
         self.setVisible(visible_flag)
 
 
-    def reminder_method(self):
-        print("Start")
-        self.main_app.reminder = Reminder(self.main_app)
+    # def reminder_method(self):
+    #     print("Start")
+    #     self.main_app.reminder = Reminder(self.main_app)
 
     def create_LineEdit(self, pos_x,pos_y, e_text, e_width):
         line_edit = QLineEdit(self)
@@ -389,9 +389,10 @@ class TrayIcon(QSystemTrayIcon):
         self.signup_url = "http://" + IP + ":" + PORT + "/api/auth/signup"
         self.msg_box = QMessageBox()
         self.internet_check_thread_flag = 1
-        self.reminder_thread_start = 1
+        self.new_rem_entry = 0
         # notify2.init("Notelet")
         self.internet_on_flag = -1
+        self.recent_reminder = None
         self.win = ""
         self.window_close = True
         super().__init__()
@@ -401,8 +402,6 @@ class TrayIcon(QSystemTrayIcon):
         self.client_id = self.login_credentials.client_id
         print("Client id :" + str(self.client_id))
         t = threading.Thread(target=self.internet_check_thread)
-        t.start()
-        t = threading.Thread(target = self.set_reminder)
         t.start()
         self.setIcon(QIcon('graphics/notes.png'))
         self.activated.connect(self.tray_icon_activated)
@@ -417,6 +416,9 @@ class TrayIcon(QSystemTrayIcon):
         self.status = ""
         self.note_window = NoteWindow()
         self.init_login()  # Login attempt from stored username & password
+        self.reminder_thread_start = 1
+        t = threading.Thread(target = self.set_reminder)
+        t.start()
         self.page = WebPage(self, self.status, self.note_hash, self.process_name, self.window_title)
         self.note_window.setPage(self.page)
         self.note_window.load(QUrl(self.note_window.abs_path))
@@ -456,18 +458,23 @@ class TrayIcon(QSystemTrayIcon):
             print("----------------In thread-----------")
             reminder = self.storage.read_reminder()
             self.recent_reminder = reminder
+            print(self.recent_reminder)
             if(reminder):
                 print("---------------reminder------------------")
                 print(reminder.target_date)
                 target_date = datetime.datetime.strptime(reminder.target_date, '%m-%d-%Y').date()
                 target_time = datetime.datetime.strptime(reminder.target_time, '%H-%M').time()
-                while(QDate.currentDate().toPyDate() < target_date):
+                while(QDate.currentDate().toPyDate() < target_date and self.reminder_thread_start == 1):
+                    if(self.new_rem_entry == 1):
+                        self.reminder_thread_start = 0
                     time.sleep(5)
                     print("---------------current_date-------------")
                     print(QDate.currentDate().toPyDate())
                 print("---------------Date-----------")
                 current_time = QTime.currentTime().toPyTime()
-                while(current_time.hour < target_time.hour ):
+                while(current_time.hour < target_time.hour and self.reminder_thread_start == 1 ):
+                    if(self.new_rem_entry == 1):
+                        self.reminder_thread_start = 0
                     if((target_time.hour - current_time.hour) > 1):
                         time.sleep(50)
                     else:
@@ -475,11 +482,13 @@ class TrayIcon(QSystemTrayIcon):
                     current_time = QTime.currentTime().toPyTime()
                 print("--------------Hour-----------")
                 current_time = QTime.currentTime().toPyTime()
-                while(current_time.minute < target_time.minute):
+                while(current_time.minute < target_time.minute and self.reminder_thread_start == 1):
+                    if(self.new_rem_entry == 1):
+                        self.reminder_thread_start = 0
                     time.sleep(3)
                     current_time = QTime.currentTime().toPyTime()
                 print("-----------Minute----------")
-                if(current_time.minute == target_time.minute):
+                if(current_time.minute == target_time.minute and self.reminder_thread_start == 1):
                     # n = notify2.Notification("Reminder","It's time")
                     # n.show()
                 # if(current_time.minute == target_time.minute):
@@ -505,8 +514,12 @@ class TrayIcon(QSystemTrayIcon):
                         self.storage.update_reminder(reminder.note_hash, reminder.event_name, reminder)
                     else:
                         self.storage.delete_reminder(reminder.note_hash, reminder.target_date, reminder.target_time)
+                if(self.new_rem_entry == 1):
+                    self.new_rem_entry = 0
+                    self.reminder_thread_start = 1
                     # reminder = self.storage.read_reminder()
             else:
+                self.recent_reminder = None
                 self.reminder_thread_start = 0
         print("-----------------reminder thread stopped----------------")
 
@@ -544,9 +557,9 @@ class TrayIcon(QSystemTrayIcon):
         self.tray_icon_menu.addAction(self.logout)
         self.tray_icon_menu.addSeparator()
 
-        # self.close_window = QAction('Close',self)
-        # self.close_window.triggered.connect(partial(self.close_window_method))
-        # self.tray_icon_menu.addAction(self.close_window)
+        self.reminder_option = QAction('Reminder',self)
+        self.reminder_option.triggered.connect(self.start_reminder_ui)
+        self.tray_icon_menu.addAction(self.reminder_option)
         self.tray_icon_menu.addSeparator()
         # self.close_window.setVisible(False)
         exitaction = QAction('Exit',self)
@@ -555,6 +568,8 @@ class TrayIcon(QSystemTrayIcon):
         self.tray_icon_menu.addAction(exitaction)
         self.setContextMenu(self.tray_icon_menu)
 
+    def start_reminder_ui(self):
+        self.reminder = Reminder(self)
 
     def login_menu(self):
         if (self.internet_on_flag == 0):

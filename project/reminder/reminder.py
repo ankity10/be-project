@@ -31,7 +31,7 @@ class Reminder(QWidget):
 		# 	"background-color: rgb(175, 238, 238);"
 		# 	}
 		# 	""")
-		self.setStyleSheet("background-color : rgb(0, 191, 255);")
+		# self.setStyleSheet("background-color : rgb(224, 255, 255);")
 		self.event_name_label = QLabel("Event name", self)
 		self.event_name_label.move(5,10)
 
@@ -66,7 +66,8 @@ class Reminder(QWidget):
 		self.target_time = QTimeEdit(self)
 		self.target_time.setStyleSheet("background-color : rgb(240, 255, 255")
 		self.target_time.setTime(QTime.currentTime())
-		self.target_time.setMinimumTime(QTime.currentTime())
+		# if(self.target_date_selected == QDate.currentDate())
+		# 	self.target_time.setMinimumTime(QTime.currentTime())
 		self.target_time_selected = QTime.currentTime()
 		self.target_time.timeChanged.connect(self.time_selected)
 		self.target_time.move(230,30)
@@ -119,6 +120,9 @@ class Reminder(QWidget):
 
 	def date_selected(self, date):
 		self.target_date_selected = date
+		# if(self.target_date_selected == QDate.currentDate()):
+		# 	self.target_time.setMinimumTime(QTime.currentTime())
+
 		if(self.target_date_selected > QDate.currentDate()):
 			self.reminder.model().item(5).setEnabled(True)
 
@@ -140,21 +144,28 @@ class Reminder(QWidget):
 		self.reminder_selection_method()
 		self.main_app.reminder_thread_start = 0
 		self.store_reminder()
-		# if(self.main_app.reminder_thread_start == 0):
-		# 	self.main_app.reminder_thread_start =1
-		self.main_app.reminder_thread_start = 1
-		t = threading.Thread(target = self.main_app.set_reminder)
-		t.start()
+		if(self.main_app.recent_reminder == None):
+			self.main_app.reminder_thread_start =1
+			# self.main_app.reminder_thread_start = 1
+			t = threading.Thread(target = self.main_app.set_reminder)
+			t.start()
 		self.close()
 		# t = threading.Thread(target=self.set_reminder)
 		# t.start()
 
 	def store_reminder(self):
 		reminder_dict_info = {}
-		target_time1 = self.target_time_selected.toPyTime()
-		target_time = target_time1.strftime('%H-%M')
-		target_date1 = self.target_date_selected.toPyDate()
-		target_date = target_date1.strftime('%m-%d-%Y')
+		target_py_time = self.target_time_selected.toPyTime()
+		target_time = target_py_time.strftime('%H-%M')
+		target_py_date = self.target_date_selected.toPyDate()
+		target_date = target_py_date.strftime('%m-%d-%Y')
+		if(self.main_app.recent_reminder != None):
+			print("----------------In less------------")
+			running_rem_date = datetime.datetime.strptime(self.main_app.recent_reminder.target_date, '%m-%d-%Y').date()
+			running_rem_time = datetime.datetime.strptime(self.main_app.recent_reminder.target_time, '%H-%M').time()
+			if(target_py_date <= running_rem_date and target_py_time < running_rem_time):
+				print("------------------Yes less ------------------")
+				self.main_app.new_rem_entry = 1
 		window_title = self.main_app.wirm.prev_active_window_title
 		process_name = self.main_app.wirm.prev_active_window_name
 		print(window_title)
