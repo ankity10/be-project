@@ -225,6 +225,7 @@ class LoginWindow(QWidget):
         self.login_ui.new_user_link.clicked.connect(self.signup_ui)
         self.login_ui.signup_label.hide()
         self.login_ui.back_link.hide()
+        self.setFixedSize(358, 265)
         self.move(400,250)
         # self.setGeometry(400,250,400,200)
         # self.setWindowTitle('Login/Sign Up')

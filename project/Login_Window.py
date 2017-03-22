@@ -201,7 +201,7 @@ class Ui_Login_Window(object):
 "{\n"
 "    qproperty-icon : None;\n"
 "    color: rgb(67, 135, 203);\n"
-"    \n"
+"    text-align : center;\n"
 "    font: 11pt \"Roboto\";\n"
 "}")
         self.new_user_link.setObjectName("new_user_link")
@@ -226,7 +226,7 @@ class Ui_Login_Window(object):
 "{\n"
 "    qproperty-icon : None;\n"
 "    color: rgb(65, 130, 195);\n"
-"    \n"
+"    text-align : center;\n"
 "    font: 11pt \"Roboto\";\n"
 "}")
         self.back_link.setObjectName("back_link")
@@ -257,8 +257,8 @@ class Ui_Login_Window(object):
         _translate = QtCore.QCoreApplication.translate
         Login_Window.setWindowTitle(_translate("Login_Window", "Login/SignUp"))
         self.login_button.setText(_translate("Login_Window", "Login"))
-        self.username.setPlaceholderText(_translate("Login_Window", "Username"))
-        self.password.setPlaceholderText(_translate("Login_Window", "Password"))
+        self.username.setPlaceholderText(_translate("Login_Window", "                       Username"))
+        self.password.setPlaceholderText(_translate("Login_Window", "                       Password"))
         self.new_user_link.setText(_translate("Login_Window", "New User ?"))
         self.signup_button.setText(_translate("Login_Window", "Sign Up"))
         self.back_link.setText(_translate("Login_Window", "      Back"))

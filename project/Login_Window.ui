@@ -499,7 +499,7 @@ background-color : rgb(79, 159, 238);
     <bool>false</bool>
    </property>
    <property name="placeholderText">
-    <string>Username</string>
+    <string>                       Username</string>
    </property>
   </widget>
   <widget class="QLineEdit" name="password">
@@ -525,7 +525,7 @@ background-color : rgb(79, 159, 238);
     <enum>QLineEdit::Password</enum>
    </property>
    <property name="placeholderText">
-    <string>Password</string>
+    <string>                       Password</string>
    </property>
   </widget>
   <widget class="QCommandLinkButton" name="new_user_link">
@@ -542,7 +542,7 @@ background-color : rgb(79, 159, 238);
 {
 	qproperty-icon : None;
 	color: rgb(67, 135, 203);
-	
+	text-align : center;
 	font: 11pt &quot;Roboto&quot;;
 }</string>
    </property>
@@ -601,7 +601,7 @@ background-color : rgb(79, 159, 238);
 {
 	qproperty-icon : None;
 	color: rgb(65, 130, 195);
-	
+	text-align : center;
 	font: 11pt &quot;Roboto&quot;;
 }</string>
    </property>
