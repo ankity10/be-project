@@ -1,0 +1,4 @@
+Requirements
+
+pip3 install pyperclip
+sudo apt-get install xclip

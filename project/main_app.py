@@ -41,7 +41,7 @@ from merge import merge as Merge
 
 global IP
 
-IP = "192.168.0.109"
+IP = "192.168.0.111"
 
 global PORT
 PORT = "8000"
@@ -281,14 +281,14 @@ class LoginWindow(QWidget):
                                                  'password' : self.password_text,
                                                  'client_id' : self.main_app.client_id}).json()
         except:
-            self.main_app.message_box("Server is Offline!!", self.main_app.msg_box)
+            self.main_app.message_box("Server is Offline!!")
             self.main_app.login.setVisible(True)
             self.main_app.logout.setVisible(False)
             return
         self.authentication_flag = login_response["success"]
         if (self.authentication_flag == 0):
             print("in if")
-            self.main_app.message_box("Wrong Username or Password!!", self.main_app.msg_box, self.auth_fail_msg_btn)
+            self.main_app.message_box("Wrong Username or Password!!", self.auth_fail_msg_btn)
             self.clear_textedit()
             self.main_app.login.setVisible(True)
             self.main_app.logout.setVisible(False)
@@ -305,7 +305,7 @@ class LoginWindow(QWidget):
                     notes_dict = requests.get(str(self.main_app.notes_retrieve_url),
                                               headers={"Authorization": "JWT " + self.token}).json()['notes']
                 except:
-                    self.main_app.message_box("Server is Offline!!", self.main_app.msg_box)
+                    self.main_app.message_box("Server is Offline!!")
                     print("Hello")
                     return
                 for note in notes_dict:
@@ -367,12 +367,12 @@ class LoginWindow(QWidget):
             self.main_app.login_credentials.token = new_token
             self.main_app.storage.update_login_token(new_token)
             self.main_app.storage.insert_saved_password(self.new_username, self.new_password)
-            self.main_app.message_box("Signed Up successfully!!", self.main_app.msg_box, self.clear_textedit)
+            self.main_app.message_box("Signed Up successfully!!", self.clear_textedit)
             self.main_app.init_login()
             self.close()
         else:
             err_msg = data['errors']['username']['message']
-            self.main_app.message_box(err_msg, self.main_app.msg_box, self.clear_textedit)
+            self.main_app.message_box(err_msg, self.clear_textedit)
 
     def clear_textedit(self):
         self.username.clear()
@@ -423,14 +423,15 @@ class TrayIcon(QSystemTrayIcon):
         self.wirm = WIRM(self)
         self.note_window.setVisible(False)
 
-    def message_box(self, message, message_box, func=lambda:print("Closing message box!")):
+    def message_box(self, message, func=lambda:print("Closing message box!")):
         print("in message box")
-        message_box.setIcon(QMessageBox.Information)
-        message_box.setText(str(message))
-        message_box.setStandardButtons(QMessageBox.Ok)
-        message_box.setWindowTitle("Message")
-        message_box.buttonClicked.connect(func)
-        message_box.exec_()
+        msg_box = QMessageBox()
+        msg_box.setIcon(QMessageBox.Information)
+        msg_box.setText(str(message))
+        msg_box.setStandardButtons(QMessageBox.Ok)
+        msg_box.setWindowTitle("Message")
+        msg_box.buttonClicked.connect(func)
+        msg_box.exec_()
 
 
     def init_login(self):
@@ -536,7 +537,7 @@ class TrayIcon(QSystemTrayIcon):
 
     def login_menu(self):
         if (self.internet_on_flag == 0):
-            self.message_box("You are offline!!", self.msg_box)
+            self.message_box("You are offline!!")
         else:
             self.login_window = LoginWindow(self)
 
@@ -549,7 +550,7 @@ class TrayIcon(QSystemTrayIcon):
         self.sync.send_offline_logs_flag = 1
         self.sync.sync_thread_flag = 0
         self.sync.disconnect()
-        self.message_box("Logged out successfully!", self.msg_box)
+        self.message_box("Logged out successfully!")
 
 
     # def close_window_method(self):
