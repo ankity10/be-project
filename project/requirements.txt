@@ -1,4 +1,6 @@
-Requirements
-
-pip3 install pyperclip
-sudo apt-get install xclip
+sip
+pyqt5
+python-xlib
+pyperclip
+requests
+hashlib

@@ -15,7 +15,6 @@ import urllib.request
 import requests
 import json
 # import subprocess
-import time
 # import pyperclip
 import datetime
 import time
