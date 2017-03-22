@@ -3,16 +3,19 @@
 ### External Dependancies
 
 - PyQt5 
+- MongoDb
 - notify2 
 
 
 ### Python dependancies
+* pymongo
 * sip
 * pyqt5
 * python-xlib
 * pyperclip
 * requests
 * hashlib
+* colorama
 
 # Installation Procedure
 

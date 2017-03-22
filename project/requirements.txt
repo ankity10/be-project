@@ -1,6 +1,8 @@
+pymongo
 python-dateutil
 sip
 pyqt5
+colorama
 python-xlib
 pyperclip
 requests
