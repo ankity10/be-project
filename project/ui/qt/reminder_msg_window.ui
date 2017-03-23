@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>326</width>
-    <height>103</height>
+    <width>453</width>
+    <height>200</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,8 +26,8 @@
    </property>
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>10</y>
+     <x>80</x>
+     <y>30</y>
      <width>301</width>
      <height>41</height>
     </rect>
@@ -53,21 +53,22 @@ text-align : center;
   <widget class="QPushButton" name="dismiss_button">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>60</y>
+     <x>80</x>
+     <y>110</y>
      <width>131</width>
-     <height>27</height>
+     <height>41</height>
     </rect>
    </property>
    <property name="styleSheet">
     <string notr="true">QPushButton
 {
+color: #fff;
 	font: 11pt &quot;Roboto&quot;;
 	border-style : solid;
-	border-radius : 10px;
+	border-radius : 4px;
 border-width : 1px;
 border-color : rgb(85, 170, 255);
-	background-color: rgb(85, 170, 255);
+	background-color: rgb(212, 0, 0);
 }</string>
    </property>
    <property name="text">
@@ -77,18 +78,19 @@ border-color : rgb(85, 170, 255);
   <widget class="QPushButton" name="snooze_button">
    <property name="geometry">
     <rect>
-     <x>180</x>
-     <y>60</y>
+     <x>260</x>
+     <y>110</y>
      <width>121</width>
-     <height>27</height>
+     <height>41</height>
     </rect>
    </property>
    <property name="styleSheet">
     <string notr="true">QPushButton
 {
+color:#fff;
 	font: 11pt &quot;Roboto&quot;;
 	border-style : solid;
-	border-radius : 10px;
+	border-radius : 4px;
 border-width : 1px;
 border-color : rgb(85,170,255);
 	background-color: rgb(85, 170, 255);

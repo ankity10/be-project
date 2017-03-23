@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'login_window.ui'
+# Form implementation generated from reading ui file 'ui/qt/login_window.ui'
 #
 # Created by: PyQt5 UI code generator 5.8
 #
@@ -220,6 +220,9 @@ class Ui_Login_Window(object):
         self.login_label.setObjectName("login_label")
         self.signup_link = QtWidgets.QPushButton(Login_Window)
         self.signup_link.setGeometry(QtCore.QRect(120, 240, 191, 41))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.signup_link.setFont(font)
         self.signup_link.setText("Not registered - Signup")
         self.signup_link.setObjectName("signup_link")
         self.signup_label = QtWidgets.QLabel(Login_Window)
@@ -235,6 +238,13 @@ class Ui_Login_Window(object):
         self.signup_label.setObjectName("signup_label")
         self.login_link = QtWidgets.QPushButton(Login_Window)
         self.login_link.setGeometry(QtCore.QRect(120, 240, 191, 41))
+        font = QtGui.QFont()
+        font.setFamily("Roboto")
+        font.setPointSize(10)
+        font.setBold(False)
+        font.setItalic(False)
+        font.setWeight(50)
+        self.login_link.setFont(font)
         self.login_link.setText("Already registered - Login")
         self.login_link.setObjectName("login_link")
         self.signup_button = QtWidgets.QPushButton(Login_Window)

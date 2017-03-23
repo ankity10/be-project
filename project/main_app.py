@@ -14,9 +14,9 @@ from PyQt5.QtWidgets import *
 from dateutil.relativedelta import relativedelta
 from random import randint
 
-from ui.login_signup.Login_Window import Ui_Login_Window
-from reminder_msg_window import Ui_Rem_MSG_Window
-from help_window import Ui_Help_Window
+from ui.qt.login_window import Ui_Login_Window
+from ui.qt.reminder_msg_window import Ui_Rem_MSG_Window
+from ui.qt.help_window import Ui_Help_Window
 # sudo apt-get install python3-dateutil
 
 from sync.sync import sync
@@ -30,7 +30,6 @@ from sync.sync import sync
 from storage.storage import Db
 from storage.storage import Local_Log
 from storage.storage import Note
-from ui.login_signup.login_window import Ui_Login_Window
 from utils.title_processing import TitleProcessing
 from wirm.wirm import WIRM
 
@@ -171,9 +170,6 @@ class Reminder_Msg_Window(QDialog):
         self.close()
 
 
-
-
-
 class LoginWindow(QWidget):
     def __init__(self, main_app, visible_flag=True):
         super().__init__()
@@ -191,7 +187,7 @@ class LoginWindow(QWidget):
         self.login_ui.signup_link.clicked.connect(self.signup_ui)
         self.login_ui.signup_label.hide()
         self.login_ui.login_link.hide()
-        self.setFixedSize(358, 265)
+        self.setFixedSize(430, 300)
 
         self.move(QApplication.desktop().screen().rect().center()- self.rect().center())
         # self.setGeometry(400,250,400,200)
