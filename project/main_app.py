@@ -20,7 +20,7 @@ from sync.sync import sync
 from storage.storage import Db
 from storage.storage import Local_Log
 from storage.storage import Note
-from ui.login_signup.Login_Window import Ui_Login_Window
+from ui.login_signup.login_window import Ui_Login_Window
 from utils.title_processing import TitleProcessing
 from wirm.wirm import WIRM
 
@@ -145,14 +145,14 @@ class LoginWindow(QWidget):
         self.login_ui = Ui_Login_Window()
         self.login_ui.setupUi(self)
         self.setWindowTitle("LOGIN IN")
-        self.login_ui.back_link.hide()
+        self.login_ui.login_link.hide()
         self.login_ui.signup_button.hide()
         self.login_ui.login_button.clicked.connect(self.login_method)
-        self.login_ui.back_link.clicked.connect(self.back_method)
+        self.login_ui.login_link.clicked.connect(self.back_method)
         self.login_ui.signup_button.clicked.connect(self.signup_method)
-        self.login_ui.new_user_link.clicked.connect(self.signup_ui)
+        self.login_ui.signup_link.clicked.connect(self.signup_ui)
         self.login_ui.signup_label.hide()
-        self.login_ui.back_link.hide()
+        self.login_ui.login_link.hide()
         self.setFixedSize(358, 265)
         self.move(400, 250)
 
@@ -187,9 +187,9 @@ class LoginWindow(QWidget):
         self.login_ui.login_label.show()
         self.login_ui.signup_label.hide()
         self.login_ui.signup_button.hide()
-        self.login_ui.new_user_link.show()
+        self.login_ui.signup_link.show()
         self.login_ui.login_button.show()
-        self.login_ui.back_link.hide()
+        self.login_ui.login_link.hide()
         self.setWindowTitle("LOGIN IN")
 
     def login_method(self):
@@ -264,13 +264,13 @@ class LoginWindow(QWidget):
         self.show()
 
     def signup_ui(self):
-        self.login_ui.back_link.show()
+        self.login_ui.login_link.show()
         self.setWindowTitle("SIGN UP")
         # self.email_lbl.show()
         # self.email.show()
         self.login_ui.signup_button.show()
         self.login_ui.login_button.hide()
-        self.login_ui.new_user_link.hide()
+        self.login_ui.signup_link.hide()
         self.login_ui.signup_label.show()
         self.login_ui.login_label.hide()
 
