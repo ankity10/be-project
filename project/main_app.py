@@ -554,6 +554,9 @@ class TrayIcon(QSystemTrayIcon):
 
                     reminder_msg_obj = Reminder_Msg_Window(self)
                     reminder_msg_obj.reminder_msg_ui.reminder_msg_edit.setText(reminder.event_name)
+                    reminder_msg_obj.reminder_msg_ui.window_title.setText(reminder.window_title)
+                    reminder_msg_obj.reminder_msg_ui.process_name.setText(reminder.process_name)
+
                     reminder_msg_obj.reminder_msg_ui.reminder_msg_edit.setAlignment(Qt.AlignCenter)
                     reminder_msg_obj.move(QApplication.desktop().screen().rect().center().x()- reminder_msg_obj.rect().center().x(), 0)
                     reminder_msg_obj.exec_()

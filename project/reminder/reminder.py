@@ -127,8 +127,8 @@ class Reminder(QWidget):
         # self.reminder_ui.add_button = QPushButton("ADD",self)
         # self.reminder_ui.add_button.move(30,120)
         self.reminder_ui.add_button.clicked.connect(self.reminder_added)
-        self.reminder_ui.add_button.move(230, 270)
-        self.reminder_ui.cancel_button.move(40, 270)
+        self.reminder_ui.add_button.move(230, 250)
+        self.reminder_ui.cancel_button.move(40, 250)
         # self.reminder_ui.add_button.setStyleSheet("background-color : rgb(240, 255, 255")
 
         # self.reminder_ui.cancel_button = QPushButton("CANCEL", self)
@@ -148,9 +148,9 @@ class Reminder(QWidget):
         self.reminder_ui.reminder_label.show()
         self.reminder_ui.repetition_label.show()
         self.reminder_ui.more_options_button.hide()
-        self.setFixedSize(400, 450)
-        self.reminder_ui.add_button.move(230, 380)
-        self.reminder_ui.cancel_button.move(50, 380)
+        self.setFixedSize(400, 410)
+        self.reminder_ui.add_button.move(230, 340)
+        self.reminder_ui.cancel_button.move(50, 340)
 
     def less_options_method(self):
         self.reminder_ui.less_options_button.hide()
@@ -160,8 +160,8 @@ class Reminder(QWidget):
         self.reminder_ui.repetition_label.hide()
         self.reminder_ui.more_options_button.show()
         self.setFixedSize(400, 340)
-        self.reminder_ui.add_button.move(230, 270)
-        self.reminder_ui.cancel_button.move(40,270)
+        self.reminder_ui.add_button.move(230, 250)
+        self.reminder_ui.cancel_button.move(40,250)
 
     def date_selected(self, date):
         self.target_date_selected = date
