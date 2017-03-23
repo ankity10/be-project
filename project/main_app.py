@@ -12,6 +12,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWebEngineWidgets import *
 from PyQt5.QtWidgets import *
 from dateutil.relativedelta import relativedelta
+from random import randint
 
 from merge import merge as Merge
 from reminder.reminder import *
@@ -304,6 +305,38 @@ class LoginWindow(QWidget):
         self.login_ui.password.clear()
 
 
+class ThemeSelector():
+    theme_list = ['white', 'yellow', 'purple', 'deepblue',"skyblue", 'pinkblue', 'grey', 'pink', 'green', "blue", "teal"]
+    availiable_modes = ["random", "process_wise"]
+
+    def __init__(self, mode):
+        if mode in ThemeSelector.availiable_modes:
+            self.mode = mode
+        else:
+            raise ValueError("Invalid mode provided, Available modes are : 'random', 'process_wise' ")
+
+    def select_theme(self, process_name=None):
+        if self.mode == 'random':
+            return self._random_theme_generator()
+        else:
+            return self._process_wise_theme_generator(process_name)
+
+    def _random_theme_generator(self):
+        random_index = randint(0, len(ThemeSelector.theme_list)-1)
+        return ThemeSelector.theme_list[random_index]
+
+    def _process_wise_theme_generator(self, process_name):
+        if isinstance(process_name, str) and process_name:
+            ascii_sum = 0
+            for char in process_name:
+                ascii_sum = ascii_sum + ord(char)
+
+            index = ascii_sum%len(ThemeSelector.theme_list)
+            return ThemeSelector.theme_list[index]
+        else:
+            raise ValueError("'{}' should be of type 'str'".format(process_name))
+
+
 class TrayIcon(QSystemTrayIcon):
     def __init__(self):
         self.log_count_retrieval_url = "http://" + IP + ":" + PORT + "/api/rabbitmq/queue/message/count?queue="
@@ -347,7 +380,9 @@ class TrayIcon(QSystemTrayIcon):
         self.note_window.load(QUrl(self.note_window.abs_path))
         print("--------------------------------------------------------------------")
         self.wirm = WIRM(self)
+        self.theme_selector = ThemeSelector("process_wise")
         self.note_window.setVisible(False)
+
 
     def message_box(self, message, func=lambda: print("Closing message box!")):
         print("in message box")
@@ -536,6 +571,7 @@ class TrayIcon(QSystemTrayIcon):
             if self.x_position <= 0:
                 self.x_position = QCursor().pos().x()
                 self.y_position = QCursor().pos().y()
+            print(self.x_position, self.y_position)
             self.note_window.setGeometry(self.x_position, self.y_position, 280, 310)
         self.note_window.setVisible(True)
         note_visible_flag = 1
@@ -548,6 +584,11 @@ class TrayIcon(QSystemTrayIcon):
         self.format_note()
         js_cmd = str("firepad.setHtml('" + self.default_text + "')")
         self.note_window.page().runJavaScript(js_cmd)
+        theme = self.theme_selector.select_theme(self.process_name)
+        print("Theme: ", theme)
+        theme_cmd = "setTheme('"+theme+"');"
+        self.note_window.page().runJavaScript(theme_cmd)
+
 
     def format_note(self):
         style_tag = "</style>"
@@ -634,6 +675,7 @@ class TrayIcon(QSystemTrayIcon):
             self.default_text = ""
             self.status = "new"
         return True
+
 
     def tray_icon_activated(self, reason):
         self.window_close = not self.window_close

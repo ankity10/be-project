@@ -384,7 +384,7 @@ div.CodeMirror.cm-s-default.CodeMirror-wrap {
 }
 
 body {
-  background-image: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+  /*background-image: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);*/
   /*background-image: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);*/
 }
 
@@ -403,9 +403,9 @@ a.firepad-btn, a.firepad-btn:visited, a.firepad-btn:active {
 a.firepad-btn:hover {
     color: #fff;
     /*background-color: #d07ee5;*/
-    background-image: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
-    background-color:#84fab0 ;
-  border-color: #8fd3f4;
+    /*background-image: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);*/
+    /*background-color:#84fab0 ;*/
+  /*border-color: #8fd3f4;*/
     /*border-color: #d07ee5;*/
     text-decoration: none;
 }
@@ -418,7 +418,18 @@ a.firepad-btn, a.firepad-btn:visited, a.firepad-btn:active {
 
     transition: all 0.25s;
     font-size: 16px;
-    background-color: rgba(252, 252, 252, 0.45);
-    border: 1px solid rgba(255, 252, 252, 0.21);
+    background-color: rgba(252, 252, 252, 0.85);
+    border: 1px solid rgba(201, 201, 201, 0.31);
 
 }
+
+.light-blue .background{
+  background-image: linear-gradient(to top, #bdc2e8 0%, #bdc2e8 1%, #e6dee9 100%) !important;
+  background-color: #bdc2e8 !important;
+}
+
+.light-blue .btn{
+  border-color: #bdc2e8 !important;
+  color: #fff !important;
+}
+

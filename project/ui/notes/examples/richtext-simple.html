@@ -43,9 +43,132 @@
 <div id="firepad-container"></div>
 
 <script>
-    var escape_str = function addslashes(str) {
-        return (str + '').replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
-    }
+
+    $(document).ready(function () {
+//        console.log("document ready")
+        window.themes = {}
+        themes.defaults = {};
+        themes.defaults.backgroundImage = "linear-gradient(to top, #bdc2e8 0%, #bdc2e8 1%, #e6dee9 100%)";
+        themes.defaults.backgroundColor = "#bdc2e8";
+        themes.defaults.color = "#fff";
+        themes.defaults.borderColor = "#bdc2e8";
+
+        themes.green = {};
+        themes.yellow = {};
+        themes.teal = {};
+        themes.pink = {};
+        themes.blue = {};
+        themes.skyblue = {};
+        themes.white = {};
+        themes.grey = {};
+        themes.pinkblue = {};
+        themes.deepblue = {};
+        themes.purple = {};
+
+
+        //green
+        themes.green.backgroundImage = "linear-gradient(120deg, #d4fc79 0%, #96e6a1 100%)";
+        themes.green.backgroundColor = "#d4fc79";
+        themes.green.color = "#fff";
+        themes.green.borderColor = "#96e6a1";
+
+        //yellow
+        themes.yellow.backgroundImage = "linear-gradient(60deg, #abecd6 0%, #fbed96 100%)";
+        themes.yellow.backgroundColor = "#fbed96";
+        themes.yellow.color = "#fff";
+        themes.yellow.borderColor = "#fbed96";
+
+        //teal
+        themes.teal.backgroundImage = "linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%)";
+        themes.teal.backgroundColor = "#84fab0";
+        themes.teal.color = "#fff";
+        themes.teal.borderColor = "#84fab0";
+
+        //pink
+        themes.pink.backgroundImage = "linear-gradient(to top, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)";
+        themes.pink.backgroundColor = "#ff9a9e";
+        themes.pink.color = "#fff";
+        themes.pink.borderColor = "#ff9a9e";
+
+        //blue
+        themes.blue.backgroundImage = "linear-gradient(45deg, #93a5cf 0%, #e4efe9 100%)";
+        themes.blue.backgroundColor = "#93a5cf";
+        themes.blue.color = "#fff";
+        themes.blue.borderColor = "#93a5cf";
+
+        //skyblue
+        themes.skyblue.backgroundImage = "linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)";
+        themes.skyblue.backgroundColor = "#a1c4fd";
+        themes.skyblue.color = "#fff";
+        themes.skyblue.borderColor = "#a1c4fd";
+
+
+        //white
+        themes.white.backgroundImage = "linear-gradient(to top, #dfe9f3 0%, white 100%)";
+        themes.white.backgroundColor = "#dfe9f3";
+        themes.white.color = "#fff";
+        themes.white.borderColor = "#dfe9f3";
+
+        //grey
+        themes.grey.backgroundImage = "linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%)";
+        themes.grey.backgroundColor = "#cfd9df";
+        themes.grey.color = "#fff";
+        themes.grey.borderColor = "#cfd9df";
+
+        //pinkblue
+        themes.pinkblue.backgroundImage = "linear-gradient(to top, #fbc2eb 0%, #a6c1ee 100%)";
+        themes.pinkblue.backgroundColor = "#fbc2eb";
+        themes.pinkblue.color = "#fff";
+        themes.pinkblue.borderColor = "#fbc2eb";
+
+        //deepblue
+        themes.deepblue.backgroundImage = "linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%)";
+        themes.deepblue.backgroundColor = "#e0c3fc";
+        themes.deepblue.color = "#fff";
+        themes.deepblue.borderColor = "#8ec5fc";
+
+        setTheme = function (theme_name) {
+            changeTheme(themes[theme_name]);
+        }
+
+        window.changeTheme = function (theme) {
+            window.backgroundImage = theme.backgroundImage;
+            window.backgroundColor = theme.backgroundColor;
+            window.color = theme.color;
+            window.borderColor = theme.borderColor;
+            $("body").css("background-image", backgroundImage);
+
+            var targetbtns = $("a.firepad-btn");
+
+            targetbtns.mouseenter(function (event) {
+//                console.log(event);
+                target_btn = $(event.target);
+                target_btn.css("background-image", backgroundImage);
+                target_btn.css("background-color", backgroundColor);
+                target_btn.css("border-color", borderColor);
+                target_btn.css("color", color);
+            })
+
+            targetbtns.mouseleave(function (event) {
+//                console.log(event);
+                target_btn = $(event.currentTarget);
+//                console.log(target_btn);
+                var status = target_btn.attr("data-active");
+//                console.log("status", status);
+                if (parseInt(status) == parseInt("0")) {
+//                    console.log("chaning color");
+                    target_btn.css("background-image", "");
+                    target_btn.css("background-color", "rgba(252, 252, 252, 0.85");
+                    target_btn.css("border", "1px solid rgba(201, 201, 201, 0.31)");
+                    target_btn.css("color", "#9c9c9c");
+                }
+            })
+        }
+
+        setTheme('blue');
+
+    })
+
 
     var firepad;
     var code_mirror;
@@ -57,8 +180,12 @@
         firepad = Firepad.fromCodeMirror(code_mirror,
             {richTextToolbar: true, richTextShortcuts: true});
 
-        var get_current_line_attrs = function () {
+        var get_current_attrs = function () {
             return firepad.richTextCodeMirror_.getCurrentAttributes_();
+        }
+
+        var get_current_line_attrs = function () {
+            return firepad.richTextCodeMirror_.getCurrentLineAttributes_();
         }
 
 
@@ -75,30 +202,68 @@
                 btn = node;
             }
 
+
+//            if (btn_type == "list" && new_status=)
             if (new_status == 'active') {
                 btn.attr("data-active", "1");
-                btn.css("background-color", "#d07ee5");
-                btn.css("color", "#fcfcfc");
+                btn.css("background-image", backgroundImage);
+                btn.css("background-color", backgroundColor);
+                btn.css("color", color);
+                btn.css("border-color", borderColor);
             }
             else if (new_status == 'inactive') {
                 btn.attr("data-active", "0");
-                btn.css("background-color", "#fcfcfc");
+                btn.css("background-image", "");
+                btn.css("background-color", "rgba(252, 252, 252, 0.85");
                 btn.css("color", "#9c9c9c");
+                btn.css("border", "1px solid rgba(201, 201, 201, 0.31)");
             }
             else {
 
                 var data_active = btn.attr("data-active");
 
-                if (data_active == 0) {
-                    btn.attr("data-active", "1");
-                    btn.css("background-color", "#d07ee5");
-                    btn.css("color", "#fcfcfc");
+                if (btn_type == 'list') {
+
+                    if (data_active == 0) {
+                        btn.attr("data-active", "1");
+                        btn.css("background-image", backgroundImage);
+                        btn.css("background-color", backgroundColor);
+                        btn.css("color", color);
+                        btn.css("border-color", borderColor);
+                    }
+                    else if (data_active == 1) {
+                        btn.attr("data-active", "2");
+                        btn.css("background-image", backgroundImage);
+                        btn.css("background-color", backgroundColor);
+                        btn.css("color", color);
+                        btn.css("border-color", borderColor);
+                    }
+                    else if (data_active == 2) {
+                        btn.attr("data-active", "0");
+                        btn.css("background-image", "");
+                        btn.css("background-color", "rgba(252, 252, 252, 0.85)");
+                        btn.css("color", "#9c9c9c");
+                        btn.css("border", "1px solid rgba(201, 201, 201, 0.31)");
+                    }
+
                 }
                 else {
-                    btn.attr("data-active", "0");
-                    btn.css("background-color", "#fcfcfc");
-                    btn.css("color", "#9c9c9c");
+                    if (data_active == 0) {
+                        btn.attr("data-active", "1");
+                        btn.css("background-image", backgroundImage);
+                        btn.css("background-color", backgroundColor);
+                        btn.css("color", color);
+                        btn.css("border-color", borderColor);
+                    }
+                    else {
+                        btn.attr("data-active", "0");
+                        btn.css("background-image", "");
+                        btn.css("background-color", "rgba(252, 252, 252, 0.85)");
+                        btn.css("color", "#9c9c9c");
+                        btn.css("border", "1px solid rgba(201, 201, 201, 0.31)");
+                    }
                 }
+
             }
         }
 
@@ -108,8 +273,10 @@
 //                console.log("in if");
 //                console.log("firepad.getText() is : " + firepad.getText());
 //                console.log(get_current_line_attrs());
-                var attr_obj = get_current_line_attrs();
-//                console.log(attr_obj);
+                var attr_obj = get_current_attrs();
+
+                var line_attr_obj = get_current_line_attrs();
+                //                console.log(attr_obj);
                 if (attr_obj.b !== undefined) {
                     toggle_buttons_colors('bold', "active");
                 }
@@ -138,6 +305,22 @@
                     toggle_buttons_colors("strikethrough", "inactive");
                 }
 
+                if (line_attr_obj.lt === "t") {
+//                    console.log("make todo active")
+                    toggle_buttons_colors("list", "active");
+                }
+                else if (line_attr_obj.lt === "o") {
+//                                        console.log("make num list active")
+
+                    toggle_buttons_colors("numbered-list", "active");
+                }
+                else {
+//                                        console.log("make both inactive active")
+
+                    toggle_buttons_colors("list", "inactive");
+                    toggle_buttons_colors("numbered-list", "inactive");
+
+                }
 
 
             }
@@ -173,35 +356,41 @@
 
         // Adding note save triggers for backspace and delete keypress
         $('#firepad-container').on('keydown', function (e) {
+//            console.log(e);
             var key = e.keyCode || e.charCode;
             if (key == 8 || key == 46 || key == 13) {
                 trigger_save_note(600);
             }
 
+            if (key === 13 || e.keyCode === 8) {
+//                console.log("triggerring cursoractivity");
+//                code_mirror.trigger("cursorActivity");
+                setTimeout(cursor_activity_callback, 50);
+
+            }
+
         });
 
-         $(".CodeMirror").on('keydown', function (e) {
+        $(".CodeMirror").on('keydown', function (e) {
 
 //            console.log(e.ctrlKey, e.shiftKey, e.metaKey);
 //            console.log(e);
 
 
-             if (e.ctrlKey && e.shiftKey && e.keyCode === 187) {
-                 var target = $(".firepad-richtext .CodeMirror ");
-                         var current_font_size = target.css("font-size").split("px")[0];
-                         target.css("font-size", String(parseInt(current_font_size)+1)+"px");
-                         console.log("Neew font size is ", target.css("font-size"));
-             }
-             else if (e.ctrlKey && e.keyCode === 189) {
-                 var target = $(".firepad-richtext .CodeMirror ");
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 187) {
+                var target = $(".firepad-richtext .CodeMirror ");
                 var current_font_size = target.css("font-size").split("px")[0];
-                target.css("font-size", String(parseInt(current_font_size)-1)+"px");
-                 console.log("Neew font size is ", target.css("font-size"));
+                target.css("font-size", String(parseInt(current_font_size) + 1) + "px");
+//                console.log("Neew font size is ", target.css("font-size"));
+            }
+            else if (e.ctrlKey && e.keyCode === 189) {
+                var target = $(".firepad-richtext .CodeMirror ");
+                var current_font_size = target.css("font-size").split("px")[0];
+                target.css("font-size", String(parseInt(current_font_size) - 1) + "px");
+//                console.log("Neew font size is ", target.css("font-size"));
 
-             }
+            }
         });
-
-
 
 
         // Adding note save triggers for shortcut key ctrl + B, ctrl + I, ctrl + U
@@ -263,15 +452,14 @@
             } else {
                 btn = node;
             }
-            var btn_type_list = ['bold', 'italic', 'underline', 'srikethrough'];
+            var btn_type_list = ['bold', 'italic', 'underline', 'strikethrough', 'numbered-list', 'list'];
             // skiping 11 chars from class name ex: 'firepad-tb-bold' -> 'bold'
             var btn_type = btn[0].className.slice(11);
 
             if (btn_type_list.indexOf(btn_type) !== -1) {
-                            toggle_buttons_colors(btn_type);
+                toggle_buttons_colors(btn_type);
 
             }
-
 
 
             trigger_save_note(300);
