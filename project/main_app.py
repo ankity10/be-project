@@ -451,7 +451,6 @@ class TrayIcon(QSystemTrayIcon):
         self.default_text = ""
         self.status = ""
         self.note_window = NoteWindow()
-        self.reminder_msg_obj = Reminder_Msg_Window(self)
         self.create_menu()
         self.init_login()  # Login attempt from stored username & password
         self.reminder_thread_start = 1
@@ -539,6 +538,7 @@ class TrayIcon(QSystemTrayIcon):
                     # # msg.buttonClicked.connect(self.close_thread)
                     # msg.exec_()
                     # self.reminder_msg_obj.reminder_msg_ui.reminder_msg_edit.setText(reminder.event_name)
+                    self.reminder_msg_obj = Reminder_Msg_Window(self)
                     self.reminder_msg_obj.reminder_msg_ui.reminder_msg_edit.setText(reminder.event_name)
                     self.reminder_msg_obj.reminder_msg_ui.reminder_msg_edit.setAlignment(Qt.AlignCenter)
                     self.reminder_msg_obj.move(QApplication.desktop().screen().rect().center().x()- self.reminder_msg_obj.rect().center().x(), 0)
@@ -574,6 +574,9 @@ class TrayIcon(QSystemTrayIcon):
                     self.reminder_thread_start = 1
                     # reminder = self.storage.read_reminder()
             else:
+                print("------------No entry in database-----------")
+                self.dismiss_checked = False
+                self.snooze_checked = False
                 self.recent_reminder = None
                 self.reminder_thread_start = 0
         print("-----------------reminder thread stopped----------------")

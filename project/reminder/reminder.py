@@ -197,9 +197,13 @@ class Reminder(QWidget):
 			print("----------------In less------------")
 			running_rem_date = datetime.datetime.strptime(self.main_app.recent_reminder.target_date, '%m-%d-%Y').date()
 			running_rem_time = datetime.datetime.strptime(self.main_app.recent_reminder.target_time, '%H-%M').time()
-			if(target_py_date <= running_rem_date and target_py_time < running_rem_time):
+			if(target_py_date < running_rem_date):
 				print("------------------Yes less ------------------")
 				self.main_app.new_rem_entry = 1
+			elif(target_py_date == running_rem_date and target_py_time < running_rem_time):
+				print("------------------Yes less ------------------")
+				self.main_app.new_rem_entry = 1
+
 		window_title = self.main_app.wirm.prev_active_window_title
 		process_name = self.main_app.wirm.prev_active_window_name
 		print(window_title)
