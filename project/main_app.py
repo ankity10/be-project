@@ -13,6 +13,16 @@ from PyQt5.QtWebEngineWidgets import *
 from PyQt5.QtWidgets import *
 from dateutil.relativedelta import relativedelta
 
+from ui.login_signup.Login_Window import Ui_Login_Window
+from reminder_msg_window import Ui_Rem_MSG_Window
+from help_window import Ui_Help_Window
+# sudo apt-get install python3-dateutil
+
+from sync.sync import sync
+from reminder.reminder import *
+from functools import partial
+
+
 from merge import merge as Merge
 from reminder.reminder import *
 from sync.sync import sync
@@ -134,6 +144,34 @@ class NoteWindow(QWebEngineView):
         note_visible_flag = 0
         event.ignore()
 
+class Reminder_Msg_Window(QDialog):
+    def __init__(self, main_app):
+        super().__init__()
+        self.reminder_msg_ui = Ui_Rem_MSG_Window()
+        self.reminder_msg_ui.setupUi(self)
+        self.main_app = main_app
+        # self.reminder_msg_ui.dismiss_button.setCheckable(True)
+        # self.reminder_msg_ui.snooze_button.setCheckable(True)
+        self.reminder_msg_ui.dismiss_button.clicked.connect(self.dismiss_method)
+        self.reminder_msg_ui.snooze_button.clicked.connect(self.snooze_method)
+        flags = Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint
+        self.setWindowFlags(flags)
+
+    def dismiss_method(self):
+        print("In dismiss")
+        self.main_app.dismiss_checked = True
+        self.main_app.snooze_checked = False
+        self.close()
+
+    def snooze_method(self):
+        print("In snooze")
+        self.main_app.dismiss_checked = False
+        self.main_app.snooze_checked = True
+        self.close()
+
+
+
+
 
 class LoginWindow(QWidget):
     def __init__(self, main_app, visible_flag=True):
@@ -153,7 +191,17 @@ class LoginWindow(QWidget):
         self.login_ui.signup_label.hide()
         self.login_ui.back_link.hide()
         self.setFixedSize(358, 265)
-        self.move(400, 250)
+
+        self.move(QApplication.desktop().screen().rect().center()- self.rect().center())
+        # self.setGeometry(400,250,400,200)
+        # self.setWindowTitle('Login/Sign Up')
+        # self.username_lbl = self.create_label(5,5,"Username")
+        # self.username = self.create_LineEdit(110,5,"Username",285)
+
+        # self.password_lbl = self.create_label(5,30,"Password :")
+        # self.password = self.create_LineEdit(110, 30, "Password",285)
+
+        # self.password.setEchoMode(2)
 
         self.main_app.merge = Merge.merge
         self.setVisible(visible_flag)
@@ -302,6 +350,54 @@ class LoginWindow(QWidget):
         self.login_ui.username.clear()
         # self.email.clear()
         self.login_ui.password.clear()
+class Help_Window(QWidget):
+    def __init__(self):
+        super().__init__()
+        menu = QMenu()
+
+        self.help_ui = Ui_Help_Window()
+        self.help_ui.setupUi(self)
+        # self.setWindowFlags(Qt.FramelessWindowHint)
+        # self.setAttribute(Qt.WA_TranslucentBackground, 60)
+        self.help_ui.about_edit.hide()
+        self.help_ui.shortcut_edit.hide()
+        self.help_ui.tips_edit.hide()
+        self.help_ui.about_button.setCheckable(True)
+        self.help_ui.shortcut_button.setCheckable(True)
+        self.help_ui.tips_button.setCheckable(True)
+        self.help_ui.shortcut_button.setChecked(True)
+        self.is_shortcuts_Checked()
+        self.help_ui.about_button.clicked.connect(self.is_about_Checked)
+        self.help_ui.shortcut_button.clicked.connect(self.is_shortcuts_Checked)
+        self.help_ui.tips_button.clicked.connect(self.is_tips_checked)
+        self.move(QApplication.desktop().screen().rect().center()- self.rect().center())
+
+    def is_tips_checked(self):
+        if(self.help_ui.tips_button.isChecked()):
+            self.help_ui.shortcut_button.setChecked(False)
+            self.help_ui.about_button.setChecked(False)
+            self.help_ui.tips_edit.show()
+            self.help_ui.shortcut_edit.hide()
+            self.help_ui.about_edit.hide()
+
+        
+
+    def is_about_Checked(self):
+        if(self.help_ui.about_button.isChecked()):
+            self.help_ui.shortcut_button.setChecked(False)
+            self.help_ui.tips_button.setChecked(False)
+            self.help_ui.about_edit.show()
+            self.help_ui.shortcut_edit.hide()
+            self.help_ui.tips_edit.hide()
+
+    def is_shortcuts_Checked(self):
+        if(self.help_ui.shortcut_button.isChecked()):
+            self.help_ui.about_button.setChecked(False)
+            self.help_ui.tips_button.setChecked(False)
+            self.help_ui.about_edit.hide()
+            self.help_ui.tips_edit.hide()
+            self.help_ui.shortcut_edit.show()
+
 
 
 class TrayIcon(QSystemTrayIcon):
@@ -348,6 +444,8 @@ class TrayIcon(QSystemTrayIcon):
         print("--------------------------------------------------------------------")
         self.wirm = WIRM(self)
         self.note_window.setVisible(False)
+        self.dismiss_checked = False
+        self.snooze_checked = False
 
     def message_box(self, message, func=lambda: print("Closing message box!")):
         print("in message box")
@@ -399,7 +497,7 @@ class TrayIcon(QSystemTrayIcon):
                     if (self.new_rem_entry == 1):
                         self.reminder_thread_start = 0
                     if ((target_time.hour - current_time.hour) > 1):
-                        time.sleep(50)
+                        time.sleep(5)
                     else:
                         time.sleep(5)
                     current_time = QTime.currentTime().toPyTime()
@@ -411,20 +509,32 @@ class TrayIcon(QSystemTrayIcon):
                     time.sleep(3)
                     current_time = QTime.currentTime().toPyTime()
                 print("-----------Minute----------")
-                if (current_time.minute == target_time.minute and self.reminder_thread_start == 1):
+
+                if(current_time.minute >= target_time.minute and self.reminder_thread_start == 1):
                     # n = notify2.Notification("Reminder","It's time")
                     # n.show()
-                    # if(current_time.minute == target_time.minute):
-                    msg = QMessageBox()
-                    msg.setText("Its time")
-                    msg.setStandardButtons(QMessageBox.Ok)
-                    # msg.buttonClicked.connect(self.close_thread)
-                    msg.exec_()
-                    # if(self.repetition_text != 0):
-                    #   self.repetition_selection_method()
-                    #   self.set_reminder()
-                    if (reminder.repetition != 0):
-                        if (reminder.repetition == 1):
+                # if(current_time.minute == target_time.minute):
+                    # msg = QMessageBox()
+                    # msg.setText("Its time")
+                    # msg.setStandardButtons(QMessageBox.Ok)
+                    # # msg.buttonClicked.connect(self.close_thread)
+                    # msg.exec_()
+                    # self.reminder_msg_obj.reminder_msg_ui.reminder_msg_edit.setText(reminder.event_name)
+
+                    reminder_msg_obj = Reminder_Msg_Window(self)
+                    reminder_msg_obj.reminder_msg_ui.reminder_msg_edit.setText(reminder.event_name)
+                    reminder_msg_obj.reminder_msg_ui.reminder_msg_edit.setAlignment(Qt.AlignCenter)
+                    reminder_msg_obj.move(QApplication.desktop().screen().rect().center().x()- reminder_msg_obj.rect().center().x(), 0)
+                    reminder_msg_obj.exec_()
+                    # del reminder_msg_obj
+
+
+                # if(self.repetition_text != 0):
+                #   self.repetition_selection_method()
+                #   self.set_reminder()
+                    if(reminder.repetition != 0 and self.dismiss_checked):
+                        if(reminder.repetition == 1):
+
                             target_date = target_date + datetime.timedelta(days=1)
                         elif (reminder.repetition == 2):
                             target_date = target_date + datetime.timedelta(days=7)
@@ -435,13 +545,24 @@ class TrayIcon(QSystemTrayIcon):
                         target_date_string = target_date.strftime('%m-%d-%Y')
                         reminder.target_date = target_date_string
                         self.storage.update_reminder(reminder.note_hash, reminder.event_name, reminder)
-                    else:
+                    elif(self.dismiss_checked):
                         self.storage.delete_reminder(reminder.note_hash, reminder.target_date, reminder.target_time)
-                if (self.new_rem_entry == 1):
+                    elif(self.snooze_checked):
+                        print("Snoozing-------------")
+                        target_time = datetime.datetime.now() + datetime.timedelta(minutes= 5)
+                        target_time_string = target_time.strftime('%H-%M')
+                        reminder.target_time = target_time_string
+                        self.storage.update_reminder(reminder.note_hash, reminder.event_name, reminder)
+
+                if(self.new_rem_entry == 1):
+
                     self.new_rem_entry = 0
                     self.reminder_thread_start = 1
                     # reminder = self.storage.read_reminder()
             else:
+                print("------------No entry in database-----------")
+                self.dismiss_checked = False
+                self.snooze_checked = False
                 self.recent_reminder = None
                 self.reminder_thread_start = 0
         print("-----------------reminder thread stopped----------------")
@@ -481,12 +602,23 @@ class TrayIcon(QSystemTrayIcon):
         self.reminder_option.triggered.connect(self.start_reminder_ui)
         self.tray_icon_menu.addAction(self.reminder_option)
         self.tray_icon_menu.addSeparator()
+        self.help_option = QAction('Help', self)
+        self.help_option.triggered.connect(self.help_method)
+        self.tray_icon_menu.addAction(self.help_option)
+        self.tray_icon_menu.addSeparator()
         # self.close_window.setVisible(False)
         exitaction = QAction('Exit', self)
 
         exitaction.triggered.connect(self.exit_app)
         self.tray_icon_menu.addAction(exitaction)
         self.setContextMenu(self.tray_icon_menu)
+
+    def help_method(self):
+        # if(self.help_option.isChecked()):
+        self.help_ui = Help_Window()
+        self.help_ui.setVisible(True)
+        # else:
+        #     self.help_ui.setVisible(False)
 
     def isChecked(self):
         if (self.shownote.isChecked()):
@@ -590,7 +722,7 @@ class TrayIcon(QSystemTrayIcon):
         self.window_title = str(self.wirm.get_active_window_title(session_num))
         self.process_name = self.wirm.get_active_window_name(session_num)
         if (self.window_title == APP_NAME and session_num == 0):
-            return
+            return False
         elif (self.window_title == APP_NAME and session_num == 1):
             print(APP_NAME)
             self.window_title = self.wirm.prev_active_window_title
