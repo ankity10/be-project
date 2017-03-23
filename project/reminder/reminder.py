@@ -6,6 +6,8 @@ import time
 import threading
 from storage.storage2 import *
 import datetime
+from Reminder_Window import Ui_Reminder_Window
+
 
 class Reminder(QWidget):
 	def __init__(self, main_app):
@@ -15,8 +17,6 @@ class Reminder(QWidget):
 		self.reminder_text = 0
 		self.main_app = main_app
 		self.thread_start = 0
-		self.setAutoFillBackground(True)
-		# QMainWindow.__init__(self)
 		self.setWindowTitle("Reminder")
 		self.setWindowFlags(Qt.FramelessWindowHint)
 		self.setupUI()
@@ -32,91 +32,124 @@ class Reminder(QWidget):
 		# 	}
 		# 	""")
 		# self.setStyleSheet("background-color : rgb(224, 255, 255);")
-		self.event_name_label = QLabel("Event name", self)
-		self.event_name_label.move(5,10)
+		self.reminder_ui = Ui_Reminder_Window()
+		self.reminder_ui.setupUi(self)
 
-		self.event_name_edit = QLineEdit(self)
-		self.event_name_edit.setStyleSheet("background-color : rgb(240, 255, 255")
-		self.event_name_edit.setPlaceholderText("Event name")
-		self.event_name_edit.setMinimumWidth(10)
-		self.event_name_edit.move(100,5)
-		self.event_name = self.event_name_edit.text()
+		self.setGeometry(400, 250, 400, 297)
+		# self.event_title_label = QLabel("Event name", self)
+		# self.event_title_label.move(5,10)
 
-		self.target_date_label = QLabel("Date",self)
-		self.target_date_label.move(5, 35)
+		# self.event_title_edit = QLineEdit(self)
+		# self.event_title_edit.setStyleSheet("background-color : rgb(240, 255, 255")
+		# self.event_title_edit.setPlaceholderText("Event name")
+		# self.event_title_edit.setMinimumWidth(10)
+		# self.event_title_edit.move(100,5)
+		# self.event_title = self.event_title_edit.text()
 
-		self.target_date = QDateEdit(self)
-		self.target_date.setStyleSheet("background-color : rgb(240, 255, 255")
-		self.target_date.setDate(QDate.currentDate())
+		# self.target_date_label = QLabel("Date",self)
+		# self.target_date_label.move(5, 35)
+
+		# self.target_date = QDateEdit(self)
+		# self.target_date.setStyleSheet("background-color : rgb(240, 255, 255")
+		self.reminder_ui.target_date_edit.setDate(QDate.currentDate())
 		self.target_date_selected = QDate.currentDate()
-		self.target_date.setMinimumDate(QDate.currentDate())
-		self.target_date.setCalendarPopup(True)
-		self.target_date.setDisplayFormat('dd/MM/yyyy')
-		self.target_date.cal = self.target_date.calendarWidget()
-		self.target_date.cal.setFirstDayOfWeek(Qt.Monday)
-		self.target_date.cal.setHorizontalHeaderFormat(QCalendarWidget.SingleLetterDayNames)
-		self.target_date.cal.setVerticalHeaderFormat(QCalendarWidget.NoVerticalHeader)
-		self.target_date.cal.setGridVisible(True)
-		self.target_date.dateChanged.connect(self.date_selected)
-		self.target_date.move(50, 30)
+		self.reminder_ui.target_date_edit.setMinimumDate(QDate.currentDate())
+		# self.target_date.setCalendarPopup(True)
+		self.reminder_ui.target_date_edit.setDisplayFormat('dd/MM/yyyy')
+		self.reminder_ui.target_date_edit.cal = self.reminder_ui.target_date_edit.calendarWidget()
+		self.reminder_ui.target_date_edit.cal.setFirstDayOfWeek(Qt.Monday)
+		self.reminder_ui.target_date_edit.cal.setHorizontalHeaderFormat(QCalendarWidget.SingleLetterDayNames)
+		self.reminder_ui.target_date_edit.cal.setVerticalHeaderFormat(QCalendarWidget.NoVerticalHeader)
+		self.reminder_ui.target_date_edit.cal.setGridVisible(True)
+		self.reminder_ui.target_date_edit.dateChanged.connect(self.date_selected)
+		# self.target_date.move(50, 30)
 		
-		self.target_time_label = QLabel("Time", self)
-		self.target_time_label.move(200,35)
+		# self.target_time_label = QLabel("Time", self)
+		# self.target_time_label.move(200,35)
 		
-		self.target_time = QTimeEdit(self)
-		self.target_time.setStyleSheet("background-color : rgb(240, 255, 255")
-		self.target_time.setTime(QTime.currentTime())
-		# if(self.target_date_selected == QDate.currentDate())
-		# 	self.target_time.setMinimumTime(QTime.currentTime())
+		# self.target_time = QTimeEdit(self)
+		# self.target_time.setStyleSheet("background-color : rgb(240, 255, 255")
+		self.reminder_ui.target_time_edit.setTime(QTime.currentTime())
+		# # if(self.target_date_selected == QDate.currentDate())
+		# # 	self.target_time.setMinimumTime(QTime.currentTime())
 		self.target_time_selected = QTime.currentTime()
-		self.target_time.timeChanged.connect(self.time_selected)
-		self.target_time.move(230,30)
-		# self.target_time.setMinimumTime(QTime.currentTime())
-		# self.target_time.setTimeRange(QTime(1,0,0,0),QTime(12,59,0,0))
+		self.reminder_ui.target_time_edit.timeChanged.connect(self.time_selected)
 
-		self.repetition_label = QLabel("Repetition", self)
-		self.repetition_label.move(5,60)
+		self.reminder_ui.more_options_button.clicked.connect(self.more_options_method)
+		self.reminder_ui.less_options_button.hide()
+		self.reminder_ui.less_options_button.clicked.connect(self.less_options_method)
+		self.reminder_ui.repetition_label.hide()
+		self.reminder_ui.reminder_label.hide()
+		self.reminder_ui.repetition_options.hide()
+		self.reminder_ui.reminder_options.hide()
+		self.reminder_ui.repetition_options.activated.connect(self.repetition_selected)
+		self.reminder_ui.reminder_options.activated.connect(self.reminder_selected)
 
-		self.repetition = QComboBox(self)
-		self.repetition.setStyleSheet("background-color : rgb(240, 255, 255")
-		self.repetition.addItem("One-Time event")
-		self.repetition.addItem("Daily")
-		self.repetition.addItem("Weekly")
-		self.repetition.addItem("Monthly")
-		self.repetition.move(100,55)
-		self.repetition.setCurrentIndex(0)
-		self.repetition.activated.connect(self.repetition_selected)
+		# self.target_time.move(230,30)
+		# # self.target_time.setMinimumTime(QTime.currentTime())
+		# # self.target_time.setTimeRange(QTime(1,0,0,0),QTime(12,59,0,0))
 
-		self.reminder_label = QLabel("Repetition", self)
-		self.reminder_label.move(5,80)
+		# self.reminder_ui.repetition_label = QLabel("Repetition", self)
+		# self.reminder_ui.repetition_label.move(5,60)
 
-		self.reminder = QComboBox(self)
-		self.reminder.setMinimumWidth(30)
-		self.reminder.setStyleSheet("background-color : rgb(240, 255, 255")
-		self.reminder.addItem("On time")
-		self.reminder.addItem("5 mins early")
-		self.reminder.addItem("10 mins early")
-		self.reminder.addItem("1 hour early")
-		self.reminder.addItem("2 hour early")
-		self.reminder.addItem("1 day early")
-		self.reminder.move(100,80)
-		self.reminder.setCurrentIndex(0)
-		self.reminder.activated.connect(self.reminder_selected)
+		# self.repetition = QComboBox(self)
+		# self.repetition.setStyleSheet("background-color : rgb(240, 255, 255")
+		# self.repetition.addItem("One-Time event")
+		# self.repetition.addItem("Daily")
+		# self.repetition.addItem("Weekly")
+		# self.repetition.addItem("Monthly")
+		# self.repetition.move(100,55)
+		# self.repetition.setCurrentIndex(0)
+		
+		# self.reminder_ui.reminder_label = QLabel("Repetition", self)
+		# self.reminder_ui.reminder_label.move(5,80)
 
-		self.add_button = QPushButton("ADD",self)
-		self.add_button.move(30,120)
-		self.add_button.clicked.connect(self.reminder_added)
-		self.add_button.setStyleSheet("background-color : rgb(240, 255, 255")
+		# self.reminder = QComboBox(self)
+		# self.reminder.setMinimumWidth(30)
+		# self.reminder.setStyleSheet("background-color : rgb(240, 255, 255")
+		# self.reminder.addItem("On time")
+		# self.reminder.addItem("5 mins early")
+		# self.reminder.addItem("10 mins early")
+		# self.reminder.addItem("1 hour early")
+		# self.reminder.addItem("2 hour early")
+		# self.reminder.addItem("1 day early")
+		# self.reminder.move(100,80)
+		# self.reminder.setCurrentIndex(0)
+		
 
-		self.cancel_button = QPushButton("CANCEL", self)
-		self.cancel_button.move(120, 120)
-		self.cancel_button.clicked.connect(self.cancel_method)
-		self.cancel_button.setStyleSheet("background-color : egb(240, 255, 255")
+		# self.reminder_ui.add_button = QPushButton("ADD",self)
+		# self.reminder_ui.add_button.move(30,120)
+		self.reminder_ui.add_button.clicked.connect(self.reminder_added)
+		# self.reminder_ui.add_button.setStyleSheet("background-color : rgb(240, 255, 255")
+
+		# self.reminder_ui.cancel_button = QPushButton("CANCEL", self)
+		# self.reminder_ui.cancel_button.move(120, 120)
+		self.reminder_ui.cancel_button.clicked.connect(self.cancel_method)
+		# self.reminder_ui.cancel_button.setStyleSheet("background-color : egb(240, 255, 255")
 		if(self.target_date_selected == QDate.currentDate()):
-			self.reminder.model().item(5).setEnabled(False)
+			self.reminder_ui.reminder_options.model().item(5).setEnabled(False)
 
-		self.setGeometry(400,250,350,200)
+		self.move(400,250)
 		self.show()
+
+	def more_options_method(self):
+		self.reminder_ui.less_options_button.show()
+		self.reminder_ui.repetition_options.show()
+		self.reminder_ui.reminder_options.show()
+		self.reminder_ui.reminder_label.show()
+		self.reminder_ui.repetition_label.show()
+		self.reminder_ui.more_options_button.hide()
+		self.setGeometry(400,250, 400, 424)
+
+	def less_options_method(self):
+		self.reminder_ui.less_options_button.hide()
+		self.reminder_ui.repetition_options.hide()
+		self.reminder_ui.reminder_options.hide()
+		self.reminder_ui.reminder_label.hide()
+		self.reminder_ui.repetition_label.hide()
+		self.reminder_ui.more_options_button.show()
+		self.setGeometry(400, 250, 400, 297)
+
 
 	def date_selected(self, date):
 		self.target_date_selected = date
@@ -124,7 +157,7 @@ class Reminder(QWidget):
 		# 	self.target_time.setMinimumTime(QTime.currentTime())
 
 		if(self.target_date_selected > QDate.currentDate()):
-			self.reminder.model().item(5).setEnabled(True)
+			self.reminder_ui.reminder_options.model().item(5).setEnabled(True)
 
 	def time_selected(self, time):
 		self.target_time_selected = time
@@ -141,6 +174,7 @@ class Reminder(QWidget):
 		self.close()
 
 	def reminder_added(self):
+		self.event_title = self.reminder_ui.event_title_edit.text()
 		self.reminder_selection_method()
 		self.main_app.reminder_thread_start = 0
 		self.store_reminder()
@@ -172,7 +206,7 @@ class Reminder(QWidget):
 		print(process_name)
 		note_hash = self.main_app.calc_hash(process_name = process_name, window_title = window_title)
 		reminder_dict_info = {"note_hash" : note_hash, "window_title" : window_title,
-						"process_name": process_name, "event_name" : self.event_name, "repetition": self.repetition_text,
+						"process_name": process_name, "event_name" : self.event_title, "repetition": self.repetition_text,
 						"reminder_time" : self.reminder_text, "target_date" : target_date,
 						"target_time" : target_time}
 		reminder_dict = Reminder_Info(**reminder_dict_info)

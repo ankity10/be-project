@@ -33,6 +33,7 @@ from storage.storage2 import Saved_Password
 from storage.storage2 import Reminder_Info
 from dateutil.relativedelta import relativedelta
 from Login_Window import Ui_Login_Window
+from reminder_msg_window import Ui_Rem_MSG_Window
 # sudo apt-get install python3-dateutil
 
 from sync.sync import sync
@@ -205,6 +206,20 @@ class NoteWindow(QWebEngineView):
         self.setVisible(False)
         note_visible_flag = 0
         event.ignore()
+
+class Reminder_Msg_Window(QDialog):
+    def __init__(self, main_app):
+        super().__init__()
+        self.reminder_msg_ui = Ui_Rem_MSG_Window()
+        self.reminder_msg_ui.setupUi(self)
+        # self.reminder_msg_ui.dismiss_button.setCheckable(True)
+        # self.reminder_msg_ui.snooze_button.setCheckable(True)
+        self.reminder_msg_ui.dismiss_button.clicked.connect(main_app.dismiss_method)
+        self.reminder_msg_ui.snooze_button.clicked.connect(main_app.snooze_method)
+        flags = Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint
+        self.setWindowFlags(flags)
+
+
 
 
 class LoginWindow(QWidget):
@@ -436,6 +451,7 @@ class TrayIcon(QSystemTrayIcon):
         self.default_text = ""
         self.status = ""
         self.note_window = NoteWindow()
+        self.reminder_msg_obj = Reminder_Msg_Window(self)
         self.create_menu()
         self.init_login()  # Login attempt from stored username & password
         self.reminder_thread_start = 1
@@ -447,6 +463,8 @@ class TrayIcon(QSystemTrayIcon):
         print("--------------------------------------------------------------------")
         self.wirm = WIRM(self)
         self.note_window.setVisible(False)
+        self.dismiss_checked = False
+        self.snooze_checked = False
 
     def message_box(self, message, func=lambda:print("Closing message box!")):
         print("in message box")
@@ -515,15 +533,22 @@ class TrayIcon(QSystemTrayIcon):
                     # n = notify2.Notification("Reminder","It's time")
                     # n.show()
                 # if(current_time.minute == target_time.minute):
-                    msg = QMessageBox()
-                    msg.setText("Its time")
-                    msg.setStandardButtons(QMessageBox.Ok)
-                    # msg.buttonClicked.connect(self.close_thread)
-                    msg.exec_()
+                    # msg = QMessageBox()
+                    # msg.setText("Its time")
+                    # msg.setStandardButtons(QMessageBox.Ok)
+                    # # msg.buttonClicked.connect(self.close_thread)
+                    # msg.exec_()
+                    # self.reminder_msg_obj.reminder_msg_ui.reminder_msg_edit.setText(reminder.event_name)
+                    self.reminder_msg_obj.reminder_msg_ui.reminder_msg_edit.setText(reminder.event_name)
+                    self.reminder_msg_obj.reminder_msg_ui.reminder_msg_edit.setAlignment(Qt.AlignCenter)
+                    self.reminder_msg_obj.move(QApplication.desktop().screen().rect().center().x()- self.reminder_msg_obj.rect().center().x(), 0)
+                    self.reminder_msg_obj.exec_()
+
+
                 # if(self.repetition_text != 0):
                 #   self.repetition_selection_method()
                 #   self.set_reminder()
-                    if(reminder.repetition != 0):
+                    if(reminder.repetition != 0 and self.dismiss_checked):
                         if(reminder.repetition == 1):
                             target_date = target_date + datetime.timedelta(days=1)
                         elif(reminder.repetition == 2):
@@ -535,8 +560,15 @@ class TrayIcon(QSystemTrayIcon):
                         target_date_string = target_date.strftime('%m-%d-%Y')
                         reminder.target_date = target_date_string
                         self.storage.update_reminder(reminder.note_hash, reminder.event_name, reminder)
-                    else:
+                    elif(self.dismiss_checked):
                         self.storage.delete_reminder(reminder.note_hash, reminder.target_date, reminder.target_time)
+                    elif(self.snooze_checked):
+                        print("Snoozing-------------")
+                        target_time = datetime.datetime.now() + datetime.timedelta(minutes= 10)
+                        target_time_string = target_time.strftime('%H-%M')
+                        reminder.target_time = target_time_string
+                        self.storage.update_reminder(reminder.note_hash, reminder.event_name, reminder)
+
                 if(self.new_rem_entry == 1):
                     self.new_rem_entry = 0
                     self.reminder_thread_start = 1
@@ -545,6 +577,19 @@ class TrayIcon(QSystemTrayIcon):
                 self.recent_reminder = None
                 self.reminder_thread_start = 0
         print("-----------------reminder thread stopped----------------")
+
+    def dismiss_method(self):
+        print("In dismiss")
+        self.dismiss_checked = True
+        self.snooze_checked = False
+        self.reminder_msg_obj.close()
+    def snooze_method(self):
+        print("In snooze")
+        self.dismiss_checked = False
+        self.snooze_checked = True
+        self.reminder_msg_obj.close()
+
+
 
 
     def internet_check_thread(self):
@@ -584,6 +629,10 @@ class TrayIcon(QSystemTrayIcon):
         self.reminder_option.triggered.connect(self.start_reminder_ui)
         self.tray_icon_menu.addAction(self.reminder_option)
         self.tray_icon_menu.addSeparator()
+        self.help_option = QAction('Help', self)
+        self.help_option.triggered.connect(self.help_method)
+        self.tray_icon_menu.addAction(self.help_option)
+        self.tray_icon_menu.addSeparator()
         # self.close_window.setVisible(False)
         exitaction = QAction('Exit',self)
 
@@ -591,6 +640,8 @@ class TrayIcon(QSystemTrayIcon):
         self.tray_icon_menu.addAction(exitaction)
         self.setContextMenu(self.tray_icon_menu)
 
+    def help_method(self):
+        pass 
     def isChecked(self):
         if(self.shownote.isChecked()):
             # self.shownote.setCheckable(True)
