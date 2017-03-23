@@ -84,9 +84,16 @@ class Reminder(QWidget):
 		self.reminder_ui.reminder_options.hide()
 		self.reminder_ui.repetition_options.activated.connect(self.repetition_selected)
 		self.reminder_ui.reminder_options.activated.connect(self.reminder_selected)
+		if(self.target_date_selected == QDate.currentDate()):
+			self.reminder_ui.target_time_edit.setMinimumTime(QTime.currentTime())
+		else:
+			t = QTime(0,0,0)
+			self.reminder_ui.target_time_edit.setMinimumTime(t)
 
 		# self.target_time.move(230,30)
-		# # self.target_time.setMinimumTime(QTime.currentTime())
+		# if(self.target_date_selected == QDate.currentDate()):
+		# 	print("INNNNN")
+		# 	self.reminder_ui.target_time_edit.setMinimumTime(QTime.currentTime())
 		# # self.target_time.setTimeRange(QTime(1,0,0,0),QTime(12,59,0,0))
 
 		# self.reminder_ui.repetition_label = QLabel("Repetition", self)
@@ -153,8 +160,11 @@ class Reminder(QWidget):
 
 	def date_selected(self, date):
 		self.target_date_selected = date
-		# if(self.target_date_selected == QDate.currentDate()):
-		# 	self.target_time.setMinimumTime(QTime.currentTime())
+		if(self.target_date_selected == QDate.currentDate()):
+			self.reminder_ui.target_time_edit.setMinimumTime(QTime.currentTime())
+		else:
+			t = QTime(0,0,0)
+			self.reminder_ui.target_time_edit.setMinimumTime(t)
 
 		if(self.target_date_selected > QDate.currentDate()):
 			self.reminder_ui.reminder_options.model().item(5).setEnabled(True)
@@ -193,6 +203,9 @@ class Reminder(QWidget):
 		target_time = target_py_time.strftime('%H-%M')
 		target_py_date = self.target_date_selected.toPyDate()
 		target_date = target_py_date.strftime('%m-%d-%Y')
+		# rem_exist = self.main_app.storage.find_reminder(self.event_title, target_date, target_time)
+		# print(rem_exist)
+		# print("--------check")
 		if(self.main_app.recent_reminder != None):
 			print("----------------In less------------")
 			running_rem_date = datetime.datetime.strptime(self.main_app.recent_reminder.target_date, '%m-%d-%Y').date()

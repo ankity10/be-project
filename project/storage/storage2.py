@@ -216,6 +216,13 @@ class Db:
 	def insert_reminder(self, reminder_info):
 		return self.reminder_collection.insert_one(dict(reminder_info))
 
+	# def find_reminder(self, event_name, target_date, target_time):
+	# 	reminder_dict = self.reminder_collection.find({'event_name' : event_name,
+	# 												'target_date' : target_date, 'target_time' : target_time})
+	# 	if not reminder_dict:
+	# 		return None
+	# 	return Reminder_Info(**reminder_dict)
+
 	def read_reminder(self):
 		try:
 			reminder_dict = self.reminder_collection.find().sort([('target_date',1), ('target_time' , 1)]).limit(1).next()

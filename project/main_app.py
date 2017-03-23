@@ -34,6 +34,7 @@ from storage.storage2 import Reminder_Info
 from dateutil.relativedelta import relativedelta
 from Login_Window import Ui_Login_Window
 from reminder_msg_window import Ui_Rem_MSG_Window
+from help_window import Ui_Help_Window
 # sudo apt-get install python3-dateutil
 
 from sync.sync import sync
@@ -212,12 +213,26 @@ class Reminder_Msg_Window(QDialog):
         super().__init__()
         self.reminder_msg_ui = Ui_Rem_MSG_Window()
         self.reminder_msg_ui.setupUi(self)
+        self.main_app = main_app
         # self.reminder_msg_ui.dismiss_button.setCheckable(True)
         # self.reminder_msg_ui.snooze_button.setCheckable(True)
-        self.reminder_msg_ui.dismiss_button.clicked.connect(main_app.dismiss_method)
-        self.reminder_msg_ui.snooze_button.clicked.connect(main_app.snooze_method)
+        self.reminder_msg_ui.dismiss_button.clicked.connect(self.dismiss_method)
+        self.reminder_msg_ui.snooze_button.clicked.connect(self.snooze_method)
         flags = Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint
         self.setWindowFlags(flags)
+
+    def dismiss_method(self):
+        print("In dismiss")
+        self.main_app.dismiss_checked = True
+        self.main_app.snooze_checked = False
+        self.close()
+
+    def snooze_method(self):
+        print("In snooze")
+        self.main_app.dismiss_checked = False
+        self.main_app.snooze_checked = True
+        self.close()
+
 
 
 
@@ -240,7 +255,7 @@ class LoginWindow(QWidget):
         self.login_ui.signup_label.hide()
         self.login_ui.back_link.hide()
         self.setFixedSize(358, 265)
-        self.move(400,250)
+        self.move(QApplication.desktop().screen().rect().center()- self.rect().center())
         # self.setGeometry(400,250,400,200)
         # self.setWindowTitle('Login/Sign Up')
         # self.username_lbl = self.create_label(5,5,"Username")
@@ -416,6 +431,54 @@ class LoginWindow(QWidget):
         self.login_ui.username.clear()
         # self.email.clear()
         self.login_ui.password.clear()
+class Help_Window(QWidget):
+    def __init__(self):
+        super().__init__()
+        menu = QMenu()
+
+        self.help_ui = Ui_Help_Window()
+        self.help_ui.setupUi(self)
+        # self.setWindowFlags(Qt.FramelessWindowHint)
+        # self.setAttribute(Qt.WA_TranslucentBackground, 60)
+        self.help_ui.about_edit.hide()
+        self.help_ui.shortcut_edit.hide()
+        self.help_ui.tips_edit.hide()
+        self.help_ui.about_button.setCheckable(True)
+        self.help_ui.shortcut_button.setCheckable(True)
+        self.help_ui.tips_button.setCheckable(True)
+        self.help_ui.shortcut_button.setChecked(True)
+        self.is_shortcuts_Checked()
+        self.help_ui.about_button.clicked.connect(self.is_about_Checked)
+        self.help_ui.shortcut_button.clicked.connect(self.is_shortcuts_Checked)
+        self.help_ui.tips_button.clicked.connect(self.is_tips_checked)
+        self.move(QApplication.desktop().screen().rect().center()- self.rect().center())
+
+    def is_tips_checked(self):
+        if(self.help_ui.tips_button.isChecked()):
+            self.help_ui.shortcut_button.setChecked(False)
+            self.help_ui.about_button.setChecked(False)
+            self.help_ui.tips_edit.show()
+            self.help_ui.shortcut_edit.hide()
+            self.help_ui.about_edit.hide()
+
+        
+
+    def is_about_Checked(self):
+        if(self.help_ui.about_button.isChecked()):
+            self.help_ui.shortcut_button.setChecked(False)
+            self.help_ui.tips_button.setChecked(False)
+            self.help_ui.about_edit.show()
+            self.help_ui.shortcut_edit.hide()
+            self.help_ui.tips_edit.hide()
+
+    def is_shortcuts_Checked(self):
+        if(self.help_ui.shortcut_button.isChecked()):
+            self.help_ui.about_button.setChecked(False)
+            self.help_ui.tips_button.setChecked(False)
+            self.help_ui.about_edit.hide()
+            self.help_ui.tips_edit.hide()
+            self.help_ui.shortcut_edit.show()
+
 
 
 class TrayIcon(QSystemTrayIcon):
@@ -528,7 +591,7 @@ class TrayIcon(QSystemTrayIcon):
                     time.sleep(3)
                     current_time = QTime.currentTime().toPyTime()
                 print("-----------Minute----------")
-                if(current_time.minute == target_time.minute and self.reminder_thread_start == 1):
+                if(current_time.minute >= target_time.minute and self.reminder_thread_start == 1):
                     # n = notify2.Notification("Reminder","It's time")
                     # n.show()
                 # if(current_time.minute == target_time.minute):
@@ -538,11 +601,13 @@ class TrayIcon(QSystemTrayIcon):
                     # # msg.buttonClicked.connect(self.close_thread)
                     # msg.exec_()
                     # self.reminder_msg_obj.reminder_msg_ui.reminder_msg_edit.setText(reminder.event_name)
-                    self.reminder_msg_obj = Reminder_Msg_Window(self)
-                    self.reminder_msg_obj.reminder_msg_ui.reminder_msg_edit.setText(reminder.event_name)
-                    self.reminder_msg_obj.reminder_msg_ui.reminder_msg_edit.setAlignment(Qt.AlignCenter)
-                    self.reminder_msg_obj.move(QApplication.desktop().screen().rect().center().x()- self.reminder_msg_obj.rect().center().x(), 0)
-                    self.reminder_msg_obj.exec_()
+
+                    reminder_msg_obj = Reminder_Msg_Window(self)
+                    reminder_msg_obj.reminder_msg_ui.reminder_msg_edit.setText(reminder.event_name)
+                    reminder_msg_obj.reminder_msg_ui.reminder_msg_edit.setAlignment(Qt.AlignCenter)
+                    reminder_msg_obj.move(QApplication.desktop().screen().rect().center().x()- reminder_msg_obj.rect().center().x(), 0)
+                    reminder_msg_obj.exec_()
+                    # del reminder_msg_obj
 
 
                 # if(self.repetition_text != 0):
@@ -564,7 +629,7 @@ class TrayIcon(QSystemTrayIcon):
                         self.storage.delete_reminder(reminder.note_hash, reminder.target_date, reminder.target_time)
                     elif(self.snooze_checked):
                         print("Snoozing-------------")
-                        target_time = datetime.datetime.now() + datetime.timedelta(minutes= 10)
+                        target_time = datetime.datetime.now() + datetime.timedelta(minutes= 1)
                         target_time_string = target_time.strftime('%H-%M')
                         reminder.target_time = target_time_string
                         self.storage.update_reminder(reminder.note_hash, reminder.event_name, reminder)
@@ -580,17 +645,6 @@ class TrayIcon(QSystemTrayIcon):
                 self.recent_reminder = None
                 self.reminder_thread_start = 0
         print("-----------------reminder thread stopped----------------")
-
-    def dismiss_method(self):
-        print("In dismiss")
-        self.dismiss_checked = True
-        self.snooze_checked = False
-        self.reminder_msg_obj.close()
-    def snooze_method(self):
-        print("In snooze")
-        self.dismiss_checked = False
-        self.snooze_checked = True
-        self.reminder_msg_obj.close()
 
 
 
@@ -644,7 +698,12 @@ class TrayIcon(QSystemTrayIcon):
         self.setContextMenu(self.tray_icon_menu)
 
     def help_method(self):
-        pass 
+        # if(self.help_option.isChecked()):
+        self.help_ui = Help_Window()
+        self.help_ui.setVisible(True)
+        # else:
+        #     self.help_ui.setVisible(False)
+
     def isChecked(self):
         if(self.shownote.isChecked()):
             # self.shownote.setCheckable(True)
@@ -756,7 +815,7 @@ class TrayIcon(QSystemTrayIcon):
         self.window_title = str(self.wirm.get_active_window_title(session_num))
         self.process_name = self.wirm.get_active_window_name(session_num)
         if (self.window_title == APP_NAME and session_num == 0):
-            return
+            return False
         elif (self.window_title == APP_NAME and session_num == 1):
             print(APP_NAME)
             self.window_title = self.wirm.prev_active_window_title
