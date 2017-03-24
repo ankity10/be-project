@@ -129,7 +129,7 @@ class sync:
         self.main_app.login.setVisible(True)
         self.send_offline_logs_flag = 0
         if (self.logout_flag == False):  # log_out flag checks if logout has been clicked by the user or server crashed
-            self.main_app.message_box("Server is offline ondisconnect!!")
+            self.main_app.message_box("Server is offline!!")
 
     def onConnectError(self, socket, error):
         logging.info("On connect error got called")
@@ -180,7 +180,7 @@ class sync:
                                                            headers={"Authorization": "JWT "
                                                                                      + self.main_app.login_credentials.token})
                 except:
-                    self.main_app.message_box("Server is offline!! sync_thread")
+                    self.main_app.message_box("Server is offline!!")
                     self.main_app.login.setVisible(True)
                     self.main_app.logout.setVisible(False)
                     return
@@ -198,7 +198,7 @@ class sync:
                     socket.setAuthenticationListener(self.onSetAuthentication, self.onAuthentication)
                     socket.connect()
                 except:
-                    print("Server offline!! sync except")
+                    print("Server offline!!")
                     continue
             else:
                 try:

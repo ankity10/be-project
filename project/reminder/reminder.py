@@ -18,7 +18,7 @@ class Reminder(QWidget):
 		self.main_app = main_app
 		self.thread_start = 0
 		self.setWindowTitle("Reminder")
-		self.setWindowFlags(Qt.FramelessWindowHint)
+		# self.setWindowFlags(Qt.FramelessWindowHint)
 		self.setupUI()
 
 	def setupUI(self):
@@ -35,7 +35,7 @@ class Reminder(QWidget):
 		self.reminder_ui = Ui_Reminder_Window()
 		self.reminder_ui.setupUi(self)
 
-		self.setGeometry(400, 250, 400, 297)
+		self.setFixedSize(400,300)
 		# self.event_title_label = QLabel("Event name", self)
 		# self.event_title_label.move(5,10)
 
@@ -127,16 +127,20 @@ class Reminder(QWidget):
 		# self.reminder_ui.add_button = QPushButton("ADD",self)
 		# self.reminder_ui.add_button.move(30,120)
 		self.reminder_ui.add_button.clicked.connect(self.reminder_added)
+		self.reminder_ui.add_button.move(230,240)
 		# self.reminder_ui.add_button.setStyleSheet("background-colorer : rgb(240, 255, 255")
 
 		# self.reminder_ui.cancel_button = QPushButton("CANCEL", self)
 		# self.reminder_ui.cancel_button.move(120, 120)
 		self.reminder_ui.cancel_button.clicked.connect(self.cancel_method)
+		self.reminder_ui.cancel_button.move(40,240)
 		# self.reminder_ui.cancel_button.setStyleSheet("background-color : egb(240, 255, 255")
 		if(self.target_date_selected == QDate.currentDate()):
 			self.reminder_ui.reminder_options.model().item(5).setEnabled(False)
 
-		self.move(400,250)
+		self.move(QApplication.desktop().screen().rect().center()- self.rect().center())
+
+		# self.move(400,250)
 		self.show()
 
 	def more_options_method(self):
@@ -146,7 +150,9 @@ class Reminder(QWidget):
 		self.reminder_ui.reminder_label.show()
 		self.reminder_ui.repetition_label.show()
 		self.reminder_ui.more_options_button.hide()
-		self.setGeometry(400,250, 400, 424)
+		self.setFixedSize(400,380)
+		self.reminder_ui.add_button.move(40,320)
+		self.reminder_ui.cancel_button.move(230,320)
 
 	def less_options_method(self):
 		self.reminder_ui.less_options_button.hide()
@@ -155,7 +161,9 @@ class Reminder(QWidget):
 		self.reminder_ui.reminder_label.hide()
 		self.reminder_ui.repetition_label.hide()
 		self.reminder_ui.more_options_button.show()
-		self.setGeometry(400, 250, 400, 297)
+		self.setFixedSize(400,300)
+		self.reminder_ui.cancel_button.move(40,240)
+		self.reminder_ui.add_button.move(230,240)
 
 
 	def date_selected(self, date):
