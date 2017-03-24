@@ -15,6 +15,8 @@
     <script src="assets/jquery-3.1.1.min.js"></script>
 
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="assets/font-awesome-4.7.0/css/font-awesome.css">
+
 
     <style>
         html {
@@ -33,6 +35,21 @@
             width: 100%;
             height: 100%;
         }
+               .mytextwithicon {
+    position:relative;
+}
+.mytextwithicon:before {
+     content: "\f119";
+    font-family: FontAwesome;
+    left:-5px;
+    position:absolute;
+    top:0;
+ }
+        
+        .CodeMirror {
+            background: url("assets/wondering.svg");
+        }
+
     </style>
 
 </head>
@@ -44,8 +61,21 @@
 
 <script>
 
+
+
+
     $(document).ready(function () {
 //        console.log("document ready")
+
+         var add_icon = function () {
+        code_mirror_target = $(".CodeMirror");
+        code_mirror_target.addClass("mytextwithicon");
+
+
+    }
+
+//    add_icon();
+
         window.themes = {}
         themes.defaults = {};
         themes.defaults.backgroundImage = "linear-gradient(to top, #bdc2e8 0%, #bdc2e8 1%, #e6dee9 100%)";
@@ -359,15 +389,10 @@
 //            console.log(e);
             var key = e.keyCode || e.charCode;
             if (key == 8 || key == 46 || key == 13) {
+                setTimeout(cursor_activity_callback, 50);
                 trigger_save_note(600);
             }
 
-            if (key === 13 || e.keyCode === 8) {
-//                console.log("triggerring cursoractivity");
-//                code_mirror.trigger("cursorActivity");
-                setTimeout(cursor_activity_callback, 50);
-
-            }
 
         });
 
@@ -398,6 +423,7 @@
 
 //            console.log(e.ctrlKey, e.shiftKey, e.metaKey);
 //            console.log(e);
+                setTimeout(cursor_activity_callback, 50);
 
             if ((e.metaKey || e.ctrlKey) && (String.fromCharCode(e.which).toLowerCase() === 'b')) {
 //                trigger_save_note(300);

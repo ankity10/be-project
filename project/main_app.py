@@ -404,7 +404,7 @@ class Help_Window(QWidget):
 
 
 class ThemeSelector():
-    theme_list = ['white', 'yellow', 'purple', 'deepblue',"skyblue", 'pinkblue', 'grey', 'pink', 'green', "blue", "teal"]
+    theme_list = ['white', 'yellow',"skyblue", 'grey', 'green', 'pink', "blue", "teal"]
     availiable_modes = ["random", "process_wise"]
 
     def __init__(self, mode):
