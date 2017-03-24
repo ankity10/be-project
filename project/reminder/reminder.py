@@ -127,7 +127,7 @@ class Reminder(QWidget):
 		# self.reminder_ui.add_button = QPushButton("ADD",self)
 		# self.reminder_ui.add_button.move(30,120)
 		self.reminder_ui.add_button.clicked.connect(self.reminder_added)
-		# self.reminder_ui.add_button.setStyleSheet("background-color : rgb(240, 255, 255")
+		# self.reminder_ui.add_button.setStyleSheet("background-colorer : rgb(240, 255, 255")
 
 		# self.reminder_ui.cancel_button = QPushButton("CANCEL", self)
 		# self.reminder_ui.cancel_button.move(120, 120)
@@ -206,16 +206,18 @@ class Reminder(QWidget):
 		# rem_exist = self.main_app.storage.find_reminder(self.event_title, target_date, target_time)
 		# print(rem_exist)
 		# print("--------check")
-		if(self.main_app.recent_reminder != None):
-			print("----------------In less------------")
-			running_rem_date = datetime.datetime.strptime(self.main_app.recent_reminder.target_date, '%m-%d-%Y').date()
-			running_rem_time = datetime.datetime.strptime(self.main_app.recent_reminder.target_time, '%H-%M').time()
-			if(target_py_date < running_rem_date):
-				print("------------------Yes less ------------------")
-				self.main_app.new_rem_entry = 1
-			elif(target_py_date == running_rem_date and target_py_time < running_rem_time):
-				print("------------------Yes less ------------------")
-				self.main_app.new_rem_entry = 1
+		self.main_app.new_rem_entry = 1
+		# if(self.main_app.recent_reminder != None):
+		# 	print("----------------In less------------")
+		# 	running_rem_date = datetime.datetime.strptime(self.main_app.recent_reminder.target_date, '%m-%d-%Y').date()
+		# 	running_rem_time = datetime.datetime.strptime(self.main_app.recent_reminder.target_time, '%H-%M').time()
+		# 	if(target_py_date < running_rem_date):
+		# 		print("------------------Yes less ------------------")
+		# 		self.main_app.new_rem_entry = 1
+		# 	elif(target_py_date == running_rem_date and target_py_time < running_rem_time):
+		# 		print("------------------Yes less ------------------")
+		# 		self.main_app.new_rem_entry = 1
+
 
 		window_title = self.main_app.wirm.prev_active_window_title
 		process_name = self.main_app.wirm.prev_active_window_name

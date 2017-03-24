@@ -219,7 +219,13 @@ class Reminder_Msg_Window(QDialog):
         self.reminder_msg_ui.dismiss_button.clicked.connect(self.dismiss_method)
         self.reminder_msg_ui.snooze_button.clicked.connect(self.snooze_method)
         flags = Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint
+        # self.timer = QTimer()
+        # self.timer.timeout.connect(self.tick)
+        # self.timer.start(10000)
         self.setWindowFlags(flags)
+
+    # def tick(self):
+    #     self.snooze_method()
 
     def dismiss_method(self):
         print("In dismiss")
@@ -587,11 +593,13 @@ class TrayIcon(QSystemTrayIcon):
                 current_time = QTime.currentTime().toPyTime()
                 while(current_time.minute < target_time.minute and self.reminder_thread_start == 1):
                     if(self.new_rem_entry == 1):
+                        print("-------In minute less-------")
                         self.reminder_thread_start = 0
                     time.sleep(3)
                     current_time = QTime.currentTime().toPyTime()
                 print("-----------Minute----------")
                 if(current_time.minute >= target_time.minute and self.reminder_thread_start == 1):
+                    print("------------IN time-----------")
                     # n = notify2.Notification("Reminder","It's time")
                     # n.show()
                 # if(current_time.minute == target_time.minute):
