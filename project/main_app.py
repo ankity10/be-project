@@ -35,7 +35,7 @@ from wirm.wirm import WIRM
 
 global IP
 
-IP = "192.168.0.109"
+IP = "20.20.20.117"
 
 global PORT
 PORT = "8000"
