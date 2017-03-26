@@ -172,8 +172,9 @@ def merge(s1, s2):
         in2 += 1
     if in1 < len1 or in2 < len2:
         final_l.append(conflict)
+    print(final_l)
 
     final_l += l1[in1:] + l2[in2:]
     result = generate_string(final_l)
-    print("Merged String is : ", result)
+    # print("Merged String is : \n", result)
     return result

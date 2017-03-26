@@ -14,7 +14,7 @@ from socketcluster import Socketcluster
 from storage.storage import *
 
 global IP
-IP = "192.168.0.109"
+IP = "20.20.20.132"
 global PORT
 PORT = "8000"
 

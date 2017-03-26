@@ -140,6 +140,10 @@ class WIRM:
                 process_name = f.read().rstrip('\n')  # Read and Remove \n
                 if process_name in ["chrome", "firefox", "chromium-browse"]:
                     process_name = "BROWSER"
+                elif process_name == "subl":
+                    process_name = "sublime_text"
+                elif process_name in ["nemo", "nautilus"]:
+                    process_name = "FILE_MANAGER"    
                 return (process_name)
         else:
             print("No such PID in Running processes!!")

@@ -22,8 +22,8 @@ class TitleProcessing:
         if s.endswith('•'):  # Didn't save the file
             s = s[:-1]
         s = s.rstrip()  # Removes trailing white spaces
-        if s.startswith('~'):
-            s = "/home/" + getpass.getuser() + s[1:]
+        # if s.startswith('~'):
+        #     s = "/home/" + getpass.getuser() + s[1:]
         return s
 
     def get_browser_title(self):
