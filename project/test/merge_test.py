@@ -40,6 +40,9 @@ parser.feed(s)
 
 '''
 
-s1 = "<div>pict</div><div>hi ni</div>"
-s2 = "<div>pict</div><div>hi ankit</div>"
-print(merge.merge(s1, s2))
+# s1 = "<div>pict</div><div>hi ni</div>"
+# s2 = "<div>pict</div><div>hi ankit</div>"
+
+s1 = "<div>1</div><div>nisha</div><div>3</div><div>4</div>"
+s2 = "<div>1</div><div>2</div><div>kabra</div><div>4</div>"
+print("In merge_test", merge.merge(s1, s2))
